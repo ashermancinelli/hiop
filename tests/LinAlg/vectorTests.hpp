@@ -1291,8 +1291,8 @@ public:
         assert(N > n_rand);
         const std::vector<int> idxs = randoms(n_rand, N);
 
-        const double C1 = 2.0f;
-        const double C2 = 3.0f;
+        const double C1 = 2.0;
+        const double C2 = 3.0;
 
         // just has to be nonzero
         pattern.setToConstant(0.0);
