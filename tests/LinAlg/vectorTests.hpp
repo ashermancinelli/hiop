@@ -1240,6 +1240,44 @@ public:
     return reduceReturn(fail, &x);
   }
 
+    int vectorComponentMult(hiop::hiopVector& v, hiop::hiopVector& other)
+    {
+        assert(v.get_size() == other.get_size());
+
+        const int N = v.get_size();
+        const double C1 = 2.0;
+        const double C2 = 3.0;
+        v.setToConstant(C1);
+        other.setToConstant(C2);
+
+        v.componentMult(other);
+
+        for (int i=0; i<N; i++)
+            if (getElement(&v, i) != C1*C2)
+                return 1;
+
+        return 0;
+    }
+
+    int vectorComponentDiv(hiop::hiopVector& v, hiop::hiopVector& other)
+    {
+        assert(v.get_size() == other.get_size());
+
+        const int N = v.get_size();
+        const double C1 = 2.0;
+        const double C2 = 3.0;
+        v.setToConstant(C1);
+        other.setToConstant(C2);
+
+        v.componentDiv(other);
+
+        for (int i=0; i<N; i++)
+            if (getElement(&v, i) != C1/C2)
+                return 1;
+
+        return 0;
+    }
+
 protected:
   // Interface to methods specific to vector implementation
   virtual void setLocalElement(hiop::hiopVector* x, local_ordinal_type i, real_type val) = 0;
