@@ -148,10 +148,4 @@ int VectorTestsPar::verifyAnswer(
   return local_fail;
 }
 
-double* VectorTestsPar::getData(hiop::hiopVector* x)
-{
-    hiop::hiopVectorPar* xvec = dynamic_cast<hiop::hiopVectorPar*>(x);
-    return xvec->local_data();
-}
-
 } // namespace hiop::tests
