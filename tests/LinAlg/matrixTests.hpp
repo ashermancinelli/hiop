@@ -14,14 +14,14 @@ public:
     MatrixTests() {}
     virtual ~MatrixTests(){}
 
-    global_ordinal_type matrixNumRows(hiop::hiopMatrix& A, long long M)
+    int matrixNumRows(const hiop::hiopMatrix& A, global_ordinal_type M, const int rank)
     {
         const bool fail = A.m() == M ? 0 : 1;
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
     }
 
-    global_ordinal_type matrixNumCols(hiop::hiopMatrix& A, long long N)
+    int matrixNumCols(const hiop::hiopMatrix& A, global_ordinal_type N, const int rank)
     {
         const bool fail = A.n() == N ? 0 : 1;
         printMessage(fail, __func__, rank);
@@ -250,6 +250,8 @@ public:
     {
         printMessage(SKIP_TEST, __func__, rank);
         return 0;
+=======
+>>>>>>> added method to hiopMatrix to get communicator; configured MPI for hiopMatrix tests
     }
 
     /*
