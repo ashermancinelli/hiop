@@ -65,6 +65,8 @@
 #include <hiopVector.hpp>
 #include "testBase.hpp"
 
+#include "testBase.hpp"
+
 namespace hiop::tests {
 
 /**
@@ -1254,4 +1256,3 @@ protected:
 };
 
 } // namespace hiop::tests
-
