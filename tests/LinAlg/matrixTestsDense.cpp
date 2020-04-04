@@ -34,4 +34,43 @@ local_ordinal_type MatrixTestsDense::getNumLocCols(hiop::hiopMatrix* A)
     //                         ^^^
 }
 
+#ifdef HIOP_USE_MPI
+/// Get communicator
+MPI_Comm MatrixTestsDense::getMPIComm(hiop::hiopMatrix* _A)
+{
+    const hiop::hiopMatrixDense* A = dynamic_cast<const hiop::hiopMatrixDense*>(_A);
+    return A->get_mpi_comm();
+}
+#endif
+
+// Every rank returns failure if any individual rank fails
+bool MatrixTestsDense::reduceReturn(int failures, hiop::hiopMatrix* A)
+{
+    int fail = 0;
+
+    if constexpr (USE_MPI)
+    {
+        MPI_Allreduce(&failures, &fail, 1, MPI_INT, MPI_SUM, getMPIComm(A));
+    }
+    else
+    {
+        fail = failures;
+    }
+
+    return (fail != 0);
+}
+
+[[nodiscard]]
+int MatrixTestsDense::verifyAnswer(hiop::hiopMatrix* A, const double answer)
+{
+    const int M = getNumLocRows(A);
+    const int N = getNumLocCols(A);
+    int fail = 0;
+    for (int i=0; i<M; i++)
+        for (int j=0; j<N; j++)
+            if (!isEqual(getElement(A, i, j), answer))
+                fail++;
+    return fail;
+}
+
 } // namespace hiop::tests
