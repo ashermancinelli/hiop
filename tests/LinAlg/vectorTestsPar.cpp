@@ -48,11 +48,14 @@ bool VectorTestsPar::reduceReturn(int failures, hiop::hiopVector* x)
 {
     int fail = 0;
 
-#ifdef HIOP_USE_MPI
-    MPI_Allreduce(&failures, &fail, 1, MPI_INT, MPI_SUM, getMPIComm(x));
-#else
-    fail = failures;
-#endif
+    if constexpr (USE_MPI)
+    {
+        MPI_Allreduce(&failures, &fail, 1, MPI_INT, MPI_SUM, getMPIComm(x));
+    }
+    else
+    {
+        fail = failures;
+    }
 
     return (fail != 0);
 }

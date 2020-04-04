@@ -4,6 +4,12 @@
 #include <limits>
 #include <cmath>
 
+#ifdef HIOP_USE_MPI
+constexpr bool USE_MPI = true;
+#else
+constexpr bool USE_MPI = false;
+#endif
+
 namespace hiop::tests
 {
 
