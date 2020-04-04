@@ -7,7 +7,7 @@ namespace hiop::tests {
 class MatrixTestsDense : public MatrixTests
 {
 public:
-    MatrixTestsDense(){}
+    MatrixTestsDense() {}
     virtual ~MatrixTestsDense(){}
 
 private:
@@ -16,6 +16,9 @@ private:
     virtual local_ordinal_type getNumLocRows(hiop::hiopMatrix* a);
     virtual local_ordinal_type getNumLocCols(hiop::hiopMatrix* a);
 
+#ifdef HIOP_USE_MPI
+    MPI_Comm getMPIComm(hiop::hiopMatrix* A);
+#endif
 };
 
 } // namespace hiop::tests
