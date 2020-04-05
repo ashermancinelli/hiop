@@ -250,8 +250,6 @@ public:
     {
         printMessage(SKIP_TEST, __func__, rank);
         return 0;
-=======
->>>>>>> added method to hiopMatrix to get communicator; configured MPI for hiopMatrix tests
     }
 
     /*
