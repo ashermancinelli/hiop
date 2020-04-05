@@ -14,7 +14,7 @@ void MatrixTestsDense::setElement(hiop::hiopMatrix* A, local_ordinal_type i, loc
 
 /// Returns element (i,j) of matrix _A_.
 /// First need to retrieve hiopMatrixDense from the abstract interface
-real_type MatrixTestsDense::getElement(hiop::hiopMatrix* A, local_ordinal_type i, local_ordinal_type j)
+real_type MatrixTestsDense::getElement(const hiop::hiopMatrix* A, local_ordinal_type i, local_ordinal_type j)
 {
     const hiop::hiopMatrixDense* amat = dynamic_cast<const hiop::hiopMatrixDense*>(A);
     return amat->local_data()[i][j];

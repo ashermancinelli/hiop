@@ -85,8 +85,19 @@ public:
         n_vec.setToConstant(two);
         A.setToConstant(one);
         A.timesVec(zero, m_vec, one, n_vec);
-        real_type expected = two * N_glob;
-        fail += verifyAnswerVec(&m_vec, expected);
+        double expected = two * N_glob;
+        for (int i=0; i<M; i++)
+        {
+            double actual = getElementVec(&m_vec, i);
+            if (!isEqual(actual, expected))
+            {
+                fail++;
+                std::cerr << RED << "---- Rank " << rank
+                    << " got " << actual
+                    << " expected " << expected
+                    << CLEAR << "\n";
+            }
+        }
 
         // Now, check y \leftarrow beta * y + alpha * A * x
         m_vec.setToConstant(two);
