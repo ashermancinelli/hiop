@@ -42,7 +42,6 @@ int main(int argc, char** argv)
         fail += test.matrixNumCols(A, N, rank);
         fail += test.matrixSetToZero(A, rank);
         fail += test.matrixSetToConstant(A, rank);
-        fail += test.matrixCopyFrom(A, *B, rank);
     }
 
     // Test RAJA matrix
