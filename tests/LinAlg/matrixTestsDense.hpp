@@ -12,9 +12,11 @@ public:
 
 private:
     virtual void setElement(hiop::hiopMatrix* a, int i, int j, double val);
-    virtual double getElement(hiop::hiopMatrix* a, int i, int j);
+    virtual double getElement(const hiop::hiopMatrix* a, int i, int j);
+    virtual double getElementVec(const hiop::hiopVector* x, int i);
     virtual int getNumLocRows(hiop::hiopMatrix* a);
     virtual int getNumLocCols(hiop::hiopMatrix* a);
+    virtual int getLocalSize(const hiop::hiopVector* x);
     virtual int verifyAnswer(hiop::hiopMatrix* A, double answer);
     virtual bool reduceReturn(int failures, hiop::hiopMatrix* A);
 

@@ -14,10 +14,18 @@ void MatrixTestsDense::setElement(hiop::hiopMatrix* A, int i, int j, double val)
 
 /// Returns element (i,j) of matrix _A_.
 /// First need to retrieve hiopMatrixDense from the abstract interface
-double MatrixTestsDense::getElement(hiop::hiopMatrix* A, int i, int j)
+double MatrixTestsDense::getElement(const hiop::hiopMatrix* A, int i, int j)
 {
-    hiop::hiopMatrixDense* amat = dynamic_cast<hiop::hiopMatrixDense*>(A);
+    const hiop::hiopMatrixDense* amat = dynamic_cast<const hiop::hiopMatrixDense*>(A);
     return amat->local_data()[i][j];
+}
+
+/// Returns element _i_ of vector _x_.
+/// First need to retrieve hiopVectorPar from the abstract interface
+double MatrixTestsDense::getElementVec(const hiop::hiopVector* x, int i)
+{
+    const hiop::hiopVectorPar* xvec = dynamic_cast<const hiop::hiopVectorPar*>(x);
+    return xvec->local_data_const()[i];
 }
 
 int MatrixTestsDense::getNumLocRows(hiop::hiopMatrix* A)
@@ -32,6 +40,13 @@ int MatrixTestsDense::getNumLocCols(hiop::hiopMatrix* A)
     hiop::hiopMatrixDense* amat = dynamic_cast<hiop::hiopMatrixDense*>(A);
     return amat->get_local_size_n();
     //                         ^^^
+}
+
+/// Returns size of local data array for vector _x_
+int MatrixTestsDense::getLocalSize(const hiop::hiopVector* x)
+{
+    const hiop::hiopVectorPar* xvec = dynamic_cast<const hiop::hiopVectorPar*>(x);
+    return static_cast<int>(xvec->get_local_size());
 }
 
 #ifdef HIOP_USE_MPI
