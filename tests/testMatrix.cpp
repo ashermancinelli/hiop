@@ -39,6 +39,7 @@ int main(int argc, char** argv)
         // initialize matrices
         hiop::hiopMatrixDense A(M_local, N_global, partition, comm);
         hiop::hiopMatrixDense* B = A.alloc_clone();
+        hiop::hiopMatrixDense* C = A.alloc_clone();
         // set up distributed vectors of size N
         hiop::hiopVectorPar x_n(N_global, partition, comm);
         hiop::hiopVectorPar* y_n= x_n.alloc_clone();
@@ -52,6 +53,10 @@ int main(int argc, char** argv)
         fail += test.matrixSetToZero(A, rank);
         fail += test.matrixSetToConstant(A, rank);
         fail += test.matrixTimesVec(A, x_m, x_n, rank);
+        fail += test.matrixTransTimesVec(A, x_m, x_n, rank);
+        fail += test.matrixTimesMat(A, *B, *C, rank);
+        fail += test.matrixTransTimesMat(A, *B, *C, rank);
+        fail += test.matrixTimesMatTrans(A, *B, *C, rank);
     }
 
     // Test RAJA matrix

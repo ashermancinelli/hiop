@@ -18,6 +18,7 @@ private:
     virtual int getNumLocCols(hiop::hiopMatrix* a);
     virtual int getLocalSize(const hiop::hiopVector* x);
     virtual int verifyAnswer(hiop::hiopMatrix* A, double answer);
+    virtual int verifyAnswerVec(hiop::hiopVector* x, double answer);
     virtual bool reduceReturn(int failures, hiop::hiopMatrix* A);
 
 #ifdef HIOP_USE_MPI

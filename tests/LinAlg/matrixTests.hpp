@@ -76,8 +76,8 @@ public:
         const int M = getNumLocRows(&A);
         const int N = getNumLocCols(&A);
         const int N_glob = n_vec.get_size();
-        assert(getLocalSize(&m_vec) == M && "Did you correctly pass in vectors of the correct size?");
-        assert(getLocalSize(&n_vec) == N && "Did you correctly pass in vectors of the correct size?");
+        assert(getLocalSize(&m_vec) == M && "Did you pass in vectors of the correct sizes?");
+        assert(getLocalSize(&n_vec) == N && "Did you pass in vectors of the correct sizes?");
 
         // First, check A_{MxN} \times x_N
         // beta = zero so y \leftarrow alpha * A * x
@@ -86,18 +86,7 @@ public:
         A.setToConstant(one);
         A.timesVec(zero, m_vec, one, n_vec);
         double expected = two * N_glob;
-        for (int i=0; i<M; i++)
-        {
-            double actual = getElementVec(&m_vec, i);
-            if (!isEqual(actual, expected))
-            {
-                fail++;
-                std::cerr << RED << "---- Rank " << rank
-                    << " got " << actual
-                    << " expected " << expected
-                    << CLEAR << "\n";
-            }
-        }
+        fail += verifyAnswerVec(&m_vec, expected);
 
         // Now, check y \leftarrow beta * y + alpha * A * x
         m_vec.setToConstant(two);
@@ -109,22 +98,102 @@ public:
         //          beta   * y    +  alpha * A   * x
         expected = (one    * two) + (two   * one * two * N_glob);
         //                                                ^^^
-        // Sum over num local columns <--------------------|
-        for (int i=0; i<M; i++)
-        {
-            double actual = getElementVec(&m_vec, i);
-            if (!isEqual(actual, expected))
-            {
-                fail++;
-                std::cerr << RED << "---- Rank " << rank
-                    << " got " << actual
-                    << " expected " << expected
-                    << CLEAR << "\n";
-            }
-        }
+        // Sum over num global columns <-------------------+
+        fail += verifyAnswerVec(&m_vec, expected);
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
+    }
+
+    /*
+     * y_{loc} \leftarrow \beta y_{loc} + \alpha A_{glob \times loc}^T x_{glob}
+     *
+     * Notice that since A^T, x must not be distributed in this case, whereas
+     * the plain `timesVec' nessecitated that x be distributed and y not be.
+     */
+    int matrixTransTimesVec(
+            hiop::hiopMatrix& A,
+            hiop::hiopVector& m_vec,
+            hiop::hiopVector& n_vec,
+            const int rank)
+    {
+        const int M = getNumLocRows(&A);
+        const int N = getNumLocCols(&A);
+        const int N_glob = n_vec.get_size();
+        assert(getLocalSize(&m_vec) == M && "Did you pass in vectors of the correct sizes?");
+        assert(getLocalSize(&n_vec) == N && "Did you pass in vectors of the correct sizes?");
+        int fail = 0;
+
+        // First, test with \beta = 0
+        A.setToConstant(one);
+        m_vec.setToConstant(one);
+        n_vec.setToConstant(zero);
+        A.transTimesVec(zero, n_vec, two, m_vec);
+        //                 0 * y + alpha * A^T   * 1
+        double expected =          two   * one   * one * M;
+        //                                              ^^^
+        // Sum over num global rows <--------------------|
+        fail += verifyAnswerVec(&n_vec, expected);
+
+        // Now test with \beta != 0 \and y != 0
+        A.setToConstant(one);
+        m_vec.setToConstant(one);
+        n_vec.setToConstant(one);
+        A.transTimesVec(two, n_vec, two, m_vec);
+        //          beta * y    + alpha * A^T   * X
+        expected = (two  * one) + two   * one   * one * M;
+        //                                             ^^^
+        // Sum over num global rows <-------------------|
+        fail += verifyAnswerVec(&n_vec, expected);
+
+        printMessage(fail, __func__, rank);
+        return reduceReturn(fail, &A);
+    }
+
+    /* 
+     * W = beta*W + alpha*this*X
+     * For A with shape M x N,
+     * X must have shape N x L, and
+     * W must have shape M x L
+     */
+    int matrixTimesMat(
+            hiop::hiopMatrix& A,
+            hiop::hiopMatrix& W,
+            hiop::hiopMatrix& X,
+            const int rank)
+    {
+        const int M = getNumLocRows(&A);
+        const int N = getNumLocCols(&A);
+        const int L = getNumLocCols(&X);
+        // W must have same shape as A \times X
+        /*
+        assert(M == getNumLocRows(&W) && "Matrices have mismatched shapes");
+        assert(L == getNumLocCols(&W) && "Matrices have mismatched shapes");
+        assert(N == getNumLocRows(&X) && "Matrices have mismatched shapes");
+        */
+        int fail = 0;
+        printMessage(SKIP_TEST, __func__, rank);
+        return 0;
+    }
+
+    int matrixTransTimesMat(
+            hiop::hiopMatrix& A,
+            hiop::hiopMatrix& W,
+            hiop::hiopMatrix& X,
+            const int rank)
+    {
+        printMessage(SKIP_TEST, __func__, rank);
+        return 0;
+    }
+
+    int matrixTimesMatTrans(
+            hiop::hiopMatrix& A,
+            hiop::hiopMatrix& W,
+            hiop::hiopMatrix& X,
+            const int rank)
+    {
+        printMessage(SKIP_TEST, __func__, rank);
+        return 0;
     }
 
 protected:
@@ -135,6 +204,7 @@ protected:
     virtual int getNumLocCols(hiop::hiopMatrix* a) = 0;
     virtual int getLocalSize(const hiop::hiopVector* x) = 0;
     virtual int verifyAnswer(hiop::hiopMatrix* A, double answer) = 0;
+    virtual int verifyAnswerVec(hiop::hiopVector* x, double answer) = 0;
     virtual bool reduceReturn(int failures, hiop::hiopMatrix* A) = 0;
 };
 
