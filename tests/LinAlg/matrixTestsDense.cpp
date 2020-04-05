@@ -88,4 +88,18 @@ int MatrixTestsDense::verifyAnswer(hiop::hiopMatrix* A, const double answer)
     return fail;
 }
 
+/// Checks if _local_ vector elements are set to `answer`.
+[[nodiscard]]
+int MatrixTestsDense::verifyAnswerVec(hiop::hiopVector* x, double answer)
+{
+    const int N = getLocalSize(x);
+
+    int local_fail = 0;
+    for(int i=0; i<N; ++i)
+        if(!isEqual(getElementVec(x, i), answer))
+            ++local_fail;
+
+    return local_fail;
+}
+
 } // namespace hiop::tests
