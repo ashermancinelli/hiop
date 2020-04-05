@@ -86,18 +86,7 @@ public:
         A.setToConstant(one);
         A.timesVec(zero, m_vec, one, n_vec);
         double expected = two * N_glob;
-        for (int i=0; i<M; i++)
-        {
-            double actual = getElementVec(&m_vec, i);
-            if (!isEqual(actual, expected))
-            {
-                fail++;
-                std::cerr << RED << "---- Rank " << rank
-                    << " got " << actual
-                    << " expected " << expected
-                    << CLEAR << "\n";
-            }
-        }
+        fail += verifyAnswerVec(&m_vec, expected);
 
         // Now, check y \leftarrow beta * y + alpha * A * x
         m_vec.setToConstant(two);
@@ -337,6 +326,52 @@ public:
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
+    }
+
+    /* 
+     * W = beta*W + alpha*this*X
+     * For A with shape M x N,
+     * X must have shape N x L, and
+     * W must have shape M x L
+     */
+    int matrixTimesMat(
+            hiop::hiopMatrix& A,
+            hiop::hiopMatrix& W,
+            hiop::hiopMatrix& X,
+            const int rank)
+    {
+        const int M = getNumLocRows(&A);
+        const int N = getNumLocCols(&A);
+        const int L = getNumLocCols(&X);
+        // W must have same shape as A \times X
+        /*
+        assert(M == getNumLocRows(&W) && "Matrices have mismatched shapes");
+        assert(L == getNumLocCols(&W) && "Matrices have mismatched shapes");
+        assert(N == getNumLocRows(&X) && "Matrices have mismatched shapes");
+        */
+        int fail = 0;
+        printMessage(SKIP_TEST, __func__, rank);
+        return 0;
+    }
+
+    int matrixTransTimesMat(
+            hiop::hiopMatrix& A,
+            hiop::hiopMatrix& W,
+            hiop::hiopMatrix& X,
+            const int rank)
+    {
+        printMessage(SKIP_TEST, __func__, rank);
+        return 0;
+    }
+
+    int matrixTimesMatTrans(
+            hiop::hiopMatrix& A,
+            hiop::hiopMatrix& W,
+            hiop::hiopMatrix& X,
+            const int rank)
+    {
+        printMessage(SKIP_TEST, __func__, rank);
+        return 0;
     }
 
 protected:
