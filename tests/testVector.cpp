@@ -23,16 +23,15 @@ int main(int argc, char** argv)
     global_ordinal_type* partition = nullptr;
     MPI_Comm comm = MPI_COMM_NULL;
 
-    if constexpr (USE_MPI)
-    {
-        int err;
-        err = MPI_Init(&argc, &argv);         assert(MPI_SUCCESS == err);
-        comm = MPI_COMM_WORLD;
-        err = MPI_Comm_rank(comm, &rank);     assert(MPI_SUCCESS == err);
-        err = MPI_Comm_size(comm, &numRanks); assert(MPI_SUCCESS == err);
-        if(0 == rank)
-            std::cout << "Running MPI enabled tests ...\n";
-    }
+#ifdef HIOP_USE_MPI
+    int err;
+    err = MPI_Init(&argc, &argv);         assert(MPI_SUCCESS == err);
+    comm = MPI_COMM_WORLD;
+    err = MPI_Comm_rank(comm, &rank);     assert(MPI_SUCCESS == err);
+    err = MPI_Comm_size(comm, &numRanks); assert(MPI_SUCCESS == err);
+    if(0 == rank)
+        std::cout << "Running MPI enabled tests ...\n";
+#endif
 
     global_ordinal_type Nlocal = 1000;
     global_ordinal_type Nglobal = Nlocal*numRanks;
@@ -122,10 +121,9 @@ int main(int argc, char** argv)
             std::cout << "All tests passed\n";
     }
 
-    if constexpr (USE_MPI)
-    {
-        MPI_Finalize();
-    }
+#ifdef HIOP_USE_MPI
+    MPI_Finalize();
+#endif
 
     return fail;
 }
