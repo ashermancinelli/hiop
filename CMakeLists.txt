@@ -14,7 +14,7 @@ target_link_libraries(hiop_warnings_3 INTERFACE hiop_warnings_2)
 
 target_compile_features(hiop_options
     INTERFACE
-        cxx_std_17
+        cxx_std_11
         cxx_alignas
         cxx_alignof
         cxx_attributes

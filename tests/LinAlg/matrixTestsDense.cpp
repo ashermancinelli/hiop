@@ -63,14 +63,11 @@ bool MatrixTestsDense::reduceReturn(int failures, hiop::hiopMatrix* A)
 {
     int fail = 0;
 
-    if constexpr (USE_MPI)
-    {
-        MPI_Allreduce(&failures, &fail, 1, MPI_INT, MPI_SUM, getMPIComm(A));
-    }
-    else
-    {
-        fail = failures;
-    }
+#ifdef HIOP_USE_MPI
+    MPI_Allreduce(&failures, &fail, 1, MPI_INT, MPI_SUM, getMPIComm(A));
+#else
+    fail = failures;
+#endif
 
     return (fail != 0);
 }

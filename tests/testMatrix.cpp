@@ -10,16 +10,15 @@ int main(int argc, char** argv)
     int rank=0, numRanks=1;
     MPI_Comm comm = MPI_COMM_NULL;
 
-    if constexpr (USE_MPI)
-    {
-        int err;
-        err = MPI_Init(&argc, &argv);                  assert(MPI_SUCCESS==err);
-        comm = MPI_COMM_WORLD;
-        err = MPI_Comm_rank(comm,&rank);     assert(MPI_SUCCESS==err);
-        err = MPI_Comm_size(comm,&numRanks); assert(MPI_SUCCESS==err);
-        if(0 == rank)
-            printf("Support for MPI is enabled\n");
-    }
+#ifdef HIOP_USE_MPI
+    int err;
+    err = MPI_Init(&argc, &argv);                  assert(MPI_SUCCESS==err);
+    comm = MPI_COMM_WORLD;
+    err = MPI_Comm_rank(comm,&rank);     assert(MPI_SUCCESS==err);
+    err = MPI_Comm_size(comm,&numRanks); assert(MPI_SUCCESS==err);
+    if(0 == rank)
+        printf("Support for MPI is enabled\n");
+#endif
 
     global_ordinal_type M = 10;  // rows
     global_ordinal_type N = 100; // columns
@@ -78,10 +77,9 @@ int main(int argc, char** argv)
         }
     }
 
-    if constexpr (USE_MPI)
-    {
-        MPI_Finalize();
-    }
+#ifdef HIOP_USE_MPI
+    MPI_Finalize();
+#endif
 
     return fail;
 }
