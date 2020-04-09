@@ -22,7 +22,7 @@ real_type MatrixTestsDense::getElement(hiop::hiopMatrix* A, local_ordinal_type i
 
 /// Returns element _i_ of vector _x_.
 /// First need to retrieve hiopVectorPar from the abstract interface
-double MatrixTestsDense::getElementVec(const hiop::hiopVector* x, int i)
+double MatrixTestsDense::getLocalElementVec(const hiop::hiopVector* x, int i)
 {
     const hiop::hiopVectorPar* xvec = dynamic_cast<const hiop::hiopVectorPar*>(x);
     return xvec->local_data_const()[i];
@@ -80,7 +80,7 @@ int MatrixTestsDense::verifyAnswer(hiop::hiopMatrix* A, const double answer)
     int fail = 0;
     for (int i=0; i<M; i++)
         for (int j=0; j<N; j++)
-            if (!isEqual(getElement(A, i, j), answer))
+            if (!isEqual(getLocalElement(A, i, j), answer))
                 fail++;
     return fail;
 }
@@ -93,7 +93,7 @@ int MatrixTestsDense::verifyAnswerVec(hiop::hiopVector* x, double answer)
 
     int local_fail = 0;
     for(int i=0; i<N; ++i)
-        if(!isEqual(getElementVec(x, i), answer))
+        if(!isEqual(getLocalElementVec(x, i), answer))
             ++local_fail;
 
     return local_fail;
