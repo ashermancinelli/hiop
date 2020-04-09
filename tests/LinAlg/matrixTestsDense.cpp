@@ -5,7 +5,7 @@ namespace hiop::tests {
 
 /// Method to set matrix _A_ element (i,j) to _val_.
 /// First need to retrieve hiopMatrixDense from the abstract interface
-void MatrixTestsDense::setElement(hiop::hiopMatrix* A, int i, int j, double val)
+void MatrixTestsDense::setLocalElement(hiop::hiopMatrix* A, int i, int j, double val)
 {
     hiop::hiopMatrixDense* amat = dynamic_cast<hiop::hiopMatrixDense*>(A);
     double** data = amat->get_M();
@@ -14,7 +14,7 @@ void MatrixTestsDense::setElement(hiop::hiopMatrix* A, int i, int j, double val)
 
 /// Returns element (i,j) of matrix _A_.
 /// First need to retrieve hiopMatrixDense from the abstract interface
-double MatrixTestsDense::getElement(const hiop::hiopMatrix* A, int i, int j)
+double MatrixTestsDense::getLocalElement(const hiop::hiopMatrix* A, int i, int j)
 {
     const hiop::hiopMatrixDense* amat = dynamic_cast<const hiop::hiopMatrixDense*>(A);
     return amat->local_data()[i][j];
@@ -22,7 +22,7 @@ double MatrixTestsDense::getElement(const hiop::hiopMatrix* A, int i, int j)
 
 /// Returns element _i_ of vector _x_.
 /// First need to retrieve hiopVectorPar from the abstract interface
-double MatrixTestsDense::getElementVec(const hiop::hiopVector* x, int i)
+double MatrixTestsDense::getLocalElementVec(const hiop::hiopVector* x, int i)
 {
     const hiop::hiopVectorPar* xvec = dynamic_cast<const hiop::hiopVectorPar*>(x);
     return xvec->local_data_const()[i];
@@ -80,7 +80,7 @@ int MatrixTestsDense::verifyAnswer(hiop::hiopMatrix* A, const double answer)
     int fail = 0;
     for (int i=0; i<M; i++)
         for (int j=0; j<N; j++)
-            if (!isEqual(getElement(A, i, j), answer))
+            if (!isEqual(getLocalElement(A, i, j), answer))
                 fail++;
     return fail;
 }
@@ -93,7 +93,7 @@ int MatrixTestsDense::verifyAnswerVec(hiop::hiopVector* x, double answer)
 
     int local_fail = 0;
     for(int i=0; i<N; ++i)
-        if(!isEqual(getElementVec(x, i), answer))
+        if(!isEqual(getLocalElementVec(x, i), answer))
             ++local_fail;
 
     return local_fail;

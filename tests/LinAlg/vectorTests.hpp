@@ -64,7 +64,7 @@ public:
 
         for(int i=0; i<N; ++i)
         {
-            setElement(&x, i, zero);
+            setLocalElement(&x, i, zero);
         }
 
         x.setToConstant(one);
@@ -88,18 +88,18 @@ public:
         static constexpr double C = two;
         for (int i=0; i<N; i++)
         {
-            setElement(&x, i, zero);
-            setElement(&pattern, i, one);
+            setLocalElement(&x, i, zero);
+            setLocalElement(&pattern, i, one);
         }
         if (rank == 0)
-            setElement(&pattern, N-1, zero);
+            setLocalElement(&pattern, N-1, zero);
 
         x.setToConstant_w_patternSelect(C, pattern);
 
         int fail = 0;
         for (int i=0; i<N; i++)
         {
-            const double val = getElement(&x, i);
+            const double val = getLocalElement(&x, i);
             if (val != C && !(rank == 0 && i == N-1)) fail++;
         }
 
@@ -151,7 +151,7 @@ public:
 
         for (int i=0; i<N; i++)
         {
-            if (getElement(&x, i) != one && !(i == 0 && rank == 0))
+            if (getLocalElement(&x, i) != one && !(i == 0 && rank == 0))
                 fail++;
         }
 
@@ -180,7 +180,7 @@ public:
         x.startingAtCopyFromStartingAt(1, from, 0);
         for (int i=0; i<N; i++)
         {
-            if (getElement(&x, i) != two && i != 0)
+            if (getLocalElement(&x, i) != two && i != 0)
                 fail++;
         }
 
@@ -249,7 +249,7 @@ public:
 
         for (int i=0; i<N; i++)
         {
-            if (getElement(&to, i) != one && i != 0)
+            if (getLocalElement(&to, i) != one && i != 0)
                 fail++;
         }
 
@@ -270,14 +270,14 @@ public:
         v.setToConstant(two);
         ix.setToConstant(one);
         if (rank== 0)
-            setElement(&ix, N - 1, zero);
+            setLocalElement(&ix, N - 1, zero);
 
         v.selectPattern(ix);
 
         int fail = 0;
         for (int i=0; i<N; ++i)
         {
-            double val = getElement(&v, i);
+            double val = getLocalElement(&v, i);
             if ((val != two) && !((rank== 0) && (i == N-1) && (val == zero)))
                 fail++;
         }
@@ -357,14 +357,14 @@ public:
         x.setToConstant(two);
         pattern.setToConstant(one);
         if (rank== 0)
-            setElement(&v, N - 1, zero);
+            setLocalElement(&v, N - 1, zero);
 
         v.componentDiv_p_selectPattern(x, pattern);
 
         int fail = 0;
         for (int i=0; i<N; ++i)
         {
-            double val = getElement(&v, i);
+            double val = getLocalElement(&v, i);
             if ((val != half) && !((rank== 0) && (i == N-1) && (val == zero)))
                 fail++;
         }
@@ -416,7 +416,7 @@ public:
 
         v.setToConstant(one);
         if (rank== 0)
-            setElement(&v, N-1, -two);
+            setLocalElement(&v, N-1, -two);
         double actual = v.infnorm();
 
         int fail = (expected != actual);
@@ -530,12 +530,12 @@ public:
         x.addConstant(half);
 
         if (rank== 0)
-            setElement(&x, N - 1, zero);
+            setLocalElement(&x, N - 1, zero);
 
         int fail = 0;
         for (int i=0; i<N; ++i)
         {
-            double val = getElement(&x, i);
+            double val = getLocalElement(&x, i);
             if ((val != half) && !((rank==0) && (i == N-1) && (val == zero)))
                 fail++;
         }
@@ -602,7 +602,7 @@ public:
         select.setToConstant(one);
         x.setToConstant(two);
 
-        setElement(&select, N-1, 0.0);
+        setLocalElement(&select, N-1, 0.0);
 
         double expected = 0.0;
         for (int i=0; i<N-1; ++i) expected += log(two);
@@ -633,7 +633,7 @@ public:
         y.setToConstant(two);
 
         if (rank == 0)
-            setElement(&select, N-1, 0.0);
+            setLocalElement(&select, N-1, 0.0);
 
         static constexpr double expected = one + (alpha / two);
         x.addLogBarrierGrad(alpha, y, select);
@@ -641,7 +641,7 @@ public:
         int fail = 0;
         for (int i=0; i<N; ++i)
         {
-            double val = getElement(&x, i);
+            double val = getLocalElement(&x, i);
             if ((val != expected) && !((rank==0) && (i == N-1) && (val == one)))
                 fail++;
         }
@@ -677,8 +677,8 @@ public:
 
         if (rank == 0)
         {
-            setElement(&left, N-1, two);
-            setElement(&right, N-1, two);
+            setLocalElement(&left, N-1, two);
+            setLocalElement(&right, N-1, two);
         }
 
         double expected = 0.0;
@@ -711,7 +711,7 @@ public:
 
         x.setToConstant(one);
         if (rank == 0)
-            setElement(&x, N-1, -one);
+            setLocalElement(&x, N-1, -one);
         if (x.allPositive())
             fail++;
 
@@ -743,7 +743,7 @@ public:
 
         x.setToConstant(one);
         if (rank == 0)
-            setElement(&x, N-1, -one);
+            setLocalElement(&x, N-1, -one);
         if (x.allPositive_w_patternSelect(pattern))
             fail++;
 
@@ -800,9 +800,9 @@ public:
         lower.setToConstant(-one);
         upper.setToConstant(one);
         lower_pattern.setToConstant(one);
-        setElement(&lower_pattern, 0, zero);
+        setLocalElement(&lower_pattern, 0, zero);
         upper_pattern.setToConstant(one);
-        setElement(&upper_pattern, 0, zero);
+        setLocalElement(&upper_pattern, 0, zero);
 
         // Call should return true
         fail += !x.projectIntoBounds(
@@ -810,7 +810,7 @@ public:
                 upper_pattern, kappa1, kappa2);
 
         // First element should be one
-        fail += !isEqual(getElement(&x, 0), one);
+        fail += !isEqual(getLocalElement(&x, 0), one);
 
         // Testing when x is on a boundary:
         // Check that projection of 1 into (-1, 1)
@@ -904,7 +904,7 @@ public:
         expected = one;
         for (int i=0; i<N; i++)
         {
-            aux = -tau * getElement(&x, i) / getElement(&dx, i);
+            aux = -tau * getLocalElement(&x, i) / getLocalElement(&dx, i);
             if (aux<expected) expected=aux;
         }
         fail += !isEqual(result, expected);
@@ -944,7 +944,7 @@ public:
         // value of one
         pattern.setToConstant(one);
         if (rank == 0)
-            setElement(&pattern, N-1, 0);
+            setLocalElement(&pattern, N-1, 0);
         dx.setToConstant(one);
         result = x.fractionToTheBdry_w_pattern(dx, tau, pattern);
         expected = one;  // default value if dx >= 0
@@ -959,7 +959,7 @@ public:
         for (int i=0; i<N; i++)
         {
             if (rank == 0 && i == N-1) continue;
-            aux = -tau * getElement(&x, i) / getElement(&dx, i);
+            aux = -tau * getLocalElement(&x, i) / getLocalElement(&dx, i);
             if (aux<expected) expected=aux;
         }
         fail += !isEqual(result, expected);
@@ -986,12 +986,12 @@ public:
 
         x.setToConstant(one);
         pattern.setToConstant(one);
-        if (rank == 0) setElement(&pattern, N-1, 0);
+        if (rank == 0) setLocalElement(&pattern, N-1, 0);
         if (x.matchesPattern(pattern)) fail++;
 
         x.setToConstant(one);
         pattern.setToConstant(one);
-        if (rank == 0) setElement(&x, N-1, 0);
+        if (rank == 0) setLocalElement(&x, N-1, 0);
         if (!x.matchesPattern(pattern)) fail++;
 
         printMessage(fail, __func__, rank);
@@ -1034,12 +1034,12 @@ public:
         double a, b;
         for (int i=0; i<N; i++)
         {
-            a = mu / getElement(&x, i);
+            a = mu / getLocalElement(&x, i);
             b = a / kappa;
             a *= kappa;
-            if      (getElement(&x, i) < b)     setElement(&z2, i, b);
-            else if (a <= b)                    setElement(&z2, i, b);
-            else if (a < getElement(&x, i))     setElement(&z2, i, a);
+            if      (getLocalElement(&x, i) < b)     setLocalElement(&z2, i, b);
+            else if (a <= b)                    setLocalElement(&z2, i, b);
+            else if (a < getLocalElement(&x, i))     setLocalElement(&z2, i, a);
         }
 
         // the method's adjustDuals_plh should yield
@@ -1048,8 +1048,8 @@ public:
         for (int i=0; i<N; i++)
         {
             fail += !isEqual(
-                    getElement(&z1, i),     // expected
-                    getElement(&z2, i));    // actual
+                    getLocalElement(&z1, i),     // expected
+                    getLocalElement(&z2, i));    // actual
         }
 
         printMessage(fail, __func__, rank);
@@ -1068,7 +1068,7 @@ public:
             fail++;
 
         if (rank == 0)
-            setElement(&x, N-1, NAN);
+            setLocalElement(&x, N-1, NAN);
         if (x.isnan() && rank != 0)
             fail++;
 
@@ -1088,7 +1088,7 @@ public:
             fail++;
 
         if (rank == 0)
-            setElement(&x, N-1, INFINITY);
+            setLocalElement(&x, N-1, INFINITY);
         if (x.isinf() && rank != 0)
             fail++;
 
@@ -1108,7 +1108,7 @@ public:
             fail++;
 
         if (rank == 0)
-            setElement(&x, N-1, INFINITY);
+            setLocalElement(&x, N-1, INFINITY);
         if (!x.isfinite() && rank != 0)
             fail++;
 
@@ -1118,8 +1118,8 @@ public:
 
 protected:
     // Interface to methods specific to vector implementation
-    virtual void   setElement(hiop::hiopVector* x, int i, double val) = 0;
-    virtual double getElement(const hiop::hiopVector* x, int i) = 0;
+    virtual void   setLocalElement(hiop::hiopVector* x, int i, double val) = 0;
+    virtual double getLocalElement(const hiop::hiopVector* x, int i) = 0;
     virtual int getLocalSize(const hiop::hiopVector* x) = 0;
     virtual double* getLocalData(hiop::hiopVector* x) = 0;
     virtual int verifyAnswer(hiop::hiopVector* x, double answer) = 0;

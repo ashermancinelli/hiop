@@ -11,9 +11,9 @@ public:
     virtual ~MatrixTestsDense(){}
 
 private:
-    virtual void setElement(hiop::hiopMatrix* a, int i, int j, double val);
-    virtual double getElement(const hiop::hiopMatrix* a, int i, int j);
-    virtual double getElementVec(const hiop::hiopVector* x, int i);
+    virtual void setLocalElement(hiop::hiopMatrix* a, int i, int j, double val);
+    virtual double getLocalElement(const hiop::hiopMatrix* a, int i, int j);
+    virtual double getLocalElementVec(const hiop::hiopVector* x, int i);
     virtual int getNumLocRows(hiop::hiopMatrix* a);
     virtual int getNumLocCols(hiop::hiopMatrix* a);
     virtual int getLocalSize(const hiop::hiopVector* x);
