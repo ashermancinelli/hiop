@@ -65,9 +65,10 @@
 #include <hiopVector.hpp>
 #include "testBase.hpp"
 
-#include "testBase.hpp"
-
-namespace hiop::tests {
+namespace hiop
+{
+namespace tests
+{
 
 /**
  * @brief Collection of tests for abstract hiopVector implementations.
@@ -141,7 +142,7 @@ public:
   {
     const local_ordinal_type N = getLocalSize(&x);
     assert(N == getLocalSize(&pattern));
-    static constexpr real_type x_val = two;
+    static const real_type x_val = two;
 
     x.setToConstant(zero);
     pattern.setToConstant(one);
@@ -752,9 +753,9 @@ public:
     const local_ordinal_type N = getLocalSize(&x);
     assert(N == getLocalSize(&pattern));
     assert(N == getLocalSize(&y));
-    static constexpr real_type alpha = half;
-    static constexpr real_type x_val = two;
-    static constexpr real_type y_val = two;
+    static const real_type alpha = half;
+    static const real_type x_val = two;
+    static const real_type y_val = two;
 
     pattern.setToConstant(one);
     x.setToConstant(x_val);
@@ -794,8 +795,8 @@ public:
     const local_ordinal_type N = getLocalSize(&x);
     assert(N == getLocalSize(&left));
     assert(N == getLocalSize(&right));
-    static constexpr real_type mu = two;
-    static constexpr real_type kappa_d = two;
+    static const real_type mu = two;
+    static const real_type kappa_d = two;
 
     x.setToConstant(one);
     left.setToConstant(one);
@@ -904,8 +905,8 @@ public:
     assert(N == getLocalSize(&upper));
     assert(N == getLocalSize(&lower_pattern));
     assert(N == getLocalSize(&upper_pattern));
-    static constexpr real_type kappa1 = half;
-    static constexpr real_type kappa2 = half;
+    static const real_type kappa1 = half;
+    static const real_type kappa2 = half;
     int fail = 0;
 
     // Check that lower > upper returns false
@@ -1013,7 +1014,7 @@ public:
   {
     const local_ordinal_type N = getLocalSize(&x);
     assert(N == getLocalSize(&dx));
-    static constexpr real_type tau = half;
+    static const real_type tau = half;
     int fail = 0;
 
     x.setToConstant(one);
@@ -1052,7 +1053,7 @@ public:
     const local_ordinal_type N = getLocalSize(&x);
     assert(N == getLocalSize(&dx));
     assert(N == getLocalSize(&pattern));
-    static constexpr real_type tau = half;
+    static const real_type tau = half;
     int fail = 0;
 
     // Fraction to boundary is const, so no need to reset x after each test
@@ -1149,8 +1150,8 @@ public:
     x.setToConstant(two);
     pattern.setToConstant(one);
 
-    static constexpr real_type mu = half;
-    static constexpr real_type kappa = half;
+    static const real_type mu = half;
+    static const real_type kappa = half;
     z1.adjustDuals_plh(
         x,
         pattern,
@@ -1255,4 +1256,4 @@ protected:
   virtual bool reduceReturn(int failures, hiop::hiopVector* x) = 0;
 };
 
-} // namespace hiop::tests
+}} // namespace hiop::tests

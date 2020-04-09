@@ -57,7 +57,10 @@
 
 #include "vectorTests.hpp"
 
-namespace hiop::tests {
+namespace hiop
+{
+namespace tests
+{
 
 /**
  * @brief Utilities for testing hiopVectorPar class
@@ -87,4 +90,4 @@ private:
 #endif
 };
 
-} // namespace hiopTest
+}} // namespace hiopTest
