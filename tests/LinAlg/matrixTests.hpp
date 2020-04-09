@@ -38,7 +38,7 @@ public:
         int fail = 0;
         for(local_ordinal_type i=0; i<M; ++i)
             for(local_ordinal_type j=0; j<N; ++j)
-                if(getElement(&A,i,j) != 0)
+                if(getLocalElement(&A,i,j) != 0)
                 {
                     std::cerr << "Element (" << i << "," << j << ") not set to zero\n";
                     fail++;
@@ -333,25 +333,44 @@ public:
      * For A with shape M x N,
      * X must have shape N x L, and
      * W must have shape M x L
+     *
+     * For simplicity:
+     *   A: MxN
+     *   X: NxN
+     *   W: MxN
+     *
+     * so that we can use clones of the same matrices
+     * with the same partitioning.
      */
     int matrixTimesMat(
             hiop::hiopMatrix& A,
-            hiop::hiopMatrix& W,
             hiop::hiopMatrix& X,
+            hiop::hiopMatrix& W,
             const int rank)
     {
         const int M = getNumLocRows(&A);
-        const int N = getNumLocCols(&A);
-        const int L = getNumLocCols(&X);
-        // W must have same shape as A \times X
-        /*
+        const int N_loc = getNumLocCols(&A);
+        const int N_glob = A.n();
         assert(M == getNumLocRows(&W) && "Matrices have mismatched shapes");
-        assert(L == getNumLocCols(&W) && "Matrices have mismatched shapes");
-        assert(N == getNumLocRows(&X) && "Matrices have mismatched shapes");
-        */
+        assert(N_loc == getNumLocCols(&W) && "Matrices have mismatched shapes");
+        assert(N_loc == getNumLocCols(&X) && "Matrices have mismatched shapes");
+        assert(N_glob == getNumLocRows(&X) && "Matrices have mismatched shapes");
         int fail = 0;
+
+        A.setToConstant(one);
+        W.setToConstant(one);
+        X.setToConstant(one);
+
+        // Beta = 0 to just test matmul portion
+        // this fails
+        // A.timesMat(zero, W, one, X);
+
+        //     W        = 0 * W + A   * X
+        double expected =         one * one * N_glob;
+        // fail += verifyAnswer(&W, expected);
+
         printMessage(SKIP_TEST, __func__, rank);
-        return 0;
+        return reduceReturn(fail, &A);
     }
 
     int matrixTransTimesMat(

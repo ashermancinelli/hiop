@@ -95,7 +95,7 @@ public:
         int fail = 0;
         for (local_ordinal_type i=0; i<N; i++)
         {
-            const real_type val = getElement(&x, i);
+            const real_type val = getLocalElement(&x, i);
             if (val != C && !(rank == 0 && i == N-1)) fail++;
         }
 
@@ -273,7 +273,7 @@ public:
         int fail = 0;
         for (local_ordinal_type i=0; i<N; ++i)
         {
-            real_type val = getElement(&v, i);
+            real_type val = getLocalElement(&v, i);
             if ((val != two) && !((rank== 0) && (i == N-1) && (val == zero)))
                 fail++;
         }
@@ -360,7 +360,7 @@ public:
         int fail = 0;
         for (local_ordinal_type i=0; i<N; ++i)
         {
-            real_type val = getElement(&v, i);
+            real_type val = getLocalElement(&v, i);
             if ((val != half) && !((rank== 0) && (i == N-1) && (val == zero)))
                 fail++;
         }
@@ -412,7 +412,7 @@ public:
 
         v.setToConstant(one);
         if (rank== 0)
-            setElement(&v, N-1, -two);
+            setLocalElement(&v, N-1, -two);
         real_type actual = v.infnorm();
 
         int fail = (expected != actual);
@@ -531,7 +531,7 @@ public:
         int fail = 0;
         for (local_ordinal_type i=0; i<N; ++i)
         {
-            real_type val = getElement(&x, i);
+            real_type val = getLocalElement(&x, i);
             if ((val != half) && !((rank==0) && (i == N-1) && (val == zero)))
                 fail++;
         }
@@ -637,7 +637,7 @@ public:
         int fail = 0;
         for (local_ordinal_type i=0; i<N; ++i)
         {
-            real_type val = getElement(&x, i);
+            real_type val = getLocalElement(&x, i);
             if ((val != expected) && !((rank==0) && (i == N-1) && (val == one)))
                 fail++;
         }
@@ -1114,8 +1114,8 @@ public:
 
 protected:
     // Interface to methods specific to vector implementation
-    virtual void setElement(hiop::hiopVector* x, int i, real_type val) = 0;
-    virtual real_type getElement(const hiop::hiopVector* x, int i) = 0;
+    virtual void setLocalElement(hiop::hiopVector* x, int i, real_type val) = 0;
+    virtual real_type getLocalElement(const hiop::hiopVector* x, int i) = 0;
     virtual local_ordinal_type getLocalSize(const hiop::hiopVector* x) = 0;
     virtual real_type* getLocalData(hiop::hiopVector* x) = 0;
     virtual int verifyAnswer(hiop::hiopVector* x, real_type answer) = 0;

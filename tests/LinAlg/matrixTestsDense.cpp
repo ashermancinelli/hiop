@@ -5,7 +5,11 @@ namespace hiop::tests {
 
 /// Method to set matrix _A_ element (i,j) to _val_.
 /// First need to retrieve hiopMatrixDense from the abstract interface
-void MatrixTestsDense::setElement(hiop::hiopMatrix* A, local_ordinal_type i, local_ordinal_type j, real_type val)
+void MatrixTestsDense::setLocalElement(
+        hiop::hiopMatrix* A,
+        local_ordinal_type i,
+        local_ordinal_type j,
+        real_type val)
 {
     hiop::hiopMatrixDense* amat = dynamic_cast<hiop::hiopMatrixDense*>(A);
     real_type** data = amat->get_M();
@@ -14,7 +18,10 @@ void MatrixTestsDense::setElement(hiop::hiopMatrix* A, local_ordinal_type i, loc
 
 /// Returns element (i,j) of matrix _A_.
 /// First need to retrieve hiopMatrixDense from the abstract interface
-real_type MatrixTestsDense::getElement(const hiop::hiopMatrix* A, local_ordinal_type i, local_ordinal_type j)
+real_type MatrixTestsDense::getLocalElement(
+        const hiop::hiopMatrix* A,
+        local_ordinal_type i,
+        local_ordinal_type j)
 {
     const hiop::hiopMatrixDense* amat = dynamic_cast<const hiop::hiopMatrixDense*>(A);
     return amat->local_data()[i][j];
