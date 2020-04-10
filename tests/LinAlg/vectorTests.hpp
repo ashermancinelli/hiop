@@ -360,11 +360,7 @@ public:
         int fail = 0;
         for (local_ordinal_type i=0; i<N; ++i)
         {
-<<<<<<< HEAD
             real_type val = getElement(&v, i);
-=======
-            double val = getLocalElement(&v, i);
->>>>>>> [gs]etElement -> [gs]etLocalElement; temporarily skipping matrixTimesMat test
             if ((val != half) && !((rank== 0) && (i == N-1) && (val == zero)))
                 fail++;
         }
@@ -416,13 +412,8 @@ public:
 
         v.setToConstant(one);
         if (rank== 0)
-<<<<<<< HEAD
             setElement(&v, N-1, -two);
         real_type actual = v.infnorm();
-=======
-            setLocalElement(&v, N-1, -two);
-        double actual = v.infnorm();
->>>>>>> [gs]etElement -> [gs]etLocalElement; temporarily skipping matrixTimesMat test
 
         int fail = (expected != actual);
         printMessage(fail, __func__, rank);
@@ -540,11 +531,7 @@ public:
         int fail = 0;
         for (local_ordinal_type i=0; i<N; ++i)
         {
-<<<<<<< HEAD
             real_type val = getElement(&x, i);
-=======
-            double val = getLocalElement(&x, i);
->>>>>>> [gs]etElement -> [gs]etLocalElement; temporarily skipping matrixTimesMat test
             if ((val != half) && !((rank==0) && (i == N-1) && (val == zero)))
                 fail++;
         }
@@ -650,11 +637,7 @@ public:
         int fail = 0;
         for (local_ordinal_type i=0; i<N; ++i)
         {
-<<<<<<< HEAD
             real_type val = getElement(&x, i);
-=======
-            double val = getLocalElement(&x, i);
->>>>>>> [gs]etElement -> [gs]etLocalElement; temporarily skipping matrixTimesMat test
             if ((val != expected) && !((rank==0) && (i == N-1) && (val == one)))
                 fail++;
         }
@@ -1131,19 +1114,11 @@ public:
 
 protected:
     // Interface to methods specific to vector implementation
-<<<<<<< HEAD
     virtual void setElement(hiop::hiopVector* x, int i, real_type val) = 0;
     virtual real_type getElement(const hiop::hiopVector* x, int i) = 0;
     virtual local_ordinal_type getLocalSize(const hiop::hiopVector* x) = 0;
     virtual real_type* getLocalData(hiop::hiopVector* x) = 0;
     virtual int verifyAnswer(hiop::hiopVector* x, real_type answer) = 0;
-=======
-    virtual void   setLocalElement(hiop::hiopVector* x, int i, double val) = 0;
-    virtual double getLocalElement(const hiop::hiopVector* x, int i) = 0;
-    virtual int getLocalSize(const hiop::hiopVector* x) = 0;
-    virtual double* getLocalData(hiop::hiopVector* x) = 0;
-    virtual int verifyAnswer(hiop::hiopVector* x, double answer) = 0;
->>>>>>> [gs]etElement -> [gs]etLocalElement; temporarily skipping matrixTimesMat test
     virtual bool reduceReturn(int failures, hiop::hiopVector* x) = 0;
 };
 

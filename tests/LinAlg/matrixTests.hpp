@@ -148,24 +148,70 @@ public:
         return reduceReturn(fail, &A);
     }
 
-    /* 
-     * W = beta*W + alpha*this*X
-     * For A with shape M x N,
-     * X must have shape N x L, and
-     * W must have shape M x L
+    /**
+     *  W = beta * W + alpha * this * X
      *
-     * For simplicity:
-     *   A: MxN
-     *   X: NxN
+     * Shapes:
+     *   A: MxK
+     *   X: KxN
      *   W: MxN
-     *
-     * so that we can use clones of the same matrices
-     * with the same partitioning.
      */
     int matrixTimesMat(
             hiop::hiopMatrix& A,
             hiop::hiopMatrix& X,
             hiop::hiopMatrix& W,
+            const int rank)
+    {
+        const int M = getNumLocRows(&A);
+        const int K_loc = getNumLocCols(&A);
+        const int K_glob = A.n();
+        const int N_loc = getNumLocCols(&X);
+        const int N_glob = X.n();
+        assert(K_glob == getNumLocRows(&X)  && "Matrices have mismatched shapes");
+        assert(M == getNumLocRows(&W)       && "Matrices have mismatched shapes");
+        assert(N_loc == getNumLocCols(&W)   && "Matrices have mismatched shapes");
+        assert(N_glob == W.n()              && "Matrices have mismatched shapes");
+        int fail = 0;
+
+        A.setToConstant(one);
+        W.setToConstant(one);
+        X.setToConstant(one);
+
+        // Beta = 0 to just test matmul portion
+        // this fails
+        A.timesMat_local(one, W, one, X);
+
+        /*
+        //     W        = 0 * W + A   * X
+        double expected =         one * one * N_glob;
+        fail += verifyAnswer(&W, expected);
+
+        A.setToConstant(one);
+        W.setToConstant(two);
+        X.setToConstant(half);
+        A.timesMat(one, W, one, X);
+
+        //     W = 0   * W   + \sum_0^{N_glob} A   * X
+        expected = one * two + N_glob        * one * half;
+        fail += verifyAnswer(&W, expected);
+
+        */
+        printMessage(fail, __func__, rank);
+        return reduceReturn(fail, &A);
+    }
+
+    /*
+     *  W = beta * W + alpha * this^T * X
+     *
+     *  A: mxn
+     *  W: mxk
+     *  X: nxk
+     *
+     */
+    int matrixTransTimesMat(
+            hiop::hiopMatrix& A,
+            hiop::hiopMatrix& W,
+            hiop::hiopMatrix& X,
             const int rank)
     {
         const int M = getNumLocRows(&A);
@@ -187,20 +233,10 @@ public:
 
         //     W        = 0 * W + A   * X
         double expected =         one * one * N_glob;
-        // fail += verifyAnswer(&W, expected);
+        fail += verifyAnswer(&W, expected);
 
         printMessage(SKIP_TEST, __func__, rank);
-        return reduceReturn(fail, &A);
-    }
-
-    int matrixTransTimesMat(
-            hiop::hiopMatrix& A,
-            hiop::hiopMatrix& W,
-            hiop::hiopMatrix& X,
-            const int rank)
-    {
-        printMessage(SKIP_TEST, __func__, rank);
-        return 0;
+        return reduceReturn(zero, &A);
     }
 
     int matrixTimesMatTrans(
@@ -216,9 +252,11 @@ public:
 protected:
     virtual void setElement(hiop::hiopMatrix* a, local_ordinal_type i, local_ordinal_type j, real_type val) = 0;
     virtual real_type getElement(hiop::hiopMatrix* a, local_ordinal_type i, local_ordinal_type j) = 0;
+    virtual real_type getLocalElementVec(
+            const hiop::hiopVector* x,
+            local_ordinal_type i) = 0;
     virtual local_ordinal_type getNumLocRows(hiop::hiopMatrix* a) = 0;
     virtual local_ordinal_type getNumLocCols(hiop::hiopMatrix* a) = 0;
-    virtual double getElementVec(const hiop::hiopVector* x, int i) = 0;
     virtual int getLocalSize(const hiop::hiopVector* x) = 0;
     virtual int verifyAnswer(hiop::hiopMatrix* A, double answer) = 0;
     virtual int verifyAnswerVec(hiop::hiopVector* x, double answer) = 0;
