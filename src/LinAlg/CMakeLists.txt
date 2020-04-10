@@ -1,4 +1,4 @@
-add_library(hiopLinAlg OBJECT hiopVector.cpp hiopMatrix.cpp hiopMatrixSparseTripletStorage.cpp hiopMatrixSparseTriplet.cpp hiopMatrixComplexSparseTriplet.cpp)
+add_library(hiopLinAlg OBJECT hiopVector.cpp hiopVectorRajaPar.cpp hiopMatrix.cpp hiopMatrixSparseTripletStorage.cpp hiopMatrixSparseTriplet.cpp hiopMatrixComplexSparseTriplet.cpp)
 
 target_link_libraries(hiopLinAlg
     PUBLIC

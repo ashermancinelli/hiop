@@ -1,6 +1,6 @@
 
 # Build vector test
-add_executable(testVector testVector.cpp LinAlg/vectorTestsPar.cpp)
+add_executable(testVector testVector.cpp LinAlg/vectorTestsPar.cpp LinAlg/vectorTestsRajaPar.cpp)
 
 target_link_libraries(testVector
     PRIVATE

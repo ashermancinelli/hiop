@@ -3,9 +3,10 @@
 
 // This header contains HiOp's MPI definitions
 #include <hiopVector.hpp>
+#include <hiopVectorRajaPar.hpp>
 
 #include "LinAlg/vectorTestsPar.hpp"
-// #include "LinAlg/vectorTestsRAJA.hpp"
+#include "LinAlg/vectorTestsRajaPar.hpp"
 
 
 /**
@@ -44,6 +45,9 @@ int main(int argc, char** argv)
 
     // Test parallel vector
     {
+        if (rank == 0)
+          std::cout << "\nTesting default HiOp vector:\n";
+
         hiop::hiopVectorPar x(Nglobal, partition, comm);
         hiop::hiopVectorPar* y = x.alloc_clone();
         hiop::hiopVectorPar* z = x.alloc_clone();
@@ -105,16 +109,21 @@ int main(int argc, char** argv)
 
     // Test RAJA vector
     {
-        //         hiop::hiopVectorRAJA x(N);
-        //         hiop::tests::VectorTestsRAJA test;
-        //
-        //         fail += test.testGetSize(x, N);
-        //         fail += test.testSetToConstant(x);
+        if (rank == 0)
+          std::cout << "\nTesting HiOp RAJA vector:\n";
+
+        hiop::hiopVectorRajaPar xx(Nglobal, partition, comm);
+        hiop::hiopVectorRajaPar yy(Nglobal, partition, comm);
+        hiop::tests::VectorTestsRajaPar test;
+
+        fail += test.vectorSetToConstant(xx, rank);
+        fail += test.vectorDotProductWith(xx, yy, rank);
     }
 
 
     if (rank == 0)
     {
+        std::cout << "\n";
         if(fail)
             std::cout << fail << " tests failed\n";
         else
