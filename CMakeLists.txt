@@ -6,86 +6,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 cmake_policy(SET CMP0074 NEW)
 
-# Add interface libraries for portable warnings and options
-add_library(hiop_warnings_1 INTERFACE)
-add_library(hiop_warnings_2 INTERFACE)
-add_library(hiop_warnings_3 INTERFACE)
-add_library(hiop_options INTERFACE)
-
-target_link_libraries(hiop_warnings_2 INTERFACE hiop_warnings_1)
-target_link_libraries(hiop_warnings_3 INTERFACE hiop_warnings_2)
-
-target_compile_features(hiop_options
-    INTERFACE
-        cxx_std_17
-        cxx_alignas
-        cxx_alignof
-        cxx_attributes
-        cxx_auto_type
-        cxx_constexpr
-        cxx_defaulted_functions
-        cxx_deleted_functions
-        cxx_final
-        cxx_lambdas
-        cxx_noexcept
-        cxx_override
-        cxx_range_for
-        cxx_rvalue_references
-        cxx_static_assert
-        cxx_strong_enums
-        cxx_trailing_return_types
-        cxx_unicode_literals
-        cxx_user_literals
-        cxx_variadic_macros
-)
-
-# Some options taken from Jason Turner
-# <https://github.com/lefticus/cpp_box/blob/master/CMakeLists.txt>
-target_compile_options(hiop_warnings_1
-    INTERFACE
-        -Wall
-        -Wextra
-)
-
-target_compile_options(hiop_warnings_2
-    INTERFACE
-        -Wshadow            # warn the user if a variable
-                            # declaration shadows one from a
-                            # parent context
-        -Wnon-virtual-dtor  # warn the user if a class
-                            # with virtual functions
-                            # has a non-virtual
-                            # destructor. This helps
-                            # catch hard to track down
-                            # memory errors
-        -Wpedantic          # Warn on nonstandard C++
-)
-
-target_compile_options(hiop_warnings_3
-    INTERFACE
-        -Wunused
-        -Wconversion        # Warn on lossy conversions
-        -Wnull-dereference
-        -Wdouble-promotion  # Warn on implicit conversion from
-                            # float to double
-        -Wformat=2          # Warn on possibly insecure formatting
-                            # when using printf
-)
-
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    message("Using extra GNU-specific compiler warnings...")
-    target_compile_options(hiop_warnings_3
-        INTERFACE
-            -Wmisleading-indentation    # Warn on indented blocks
-                                        # that are not really blocks
-            -Wduplicated-cond           # Warn on if/else chain with
-                                        # duplicated conditions
-            -Wduplicated-branches       # Warn on if/else chains with
-                                        # duplicated code
-            -Wuseless-cast              # Warn when casting to the same type
-    )
-endif()
-
 project (hiop)
 # enable Fortran for Fortran name mangling
 enable_language(Fortran)
@@ -96,6 +16,8 @@ FortranCInterface_HEADER(FortranCInterface.hpp MACRO_NAMESPACE "FC_")
 
 option(HIOP_USE_MPI "Build with MPI support" ON)
 option(HIOP_USE_GPU "Build with support for GPUs - Magma and cuda libraries" OFF)
+option(HIOP_USE_UMPIRE "Build with portable memory management library Umpire" ON)
+option(HIOP_USE_RAJA   "Build with portability abstraction library RAJA" ON)
 option(HIOP_DEEPCHECKS "Extra checks and asserts in the code with a high penalty on performance" ON)
 option(HIOP_WITH_KRON_REDUCTION "Build Kron Reduction code (requires MA86)" OFF)
 option(HIOP_DEVELOPER_MODE "Build with extended warnings and options" OFF)
@@ -214,6 +136,20 @@ if(HIOP_USE_GPU)
   include(FindHiopCudaLibraries)
   target_link_libraries(hiop_math INTERFACE hiop_cuda)
 endif(HIOP_USE_GPU)
+
+if(HIOP_USE_RAJA)
+  # Look for CMake configuration file in RAJA installation
+  find_package(RAJA CONFIG
+    PATHS ${RAJA_DIR} ${RAJA_DIR}/share/raja/cmake
+    REQUIRED)
+endif()
+
+if(HIOP_USE_UMPIRE)
+  # Look for CMake configuration file in Umpire installation
+  find_package(umpire CONFIG
+    PATHS ${umpire_DIR} ${umpire_DIR}/share/umpire/cmake
+    REQUIRED)
+endif()
 
 if(HIOP_WITH_KRON_REDUCTION)
   set(HIOP_UMFPACK_DIR CACHE PATH "Path to UMFPACK directory")
