@@ -11,14 +11,14 @@ public:
     virtual ~MatrixTestsDense(){}
 
 private:
-    virtual void setLocalElement(hiop::hiopMatrix* a, int i, int j, double val);
-    virtual double getLocalElement(const hiop::hiopMatrix* a, int i, int j);
-    virtual double getLocalElementVec(const hiop::hiopVector* x, int i);
-    virtual int getNumLocRows(hiop::hiopMatrix* a);
-    virtual int getNumLocCols(hiop::hiopMatrix* a);
-    virtual int getLocalSize(const hiop::hiopVector* x);
-    virtual int verifyAnswer(hiop::hiopMatrix* A, double answer);
-    virtual int verifyAnswerVec(hiop::hiopVector* x, double answer);
+    virtual void setLocalElement(hiop::hiopMatrix* a, local_ordinal_type i, local_ordinal_type j, real_type val);
+    virtual real_type getLocalElement(const hiop::hiopMatrix* a, local_ordinal_type i, local_ordinal_type j);
+    virtual real_type getLocalElementVec(const hiop::hiopVector* x, local_ordinal_type i);
+    virtual local_ordinal_type getNumLocRows(hiop::hiopMatrix* a);
+    virtual local_ordinal_type getNumLocCols(hiop::hiopMatrix* a);
+    virtual local_ordinal_type getLocalSize(const hiop::hiopVector* x);
+    virtual int verifyAnswer(hiop::hiopMatrix* A, real_type answer);
+    virtual int verifyAnswerVec(hiop::hiopVector* x, real_type answer);
     virtual bool reduceReturn(int failures, hiop::hiopMatrix* A);
 
 #ifdef HIOP_USE_MPI

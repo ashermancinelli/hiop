@@ -14,14 +14,14 @@ public:
     MatrixTests() {}
     virtual ~MatrixTests(){}
 
-    int matrixNumRows(hiop::hiopMatrix& A, long long M, const int rank)
+    int matrixNumRows(hiop::hiopMatrix& A, global_ordinal_type M, const int rank)
     {
         const bool fail = A.m() == M ? 0 : 1;
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
     }
 
-    int matrixNumCols(hiop::hiopMatrix& A, long long N, const int rank)
+    int matrixNumCols(hiop::hiopMatrix& A, global_ordinal_type N, const int rank)
     {
         const bool fail = A.n() == N ? 0 : 1;
         printMessage(fail, __func__, rank);
@@ -30,14 +30,14 @@ public:
 
     int matrixSetToZero(hiop::hiopMatrix& A, const int rank)
     {
-        int M = getNumLocRows(&A);
-        int N = getNumLocCols(&A);
+        local_ordinal_type M = getNumLocRows(&A);
+        local_ordinal_type N = getNumLocCols(&A);
 
         A.setToZero();
 
         int fail = 0;
-        for(int i=0; i<M; ++i)
-            for(int j=0; j<N; ++j)
+        for(local_ordinal_type i=0; i<M; ++i)
+            for(local_ordinal_type j=0; j<N; ++j)
                 if(getLocalElement(&A,i,j) != 0)
                 {
                     std::cerr << "Element (" << i << "," << j << ") not set to zero\n";
@@ -214,14 +214,14 @@ public:
     }
 
 protected:
-    virtual void setLocalElement(hiop::hiopMatrix* a, int i, int j, double val) = 0;
-    virtual double getLocalElement(const hiop::hiopMatrix* a, int i, int j) = 0;
-    virtual double getLocalElementVec(const hiop::hiopVector* x, int i) = 0;
-    virtual int getNumLocRows(hiop::hiopMatrix* a) = 0;
-    virtual int getNumLocCols(hiop::hiopMatrix* a) = 0;
-    virtual int getLocalSize(const hiop::hiopVector* x) = 0;
-    virtual int verifyAnswer(hiop::hiopMatrix* A, double answer) = 0;
-    virtual int verifyAnswerVec(hiop::hiopVector* x, double answer) = 0;
+    virtual void setLocalElement(hiop::hiopMatrix* a, local_ordinal_type i, local_ordinal_type j, double val) = 0;
+    virtual real_type getLocalElement(const hiop::hiopMatrix* a, local_ordinal_type i, local_ordinal_type j) = 0;
+    virtual real_type getLocalElementVec(const hiop::hiopVector* x, local_ordinal_type i) = 0;
+    virtual local_ordinal_type getNumLocRows(hiop::hiopMatrix* a) = 0;
+    virtual local_ordinal_type getNumLocCols(hiop::hiopMatrix* a) = 0;
+    virtual local_ordinal_type getLocalSize(const hiop::hiopVector* x) = 0;
+    virtual int verifyAnswer(hiop::hiopMatrix* A, real_type answer) = 0;
+    virtual int verifyAnswerVec(hiop::hiopVector* x, real_type answer) = 0;
     virtual bool reduceReturn(int failures, hiop::hiopMatrix* A) = 0;
 };
 

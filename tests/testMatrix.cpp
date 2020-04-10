@@ -20,13 +20,13 @@ int main(int argc, char** argv)
         printf("Support for MPI is enabled\n");
 #endif
 
-    long long M_local   = 10;  // local rows
+    global_ordinal_type M_local   = 10;  // local rows
 
     // all distribution occurs column-wise
-    long long N_local   = 100; // local columns
-    long long N_global  = N_local * numRanks; // global columns
+    global_ordinal_type N_local   = 100; // local columns
+    global_ordinal_type N_global  = N_local * numRanks; // global columns
     
-    auto partition = new long long[numRanks+1];
+    auto partition = new global_ordinal_type[numRanks+1];
     partition[0] = 0;
     for(int i = 1; i < numRanks + 1; ++i)
         partition[i] = i*N_local;
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
 
         // set up distributed vectors of size N
         hiop::hiopVectorPar x_n(N_global, partition, comm);
-        hiop::hiopVectorPar* y_n= x_n.alloc_clone();
+        hiop::hiopVectorPar* y_n = x_n.alloc_clone();
         // set up local vectors of size M
         hiop::hiopVectorPar x_m(M_local);
         hiop::hiopVectorPar* y_m = x_m.alloc_clone();
@@ -60,9 +60,12 @@ int main(int argc, char** argv)
         fail += test.matrixTimesVec(A_mxn, x_m, x_n, rank);
         fail += test.matrixTransTimesVec(A_mxn, x_m, x_n, rank);
 
-        fail += test.matrixTimesMat(A_mxn, A_nxn, *B_mxn, rank);
-        fail += test.matrixTransTimesMat(A_mxn, *B_nxn, *C_nxn, rank);
-        fail += test.matrixTimesMatTrans(A_mxn, *B_nxn, *C_nxn, rank);
+        if (numRanks == 0)
+        {
+            fail += test.matrixTimesMat(A_mxn, A_nxn, *B_mxn, rank);
+            fail += test.matrixTransTimesMat(A_mxn, *B_nxn, *C_nxn, rank);
+            fail += test.matrixTimesMatTrans(A_mxn, *B_nxn, *C_nxn, rank);
+        }
     }
 
     // Test RAJA matrix
