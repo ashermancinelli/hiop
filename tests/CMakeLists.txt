@@ -9,6 +9,11 @@ target_link_libraries(testVector
 
 target_link_libraries(testVector PRIVATE hiop ${HIOP_MATH_LIBRARIES})
 
+if(HIOP_USE_UMPIRE)
+  target_link_libraries(testVector PRIVATE umpire)
+endif()
+
+
 # Build matrix test
 add_executable(testMatrix testMatrix.cpp LinAlg/matrixTestsDense.cpp)
 target_link_libraries(testMatrix hiop ${HIOP_MATH_LIBRARIES})

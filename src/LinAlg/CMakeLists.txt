@@ -1,4 +1,18 @@
-add_library(hiopLinAlg OBJECT hiopVector.cpp hiopVectorRajaPar.cpp hiopMatrix.cpp hiopMatrixSparseTripletStorage.cpp hiopMatrixSparseTriplet.cpp hiopMatrixComplexSparseTriplet.cpp)
+set(LinAlg_SRC 
+  hiopVector.cpp
+  hiopMatrix.cpp
+  hiopMatrixSparseTripletStorage.cpp
+  hiopMatrixSparseTriplet.cpp 
+  hiopMatrixComplexSparseTriplet.cpp
+)
+
+if(HIOP_USE_UMPIRE)
+  set(LinAlg_SRC ${LinAlg_SRC} hiopVectorRajaPar.cpp)
+  include_directories(${UMPIRE_INCLUDE_DIRS})
+endif()
+
+add_library(hiopLinAlg OBJECT ${LinAlg_SRC})
+#add_library(hiopLinAlg OBJECT hiopVector.cpp hiopVectorRajaPar.cpp hiopMatrix.cpp hiopMatrixSparseTripletStorage.cpp hiopMatrixSparseTriplet.cpp hiopMatrixComplexSparseTriplet.cpp)
 
 target_link_libraries(hiopLinAlg
     PUBLIC
@@ -15,3 +29,8 @@ target_link_libraries(test_hiopLinAlgComplex.exe
     PRIVATE
         hiop_warnings_3
         hiop_options)
+
+if(HIOP_USE_UMPIRE)
+  target_link_libraries(test_hiopLinAlgComplex.exe PRIVATE umpire)
+endif()
+

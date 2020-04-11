@@ -96,6 +96,8 @@ file(WRITE "src/Interface/hiop_defs.hpp" "")
 
 option(HIOP_USE_MPI "Build with MPI support" ON)
 option(HIOP_USE_GPU "Build with support for GPUs - Magma and cuda libraries" OFF)
+option(HIOP_USE_UMPIRE "Build with portable memory management library Umpire" ON)
+option(HIOP_USE_RAJA   "Build with portability abstraction library RAJA" OFF)
 option(HIOP_DEEPCHECKS "Extra checks and asserts in the code with a high penalty on performance" ON)
 
 #with testing drivers capable of 'selfchecking' (-selfcheck)
@@ -148,11 +150,29 @@ if(HIOP_USE_GPU)
   set(HIOP_MATH_LIBRARIES "${MAGMA_LIBRARIES} ${HIOP_CUDA_LIBRARIES} ${HIOP_MATH_LIBRARIES}")
 endif(HIOP_USE_GPU)
 
+
 if(HIOP_USE_GPU)
   file(APPEND "src/Interface/hiop_defs.hpp" "#define HIOP_USE_MAGMA\n")
 else()
   file(APPEND "src/Interface/hiop_defs.hpp" "#ifdef HIOP_USE_MAGMA\n#undef HIOP_USE_MAGMA\n#endif\n")
 endif(HIOP_USE_GPU)
+
+
+if(HIOP_USE_RAJA)
+  # Look for CMake configuration file in RAJA installation
+  find_package(RAJA CONFIG
+    PATHS ${RAJA_DIR} ${RAJA_DIR}/share/raja/cmake
+    REQUIRED)
+endif()
+
+
+if(HIOP_USE_UMPIRE)
+  # Look for CMake configuration file in Umpire installation
+  find_package(umpire CONFIG
+    PATHS ${umpire_DIR} ${umpire_DIR}/share/umpire/cmake
+    REQUIRED)
+endif()
+
 
 if(HIOP_DEEPCHECKS)
   file(APPEND "src/Interface/hiop_defs.hpp" "#define HIOP_DEEPCHECKS\n")
@@ -208,6 +228,7 @@ endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 add_library(hiop STATIC $<TARGET_OBJECTS:hiopOptimization>
                         $<TARGET_OBJECTS:hiopLinAlg>
                         $<TARGET_OBJECTS:hiopUtils>)
+
 
 add_subdirectory(tests)
 

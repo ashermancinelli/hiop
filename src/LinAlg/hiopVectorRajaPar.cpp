@@ -58,6 +58,9 @@
 #include <limits>
 #include <cstddef>
 
+#include <umpire/Allocator.hpp>
+#include <umpire/ResourceManager.hpp>
+
 namespace hiop
 {
 
@@ -83,8 +86,12 @@ hiopVectorRajaPar::hiopVectorRajaPar(const long long& glob_n, long long* col_par
   }   
   n_local=glob_iu-glob_il;
 
+  auto& rm = umpire::ResourceManager::getInstance();
+  umpire::Allocator allocator = rm.getAllocator("HOST");
+
   data = new double[n_local];
 }
+
 hiopVectorRajaPar::hiopVectorRajaPar(const hiopVectorRajaPar& v)
 {
   n_local = v.n_local;
