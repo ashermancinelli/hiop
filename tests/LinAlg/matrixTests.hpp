@@ -85,7 +85,7 @@ public:
         n_vec.setToConstant(two);
         A.setToConstant(one);
         A.timesVec(zero, m_vec, one, n_vec);
-        double expected = two * N_glob;
+        real_type expected = two * N_glob;
         fail += verifyAnswerVec(&m_vec, expected);
 
         // Now, check y \leftarrow beta * y + alpha * A * x
@@ -362,11 +362,11 @@ public:
 
         // Beta = 0 to just test matmul portion
         // this fails
-        A.timesMat_local(one, W, one, X);
+        A.timesMat(one, W, one, X);
 
         /*
         //     W        = 0 * W + A   * X
-        double expected =         one * one * N_glob;
+        real_type expected =         one * one * N_glob;
         fail += verifyAnswer(&W, expected);
 
         A.setToConstant(one);
@@ -397,9 +397,9 @@ public:
             hiop::hiopMatrix& X,
             const int rank)
     {
-        const int M = getNumLocRows(&A);
-        const int N_loc = getNumLocCols(&A);
-        const int N_glob = A.n();
+        const local_ordinal_type M = getNumLocRows(&A);
+        const local_ordinal_type N_loc = getNumLocCols(&A);
+        const global_ordinal_type N_glob = A.n();
         assert(M == getNumLocRows(&W) && "Matrices have mismatched shapes");
         assert(N_loc == getNumLocCols(&W) && "Matrices have mismatched shapes");
         assert(N_loc == getNumLocCols(&X) && "Matrices have mismatched shapes");
@@ -414,8 +414,8 @@ public:
         // this fails
         // A.timesMat(zero, W, one, X);
 
-        //     W        = 0 * W + A   * X
-        double expected =         one * one * N_glob;
+        //        W        = 0 * W + A   * X
+        real_type expected =         one * one * N_glob;
         fail += verifyAnswer(&W, expected);
 
         printMessage(SKIP_TEST, __func__, rank);
