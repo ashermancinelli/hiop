@@ -82,11 +82,11 @@ bool MatrixTestsDense::reduceReturn(int failures, hiop::hiopMatrix* A)
 [[nodiscard]]
 int MatrixTestsDense::verifyAnswer(hiop::hiopMatrix* A, const double answer)
 {
-    const int M = getNumLocRows(A);
-    const int N = getNumLocCols(A);
+    const local_ordinal_type M = getNumLocRows(A);
+    const local_ordinal_type N = getNumLocCols(A);
     int fail = 0;
-    for (int i=0; i<M; i++)
-        for (int j=0; j<N; j++)
+    for (local_ordinal_type i=0; i<M; i++)
+        for (local_ordinal_type j=0; j<N; j++)
             if (!isEqual(getLocalElement(A, i, j), answer))
                 fail++;
     return fail;
@@ -96,10 +96,10 @@ int MatrixTestsDense::verifyAnswer(hiop::hiopMatrix* A, const double answer)
 [[nodiscard]]
 int MatrixTestsDense::verifyAnswerVec(hiop::hiopVector* x, double answer)
 {
-    const int N = getLocalSize(x);
+    const local_ordinal_type N = getLocalSize(x);
 
     int local_fail = 0;
-    for(int i=0; i<N; ++i)
+    for(local_ordinal_type i=0; i<N; ++i)
         if(!isEqual(getLocalElementVec(x, i), answer))
             ++local_fail;
 
