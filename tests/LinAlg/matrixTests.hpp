@@ -50,11 +50,11 @@ public:
 
     int matrixSetToConstant(hiop::hiopMatrix& A, const int rank)
     {
-        const int M = getNumLocRows(&A);
-        const int N = getNumLocCols(&A);
+        const local_ordinal_type M = getNumLocRows(&A);
+        const local_ordinal_type N = getNumLocCols(&A);
         int fail = 0;
-        for (int i=0; i<M; i++)
-            for (int j=0; j<N; j++)
+        for (local_ordinal_type i=0; i<M; i++)
+            for (local_ordinal_type j=0; j<N; j++)
                 setLocalElement(&A, i, j, one);
         A.setToConstant(two);
         fail = verifyAnswer(&A, two);
@@ -73,9 +73,9 @@ public:
     {
         int fail = 0;
         A.setToConstant(one);
-        const int M = getNumLocRows(&A);
-        const int N = getNumLocCols(&A);
-        const int N_glob = n_vec.get_size();
+        const local_ordinal_type M = getNumLocRows(&A);
+        const local_ordinal_type N = getNumLocCols(&A);
+        const global_ordinal_type N_glob = n_vec.get_size();
         assert(getLocalSize(&m_vec) == M && "Did you pass in vectors of the correct sizes?");
         assert(getLocalSize(&n_vec) == N && "Did you pass in vectors of the correct sizes?");
 
@@ -85,7 +85,7 @@ public:
         n_vec.setToConstant(two);
         A.setToConstant(one);
         A.timesVec(zero, m_vec, one, n_vec);
-        double expected = two * N_glob;
+        real_type expected = two * N_glob;
         fail += verifyAnswerVec(&m_vec, expected);
 
         // Now, check y \leftarrow beta * y + alpha * A * x
@@ -115,9 +115,9 @@ public:
             hiop::hiopVector& n_vec,
             const int rank)
     {
-        const int M = getNumLocRows(&A);
-        const int N = getNumLocCols(&A);
-        const int N_glob = n_vec.get_size();
+        const local_ordinal_type M = getNumLocRows(&A);
+        const local_ordinal_type N = getNumLocCols(&A);
+        const global_ordinal_type N_glob = n_vec.get_size();
         assert(getLocalSize(&m_vec) == M && "Did you pass in vectors of the correct sizes?");
         assert(getLocalSize(&n_vec) == N && "Did you pass in vectors of the correct sizes?");
         int fail = 0;
@@ -128,7 +128,7 @@ public:
         n_vec.setToConstant(zero);
         A.transTimesVec(zero, n_vec, two, m_vec);
         //                 0 * y + alpha * A^T   * 1
-        double expected =          two   * one   * one * M;
+        real_type expected =          two   * one   * one * M;
         //                                              ^^^
         // Sum over num global rows <--------------------|
         fail += verifyAnswerVec(&n_vec, expected);
@@ -162,11 +162,11 @@ public:
             hiop::hiopMatrix& W,
             const int rank)
     {
-        const int M = getNumLocRows(&A);
-        const int K_loc = getNumLocCols(&A);
-        const int K_glob = A.n();
-        const int N_loc = getNumLocCols(&X);
-        const int N_glob = X.n();
+        const local_ordinal_type M = getNumLocRows(&A);
+        const local_ordinal_type K_loc = getNumLocCols(&A);
+        const global_ordinal_type K_glob = A.n();
+        const local_ordinal_type N_loc = getNumLocCols(&X);
+        const global_ordinal_type N_glob = X.n();
         assert(K_glob == getNumLocRows(&X)  && "Matrices have mismatched shapes");
         assert(M == getNumLocRows(&W)       && "Matrices have mismatched shapes");
         assert(N_loc == getNumLocCols(&W)   && "Matrices have mismatched shapes");
@@ -179,11 +179,11 @@ public:
 
         // Beta = 0 to just test matmul portion
         // this fails
-        A.timesMat_local(one, W, one, X);
+        A.timesMat(one, W, one, X);
 
         /*
         //     W        = 0 * W + A   * X
-        double expected =         one * one * N_glob;
+        real_type expected =         one * one * N_glob;
         fail += verifyAnswer(&W, expected);
 
         A.setToConstant(one);
@@ -214,9 +214,9 @@ public:
             hiop::hiopMatrix& X,
             const int rank)
     {
-        const int M = getNumLocRows(&A);
-        const int N_loc = getNumLocCols(&A);
-        const int N_glob = A.n();
+        const local_ordinal_type M = getNumLocRows(&A);
+        const local_ordinal_type N_loc = getNumLocCols(&A);
+        const global_ordinal_type N_glob = A.n();
         assert(M == getNumLocRows(&W) && "Matrices have mismatched shapes");
         assert(N_loc == getNumLocCols(&W) && "Matrices have mismatched shapes");
         assert(N_loc == getNumLocCols(&X) && "Matrices have mismatched shapes");
@@ -231,8 +231,8 @@ public:
         // this fails
         // A.timesMat(zero, W, one, X);
 
-        //     W        = 0 * W + A   * X
-        double expected =         one * one * N_glob;
+        //        W        = 0 * W + A   * X
+        real_type expected =         one * one * N_glob;
         fail += verifyAnswer(&W, expected);
 
         printMessage(SKIP_TEST, __func__, rank);
@@ -251,11 +251,17 @@ public:
 
 protected:
     virtual void setLocalElement(
-            hiop::hiopMatrix* a, local_ordinal_type i,
-            local_ordinal_type j, real_type val) = 0;
-    virtual real_type getLocalElement(hiop::hiopMatrix* a,
-            local_ordinal_type i, local_ordinal_type j) = 0;
-    virtual real_type getLocalElementVec(const hiop::hiopVector* x, local_ordinal_type i) = 0;
+            hiop::hiopMatrix* a,
+            local_ordinal_type i,
+            local_ordinal_type j,
+            real_type val) = 0;
+    virtual real_type getLocalElement(
+            const hiop::hiopMatrix* a,
+            local_ordinal_type i,
+            local_ordinal_type j) = 0;
+    virtual real_type getLocalElementVec(
+            const hiop::hiopVector* x,
+            local_ordinal_type i) = 0;
     virtual local_ordinal_type getNumLocRows(hiop::hiopMatrix* a) = 0;
     virtual local_ordinal_type getNumLocCols(hiop::hiopMatrix* a) = 0;
     virtual local_ordinal_type getLocalSize(const hiop::hiopVector* x) = 0;
