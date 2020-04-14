@@ -182,6 +182,9 @@ public:
         A.timesMat(one, W, one, X);
 
         /*
+         * This is commented out until we successfully
+         * test the previous lines
+         *
         //     W        = 0 * W + A   * X
         real_type expected =         one * one * N_glob;
         fail += verifyAnswer(&W, expected);
@@ -232,11 +235,11 @@ public:
         // A.timesMat(zero, W, one, X);
 
         //        W        = 0 * W + A   * X
-        real_type expected =         one * one * N_glob;
-        fail += verifyAnswer(&W, expected);
+        // real_type expected =         one * one * N_glob;
+        // fail += verifyAnswer(&W, expected);
 
         printMessage(SKIP_TEST, __func__, rank);
-        return reduceReturn(zero, &A);
+        return reduceReturn(fail, &A);
     }
 
     int matrixTimesMatTrans(
@@ -247,6 +250,82 @@ public:
     {
         printMessage(SKIP_TEST, __func__, rank);
         return 0;
+    }
+
+    /*
+     * this += alpha * diag
+     */
+    int matrixAddDiagonal(
+            hiop::hiopMatrix& A,
+            hiop::hiopVector& x,
+            const int rank)
+    {
+        int fail = 0;
+        const local_ordinal_type M = getNumLocRows(&A);
+        const local_ordinal_type N = getNumLocCols(&A);
+        assert(N == getLocalSize(&x));
+        assert(M == getLocalSize(&x));
+        assert(M == A.n());
+        assert(A.n() == x.get_size());
+        assert(A.m() == x.get_size());
+        constexpr real_type alpha = two;
+
+        A.setToConstant(one);
+        x.setToConstant(two);
+        A.addDiagonal(alpha, x);
+        real_type expected = one + (alpha * two);
+        for (local_ordinal_type i=0; i<M; i++)
+            if (getLocalElement(&A, i, i) != expected)
+                fail++;
+
+        A.setToConstant(one);
+        A.addDiagonal(alpha);
+        expected = one + alpha;
+        for (local_ordinal_type i=0; i<M; i++)
+            if (getLocalElement(&A, i, i) != expected)
+                fail++;
+
+        printMessage(fail, __func__, rank);
+        return reduceReturn(fail, &A);
+    }
+
+    /*
+     * this += alpha * subdiag
+     */
+    int matrixAddSubDiagonal(
+            hiop::hiopMatrix& A,
+            hiop::hiopVector& x,
+            const int rank)
+    {
+        int fail = 0;
+        const local_ordinal_type M = getNumLocRows(&A);
+        const local_ordinal_type N = getNumLocCols(&A);
+        assert(N == getLocalSize(&x));
+        assert(M == getLocalSize(&x));
+        assert(M == A.n());
+        assert(A.n() == x.get_size());
+        assert(A.m() == x.get_size());
+
+        A.setToConstant(one);
+        x.setToConstant(two);
+        A.addSubDiagonal(two, 0, x);
+        for (global_ordinal_type i=0; i<M; i++)
+        {
+            if (getLocalElement(&A, i, i) != (one + two * two))
+                fail++;
+        }
+
+        A.setToConstant(one);
+        x.setToConstant(two);
+        A.addSubDiagonal(0, two, x, 0, N);
+        for (global_ordinal_type i=0; i<M; i++)
+        {
+            if (getLocalElement(&A, i, i) != (one + two * two))
+                fail++;
+        }
+
+        printMessage(fail, __func__, rank);
+        return reduceReturn(fail, &A);
     }
 
 protected:

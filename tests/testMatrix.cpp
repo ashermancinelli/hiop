@@ -46,15 +46,14 @@ int main(int argc, char** argv)
     {
         // Matrix dimensions denoted by subscript
         hiop::hiopMatrixDense A_mxn(M_global, N_global, n_partition, comm);
+        hiop::hiopMatrixDense A_nxn(N_global, N_global, n_partition, comm);
         hiop::hiopMatrixDense A_kxn(K_global, N_global, n_partition, comm);
         hiop::hiopMatrixDense A_mxk(M_global, K_global, k_partition, comm);
-
-        // set up distributed vectors of size N
-        hiop::hiopVectorPar x_n(N_global, partition, comm);
-        hiop::hiopVectorPar* y_n= x_n.alloc_clone();
-        // set up local vectors of size M
-        hiop::hiopVectorPar x_m(M_local);
-        hiop::hiopVectorPar* y_m = x_m.alloc_clone();
+        //                      ^^^
+        hiop::hiopVectorPar x_n(N_global, n_partition, comm);
+        //                   ^^^
+        hiop::hiopVectorPar x_m(M_global);
+        //                   ^^^
         hiop::tests::MatrixTestsDense test;
 
         fail += test.matrixNumRows(A_mxn, M_global, rank);
@@ -66,9 +65,16 @@ int main(int argc, char** argv)
 
         if (numRanks == 1)
         {
+            /* 
+             * Note that these ended up not being used
+             * and are not as high of a priority
             fail += test.matrixTimesMat(A_mxk, A_kxn, A_mxn, rank);
-            // fail += test.matrixTransTimesMat(A_mxk, A_kxn, A_mxn, rank);
-            // fail += test.matrixTimesMatTrans(A_mxn, *B_nxn, *C_nxn, rank);
+            fail += test.matrixTransTimesMat(A_mxk, A_kxn, A_mxn, rank);
+            fail += test.matrixTimesMatTrans(A_mxk, A_kxn, A_mxn, rank);
+            */
+
+            fail += test.matrixAddDiagonal(A_nxn, x_n, rank);
+            fail += test.matrixAddSubDiagonal(A_nxn, x_n, rank);
         }
     }
 
