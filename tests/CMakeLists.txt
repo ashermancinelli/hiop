@@ -13,6 +13,10 @@ if(HIOP_USE_UMPIRE)
   target_link_libraries(testVector PRIVATE umpire)
 endif()
 
+if(HIOP_USE_RAJA)
+  target_link_libraries(testVector PRIVATE RAJA)
+endif()
+
 
 # Build matrix test
 add_executable(testMatrix testMatrix.cpp LinAlg/matrixTestsDense.cpp)

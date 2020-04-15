@@ -6,6 +6,7 @@ set(LinAlg_SRC
   hiopMatrixComplexSparseTriplet.cpp
 )
 
+
 if(HIOP_USE_UMPIRE)
   set(LinAlg_SRC ${LinAlg_SRC} hiopVectorRajaPar.cpp)
   include_directories(${UMPIRE_INCLUDE_DIRS})

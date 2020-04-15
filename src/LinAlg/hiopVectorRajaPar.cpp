@@ -61,6 +61,8 @@
 #include <umpire/Allocator.hpp>
 #include <umpire/ResourceManager.hpp>
 
+//#include <RAJA/RAJA.hpp>
+
 namespace hiop
 {
 
@@ -86,10 +88,11 @@ hiopVectorRajaPar::hiopVectorRajaPar(const long long& glob_n, long long* col_par
   }   
   n_local=glob_iu-glob_il;
 
-  auto& rm = umpire::ResourceManager::getInstance();
-  umpire::Allocator allocator = rm.getAllocator("HOST");
+  auto& resmgr = umpire::ResourceManager::getInstance();
+  umpire::Allocator allocator = resmgr.getAllocator("HOST");
 
-  data = new double[n_local];
+  //  data = new double[n_local];
+  data = static_cast<double*>(allocator.allocate(n_local*sizeof(double)));
 }
 
 hiopVectorRajaPar::hiopVectorRajaPar(const hiopVectorRajaPar& v)
@@ -99,12 +102,21 @@ hiopVectorRajaPar::hiopVectorRajaPar(const hiopVectorRajaPar& v)
   glob_il = v.glob_il;
   glob_iu = v.glob_iu;
   comm = v.comm;
-  data = new double[n_local];
+  auto& resmgr = umpire::ResourceManager::getInstance();
+  umpire::Allocator allocator = resmgr.getAllocator("HOST");
+
+  //  data = new double[n_local];
+  data = static_cast<double*>(allocator.allocate(n_local*sizeof(double)));
 }
+
 hiopVectorRajaPar::~hiopVectorRajaPar()
 {
-  delete[] data;
-  data=NULL;
+  auto& resmgr = umpire::ResourceManager::getInstance();
+  umpire::Allocator allocator = resmgr.getAllocator("HOST");
+
+  allocator.deallocate(data);
+  //delete[] data;
+  data=nullptr;
 }
 
 hiopVectorRajaPar* hiopVectorRajaPar::alloc_clone() const

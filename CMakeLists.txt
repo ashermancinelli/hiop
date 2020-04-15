@@ -123,7 +123,7 @@ if(HIOP_USE_GPU)
 
 
   set(HIOP_CUDA_LIBRARIES "-lculibos -lcublas -lcublasLt -lnvblas -lcusparse -lcudart -lcudadevrt")
-  find_package(CUDA)
+  find_package(CUDA 10.1)
   
   if(HIOP_CUDA_LIB_DIR)
     set(HIOP_CUDA_LIBRARIES "-L${HIOP_CUDA_LIB_DIR} ${HIOP_CUDA_LIBRARIES}")
@@ -147,7 +147,7 @@ if(HIOP_USE_GPU)
   message("HiOp GPU libs: '${MAGMA_LIBRARIES} ${HIOP_CUDA_LIBRARIES}'") 
   message("HiOp GPU includes: '${MAGMA_INCLUDE} ${HIOP_CUDA_INCLUDE}'") 
   include_directories(${MAGMA_INCLUDE} ${HIOP_CUDA_INCLUDE})
-  set(HIOP_MATH_LIBRARIES "${MAGMA_LIBRARIES} ${HIOP_CUDA_LIBRARIES} ${HIOP_MATH_LIBRARIES}")
+  set(HIOP_MATH_LIBRARIES ${MAGMA_LIBRARIES} ${HIOP_CUDA_LIBRARIES} ${HIOP_MATH_LIBRARIES})
 endif(HIOP_USE_GPU)
 
 
@@ -188,7 +188,7 @@ find_package(OpenMP)
 if(NOT DEFINED LAPACK_LIBRARIES)
   # in case the toolchain defines them
   find_package(LAPACK REQUIRED)
-  set(HIOP_MATH_LIBRARIES "${LAPACK_LIBRARIES} ${HIOP_MATH_LIBRARIES}")
+  set(HIOP_MATH_LIBRARIES ${LAPACK_LIBRARIES} ${HIOP_MATH_LIBRARIES})
 endif(NOT DEFINED LAPACK_LIBRARIES)
 string(STRIP "${HIOP_MATH_LIBRARIES}" HIOP_MATH_LIBRARIES)
 
@@ -243,10 +243,12 @@ install(FILES src/Interface/hiopInterface.hpp
 	      src/Optimization/hiopFilter.hpp
 	      src/Optimization/hiopHessianLowRank.hpp
 	      src/Optimization/hiopDualsUpdater.hpp
+	      src/Optimization/hiopKKTLinSys.hpp
 	      src/LinAlg/hiopVector.hpp
 	      src/LinAlg/hiopMatrix.hpp
 	      src/LinAlg/hiopMatrixSparseTriplet.hpp
 	      src/LinAlg/hiopMatrixSparseTripletStorage.hpp
+	      src/LinAlg/hiopMatrixMDS.hpp
 	      src/Utils/hiopRunStats.hpp
 	      src/Utils/hiopLogger.hpp
 	      src/Utils/hiopCSR_IO.hpp
