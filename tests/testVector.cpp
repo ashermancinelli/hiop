@@ -117,7 +117,7 @@ int main(int argc, char** argv)
         hiop::tests::VectorTestsRajaPar test;
 
         fail += test.vectorSetToConstant(xx, rank);
-        fail += test.vectorDotProductWith(xx, yy, rank);
+        fail += test.vectorOnenorm(xx, rank);
     }
 
 

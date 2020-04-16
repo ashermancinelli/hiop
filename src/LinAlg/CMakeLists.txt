@@ -9,11 +9,13 @@ set(LinAlg_SRC
 
 if(HIOP_USE_UMPIRE)
   set(LinAlg_SRC ${LinAlg_SRC} hiopVectorRajaPar.cpp)
-  include_directories(${UMPIRE_INCLUDE_DIRS})
+  include_directories(${UMPIRE_INCLUDE_DIRS} ${camp_INSTALL_PREFIX}/include)
 endif()
+message("Include dirs: ${UMPIRE_INCLUDE_DIRS} ${camp_INSTALL_PREFIX}/include")
 
 add_library(hiopLinAlg OBJECT ${LinAlg_SRC})
-#add_library(hiopLinAlg OBJECT hiopVector.cpp hiopVectorRajaPar.cpp hiopMatrix.cpp hiopMatrixSparseTripletStorage.cpp hiopMatrixSparseTriplet.cpp hiopMatrixComplexSparseTriplet.cpp)
+
+target_compile_options(hiopLinAlg PRIVATE "-fopenmp") 
 
 target_link_libraries(hiopLinAlg
     PUBLIC
@@ -21,6 +23,9 @@ target_link_libraries(hiopLinAlg
         hiop_options)
 
 add_executable(test_hiopLinAlgComplex.exe test_hiopLinalgComplex.cpp)
+
+target_compile_options(test_hiopLinAlgComplex.exe PRIVATE "-fopenmp") 
+
 target_link_libraries(test_hiopLinAlgComplex.exe
     PRIVATE
         hiopLinAlg
@@ -32,6 +37,6 @@ target_link_libraries(test_hiopLinAlgComplex.exe
         hiop_options)
 
 if(HIOP_USE_UMPIRE)
-  target_link_libraries(test_hiopLinAlgComplex.exe PRIVATE umpire)
+  target_link_libraries(test_hiopLinAlgComplex.exe PRIVATE umpire RAJA)
 endif()
 

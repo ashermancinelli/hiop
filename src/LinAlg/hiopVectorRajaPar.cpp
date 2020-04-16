@@ -61,7 +61,7 @@
 #include <umpire/Allocator.hpp>
 #include <umpire/ResourceManager.hpp>
 
-//#include <RAJA/RAJA.hpp>
+#include <RAJA/RAJA.hpp>
 
 namespace hiop
 {
@@ -142,11 +142,18 @@ void hiopVectorRajaPar::setToZero()
   for(int i=0; i<n_local; i++)
     data[i]=0.0;
 }
+
+
 void hiopVectorRajaPar::setToConstant(double c)
 {
-  for(int i=0; i<n_local; i++)
-    data[i]=c;
+  //for(int i=0; i<n_local; i++)
+  //  data[i] = c;
+  RAJA::forall<RAJA::omp_parallel_for_exec>(RAJA::RangeSegment(0, n_local), 
+    [=] (int i) {
+      data[i] = c;
+    });
 }
+
 void hiopVectorRajaPar::setToConstant_w_patternSelect(double c, const hiopVector& select)
 {
   const hiopVectorRajaPar& s = dynamic_cast<const hiopVectorRajaPar&>(select);
@@ -321,7 +328,14 @@ double hiopVectorRajaPar::infnorm_local() const
 
 double hiopVectorRajaPar::onenorm() const
 {
-  double nrm1=0.; for(int i=0; i<n_local; i++) nrm1 += fabs(data[i]);
+  //double nrm1=0.; for(int i=0; i<n_local; i++) nrm1 += fabs(data[i]);
+
+  RAJA::ReduceSum< RAJA::omp_reduce, double > norm(0.0);
+  RAJA::forall<RAJA::omp_parallel_for_exec>( RAJA::RangeSegment(0, n_local),
+					     [=](RAJA::Index_type i) {
+					       norm += std::abs(data[i]);
+					     });
+  double nrm1 = static_cast<double>(norm.get());
 #ifdef HIOP_USE_MPI
   double nrm1_global;
   int ierr = MPI_Allreduce(&nrm1, &nrm1_global, 1, MPI_DOUBLE, MPI_SUM, comm); assert(MPI_SUCCESS==ierr);

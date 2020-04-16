@@ -97,7 +97,7 @@ file(WRITE "src/Interface/hiop_defs.hpp" "")
 option(HIOP_USE_MPI "Build with MPI support" ON)
 option(HIOP_USE_GPU "Build with support for GPUs - Magma and cuda libraries" OFF)
 option(HIOP_USE_UMPIRE "Build with portable memory management library Umpire" ON)
-option(HIOP_USE_RAJA   "Build with portability abstraction library RAJA" OFF)
+option(HIOP_USE_RAJA   "Build with portability abstraction library RAJA" ON)
 option(HIOP_DEEPCHECKS "Extra checks and asserts in the code with a high penalty on performance" ON)
 
 #with testing drivers capable of 'selfchecking' (-selfcheck)
@@ -157,6 +157,7 @@ else()
   file(APPEND "src/Interface/hiop_defs.hpp" "#ifdef HIOP_USE_MAGMA\n#undef HIOP_USE_MAGMA\n#endif\n")
 endif(HIOP_USE_GPU)
 
+find_package(OpenMP)
 
 if(HIOP_USE_RAJA)
   # Look for CMake configuration file in RAJA installation
@@ -164,7 +165,8 @@ if(HIOP_USE_RAJA)
     PATHS ${RAJA_DIR} ${RAJA_DIR}/share/raja/cmake
     REQUIRED)
 endif()
-
+set(RAJA_INCLUDE_DIR ${RAJA_DIR}/../../../include CACHE PATH "RAJA includes")
+message("---- ${RAJA_DIR}/../../../include")
 
 if(HIOP_USE_UMPIRE)
   # Look for CMake configuration file in Umpire installation
