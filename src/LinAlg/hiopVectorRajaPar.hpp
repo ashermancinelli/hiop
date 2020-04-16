@@ -152,11 +152,17 @@ public:
   inline long long get_local_size() const { return n_local; }
   inline double* local_data() { return data; }
   inline const double* local_data_const() const { return data; }
+  inline double* local_data_dev() { return data_dev; }
+  inline const double* local_data_dev_const() const { return data_dev; }
   inline MPI_Comm get_mpi_comm() const { return comm; }
+
+  void copyToDev();
+  void copyFromDev();
 
 protected:
   MPI_Comm comm;
   double* data;
+  double* data_dev;
   long long glob_il, glob_iu;
   long long n_local;
 private:

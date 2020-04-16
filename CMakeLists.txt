@@ -165,8 +165,6 @@ if(HIOP_USE_RAJA)
     PATHS ${RAJA_DIR} ${RAJA_DIR}/share/raja/cmake
     REQUIRED)
 endif()
-set(RAJA_INCLUDE_DIR ${RAJA_DIR}/../../../include CACHE PATH "RAJA includes")
-message("---- ${RAJA_DIR}/../../../include")
 
 if(HIOP_USE_UMPIRE)
   # Look for CMake configuration file in Umpire installation

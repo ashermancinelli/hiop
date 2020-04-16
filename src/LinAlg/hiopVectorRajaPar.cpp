@@ -68,7 +68,8 @@ namespace hiop
 
 
 hiopVectorRajaPar::hiopVectorRajaPar(const long long& glob_n, long long* col_part/*=NULL*/, MPI_Comm comm_/*=MPI_COMM_NULL*/)
-  : comm(comm_)
+  : hiopVector(),
+    comm(comm_)
 {
   n = glob_n;
 
@@ -89,13 +90,16 @@ hiopVectorRajaPar::hiopVectorRajaPar(const long long& glob_n, long long* col_par
   n_local=glob_iu-glob_il;
 
   auto& resmgr = umpire::ResourceManager::getInstance();
-  umpire::Allocator allocator = resmgr.getAllocator("HOST");
+  umpire::Allocator hostalloc = resmgr.getAllocator("HOST");
+  umpire::Allocator devalloc  = resmgr.getAllocator("DEVICE");
 
   //  data = new double[n_local];
-  data = static_cast<double*>(allocator.allocate(n_local*sizeof(double)));
+  data = static_cast<double*>(hostalloc.allocate(n_local*sizeof(double)));
+  data_dev = static_cast<double*>(devalloc.allocate(n_local*sizeof(double)));
 }
 
 hiopVectorRajaPar::hiopVectorRajaPar(const hiopVectorRajaPar& v)
+  : hiopVector()
 {
   n_local = v.n_local;
   n = v.n;
@@ -559,7 +563,7 @@ void  hiopVectorRajaPar::addConstant_w_patternSelect(double c, const hiopVector&
   for(int i=0; i<n_local; i++) if(ix_vec[i]==1.) data[i]+=c;
 }
 
-void hiopVectorRajaPar::min( double& m, int& index ) const
+void hiopVectorRajaPar::min( double& /* m */, int& /* index */) const
 {
   assert(false && "not implemented");
 }
@@ -856,4 +860,17 @@ void hiopVectorRajaPar::print(FILE* file, const char* msg/*=NULL*/, int max_elem
   }
 }
 
-};
+void hiopVectorRajaPar::copyToDev()
+{
+  auto& resmgr = umpire::ResourceManager::getInstance();
+  resmgr.copy(data, data_dev);
+}
+
+void hiopVectorRajaPar::copyFromDev()
+{
+  auto& resmgr = umpire::ResourceManager::getInstance();
+  resmgr.copy(data_dev, data);
+}
+
+
+} // namespace hiop
