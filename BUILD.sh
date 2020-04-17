@@ -17,9 +17,10 @@ else
     #  NOTE: The following is required when running from Gitlab CI via slurm job
     export MY_CLUSTER="marianas"
     export MY_GCC_VERSION=7.3.0
-    export MY_CUDA_VERSION=9.2.148
+    export MY_CUDA_VERSION=10.2.89
     export MY_OPENMPI_VERSION=3.1.3
     export MY_CMAKE_VERSION=3.15.3
+    export MY_MAGMA_VERSION=2.5.2_cuda10.2
 fi
 
 module purge
@@ -30,6 +31,7 @@ module load cmake/$MY_CMAKE_VERSION
 
 export MY_RAJA_DIR=/qfs/projects/exasgd/$MY_CLUSTER/raja
 export MY_UMPIRE_DIR=/qfs/projects/exasgd/$MY_CLUSTER/umpire
+export MY_HIOP_MAGMA_DIR=/share/apps/magma/2.5.2/cuda10.2
 
 base_path=`dirname $0`
 #  NOTE: The following is required when running from Gitlab CI via slurm job
@@ -39,13 +41,13 @@ fi
 
 #export MAKEFLAGS="-j 8"
 #export CMAKE_OPTIONS="-GNinja -DCMAKE_BUILD_TYPE=Debug -DENABLE_TESTS=ON"
-export CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DENABLE_TESTS=ON -DHIOP_USE_MPI=ON -DHIOP_DEEPCHECKS=ON -DHIOP_USE_RAJA=On -DRAJA_DIR=$MY_RAJA_DIR -DHIOP_ENABLE_UMPIRE=On -Dumpire_DIR=$MY_UMPIRE_DIR"
+export CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DENABLE_TESTS=ON -DHIOP_USE_MPI=Off -DHIOP_DEEPCHECKS=ON -DHIOP_USE_RAJA=On -DRAJA_DIR=$MY_RAJA_DIR -DHIOP_ENABLE_UMPIRE=On -Dumpire_DIR=$MY_UMPIRE_DIR -DHIOP_USE_GPU=On -DHIOP_MAGMA_DIR=$MY_HIOP_MAGMA_DIR"
 
 BUILDDIR="build"
 rm -rf $BUILDDIR                            || exit 1
 mkdir -p $BUILDDIR                          || exit 1
 cd $BUILDDIR                                || exit 1
-CC=mpicc CXX=mpicxx cmake $CMAKE_OPTIONS .. || exit 1
+cmake $CMAKE_OPTIONS ..                     || exit 1
 cmake --build .                             || exit 1
 ctest                                       || cat Testing/Temporary/LastTest.log
 exit 0

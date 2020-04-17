@@ -18,10 +18,10 @@ void VectorTestsRajaPar::setElement(hiop::hiopVector* x, local_ordinal_type i, r
 /// First need to retrieve hiopVectorRajaPar from the abstract interface
 real_type VectorTestsRajaPar::getElement(const hiop::hiopVector* x, local_ordinal_type i)
 {
-    const hiop::hiopVectorRajaPar* xvec = dynamic_cast<const hiop::hiopVectorRajaPar*>(x);
-    hiop::hiopVectorRajaPar* xv = const_cast<hiop::hiopVectorRajaPar*>(xvec);
-    xv->copyFromDev();
-    return xv->local_data_const()[i];
+    const hiop::hiopVectorRajaPar* xv = dynamic_cast<const hiop::hiopVectorRajaPar*>(x);
+    hiop::hiopVectorRajaPar* xvec = const_cast<hiop::hiopVectorRajaPar*>(xv);
+    xvec->copyFromDev();
+    return xvec->local_data_const()[i];
 }
 
 /// Returns pointer to local ector data
@@ -75,7 +75,7 @@ int VectorTestsRajaPar::verifyAnswer(hiop::hiopVector* x, real_type answer)
     for(local_ordinal_type i=0; i<N; ++i)
         if(!isEqual(xdata[i], answer))
 	{
-	    //std::cout << xdata[i] << " ?= " << answer << "\n";
+	    std::cout << xdata[i] << " ?= " << answer << "\n";
             ++local_fail;
 	}
 

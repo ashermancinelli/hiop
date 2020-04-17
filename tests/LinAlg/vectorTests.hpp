@@ -62,7 +62,7 @@ public:
 
         for(local_ordinal_type i=0; i<N; ++i)
         {
-            setElement(&x, i, zero);
+            setElement(&x, i, two);
         }
 
         x.setToConstant(one);

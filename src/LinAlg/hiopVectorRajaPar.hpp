@@ -49,22 +49,6 @@
 #ifndef HIOP_VECTOR_RAJA_PAR
 #define HIOP_VECTOR_RAJA_PAR
 
-// #include "hiop_defs.hpp"
-//
-// #ifdef HIOP_USE_MPI
-// #include "mpi.h"
-// #else
-//
-// #ifndef MPI_COMM
-// #define MPI_Comm int
-// #endif
-// #ifndef MPI_COMM_NULL
-// #define MPI_COMM_NULL 0
-// #endif
-// #include <cstddef>
-//
-// #endif
-
 #include <cstdio>
 
 #include "hiopVector.hpp"

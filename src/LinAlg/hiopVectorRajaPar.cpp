@@ -67,8 +67,17 @@
 namespace hiop
 {
 
-using hiop_raja_policy = RAJA::cuda_exec<128>;
-#define RAJA_LAMBDA [=] __device__
+#ifdef HIOP_USE_CUDA
+  const std::string hiop_umpire_dev = "DEVICE"; 
+  using hiop_raja_exec   = RAJA::cuda_exec<128>;
+  using hiop_raja_reduce = RAJA::cuda_reduce;
+  #define RAJA_LAMBDA [=] __device__
+#else
+  const std::string hiop_umpire_dev = "HOST"; 
+  using hiop_raja_exec   = RAJA::omp_parallel_for_exec;
+  using hiop_raja_reduce = RAJA::omp_reduce;
+  #define RAJA_LAMBDA [=]
+#endif
 
 hiopVectorRajaPar::hiopVectorRajaPar(const long long& glob_n, long long* col_part/*=NULL*/, MPI_Comm comm_/*=MPI_COMM_NULL*/)
   : hiopVector(),
@@ -94,7 +103,7 @@ hiopVectorRajaPar::hiopVectorRajaPar(const long long& glob_n, long long* col_par
 
   auto& resmgr = umpire::ResourceManager::getInstance();
   umpire::Allocator hostalloc = resmgr.getAllocator("HOST");
-  umpire::Allocator devalloc  = resmgr.getAllocator("DEVICE");
+  umpire::Allocator devalloc  = resmgr.getAllocator(hiop_umpire_dev);
 
   //  data = new double[n_local];
   data = static_cast<double*>(hostalloc.allocate(n_local*sizeof(double)));
@@ -111,7 +120,7 @@ hiopVectorRajaPar::hiopVectorRajaPar(const hiopVectorRajaPar& v)
   comm = v.comm;
   auto& resmgr = umpire::ResourceManager::getInstance();
   umpire::Allocator hostalloc = resmgr.getAllocator("HOST");
-  umpire::Allocator devalloc  = resmgr.getAllocator("DEVICE");
+  umpire::Allocator devalloc  = resmgr.getAllocator(hiop_umpire_dev);
 
   //  data = new double[n_local];
   data = static_cast<double*>(hostalloc.allocate(n_local*sizeof(double)));
@@ -122,7 +131,7 @@ hiopVectorRajaPar::~hiopVectorRajaPar()
 {
   auto& resmgr = umpire::ResourceManager::getInstance();
   umpire::Allocator hostalloc = resmgr.getAllocator("HOST");
-  umpire::Allocator devalloc  = resmgr.getAllocator("DEVICE");
+  umpire::Allocator devalloc  = resmgr.getAllocator(hiop_umpire_dev);
 
   hostalloc.deallocate(data);
   devalloc.deallocate(data_dev);
@@ -159,17 +168,12 @@ void hiopVectorRajaPar::setToZero()
 
 void hiopVectorRajaPar::setToConstant(double c)
 {
-  //copyToDev(); // Temporary, until all data is moved to device
   //for(int i=0; i<n_local; i++)
   //  data[i] = c;
-  //RAJA::forall<RAJA::omp_parallel_for_exec>(RAJA::RangeSegment(0, n_local), 
-  RAJA::forall<hiop_raja_policy>( RAJA::RangeSegment(0, n_local),
+  RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
 				  RAJA_LAMBDA(RAJA::Index_type i) {
 				    data_dev[i] = c;
 				  });
-  //copyFromDev();
-  //  for(int i=0; i<n_local; i++) std::cout << data[i] << "\n";
-  
 }
 
 void hiopVectorRajaPar::setToConstant_w_patternSelect(double c, const hiopVector& select)
@@ -347,8 +351,8 @@ double hiopVectorRajaPar::infnorm_local() const
 double hiopVectorRajaPar::onenorm() const
 {
   //double nrm1=0.; for(int i=0; i<n_local; i++) nrm1 += fabs(data[i]);
-  RAJA::ReduceSum< RAJA::cuda_reduce, double > norm(0.0);
-  RAJA::forall<hiop_raja_policy>( RAJA::RangeSegment(0, n_local),
+  RAJA::ReduceSum< hiop_raja_reduce, double > norm(0.0);
+  RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
 				  RAJA_LAMBDA(RAJA::Index_type i) {
 				    norm += std::abs(data_dev[i]);
 				  });
@@ -876,13 +880,13 @@ void hiopVectorRajaPar::print(FILE* file, const char* msg/*=NULL*/, int max_elem
 void hiopVectorRajaPar::copyToDev()
 {
   auto& resmgr = umpire::ResourceManager::getInstance();
-  resmgr.copy(data, data_dev);
+  resmgr.copy(data_dev, data);
 }
 
 void hiopVectorRajaPar::copyFromDev()
 {
   auto& resmgr = umpire::ResourceManager::getInstance();
-  resmgr.copy(data_dev, data);
+  resmgr.copy(data, data_dev);
 }
 
 

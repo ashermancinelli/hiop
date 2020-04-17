@@ -160,8 +160,9 @@ endif(HIOP_USE_GPU)
 
 
 if(HIOP_USE_GPU)
-  file(APPEND "src/Interface/hiop_defs.hpp" "#define HIOP_USE_MAGMA\n")
+  file(APPEND "src/Interface/hiop_defs.hpp" "\n#define HIOP_USE_CUDA\n#define HIOP_USE_MAGMA\n")
 else()
+  file(APPEND "src/Interface/hiop_defs.hpp" "#ifdef HIOP_USE_CUDA\n#undef HIOP_USE_CUDA\n#endif\n")
   file(APPEND "src/Interface/hiop_defs.hpp" "#ifdef HIOP_USE_MAGMA\n#undef HIOP_USE_MAGMA\n#endif\n")
 endif(HIOP_USE_GPU)
 

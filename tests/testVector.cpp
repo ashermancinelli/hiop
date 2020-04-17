@@ -44,6 +44,7 @@ int main(int argc, char** argv)
     int fail = 0;
 
     // Test parallel vector
+    if(0)
     {
         if (rank == 0)
           std::cout << "\nTesting default HiOp vector:\n";
@@ -112,12 +113,12 @@ int main(int argc, char** argv)
         if (rank == 0)
           std::cout << "\nTesting HiOp RAJA vector:\n";
 
-        hiop::hiopVectorRajaPar xx(Nglobal, partition, comm);
-        hiop::hiopVectorRajaPar yy(Nglobal, partition, comm);
+        hiop::hiopVectorRajaPar x(Nglobal, partition, comm);
+        hiop::hiopVectorRajaPar y(Nglobal, partition, comm);
         hiop::tests::VectorTestsRajaPar test;
 
-        fail += test.vectorSetToConstant(xx, rank);
-        fail += test.vectorOnenorm(xx, rank);
+        fail += test.vectorSetToConstant(x, rank);
+        fail += test.vectorOnenorm(x, rank);
     }
 
 
