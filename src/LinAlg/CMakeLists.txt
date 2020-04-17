@@ -6,25 +6,30 @@ set(LinAlg_SRC
   hiopMatrixComplexSparseTriplet.cpp
 )
 
+if(HIOP_USE_GPU)
+  set_source_files_properties(hiopVectorRajaPar.cpp PROPERTIES LANGUAGE CUDA)
+endif()
 
 if(HIOP_USE_UMPIRE)
   set(LinAlg_SRC ${LinAlg_SRC} hiopVectorRajaPar.cpp)
   include_directories(${UMPIRE_INCLUDE_DIRS} ${camp_INSTALL_PREFIX}/include)
 endif()
-message("Include dirs: ${UMPIRE_INCLUDE_DIRS} ${camp_INSTALL_PREFIX}/include")
 
 add_library(hiopLinAlg OBJECT ${LinAlg_SRC})
 
-target_compile_options(hiopLinAlg PRIVATE "-fopenmp") 
+# Figure out how to make these play nicely with nvcc
+#target_link_libraries(hiopLinAlg
+#    PUBLIC
+#        hiop_warnings_1
+#        hiop_options)
 
-target_link_libraries(hiopLinAlg
-    PUBLIC
-        hiop_warnings_1
-        hiop_options)
+if(HIOP_USE_UMPIRE)
+    target_link_libraries(hiopLinAlg PUBLIC umpire RAJA OpenMP::OpenMP_CXX)
+endif()
+
+
 
 add_executable(test_hiopLinAlgComplex.exe test_hiopLinalgComplex.cpp)
-
-target_compile_options(test_hiopLinAlgComplex.exe PRIVATE "-fopenmp") 
 
 target_link_libraries(test_hiopLinAlgComplex.exe
     PRIVATE
@@ -36,7 +41,7 @@ target_link_libraries(test_hiopLinAlgComplex.exe
         hiop_warnings_3
         hiop_options)
 
-if(HIOP_USE_UMPIRE)
-  target_link_libraries(test_hiopLinAlgComplex.exe PRIVATE umpire RAJA)
-endif()
+#if(HIOP_USE_UMPIRE)
+#  target_link_libraries(test_hiopLinAlgComplex.exe)
+#endif()
 

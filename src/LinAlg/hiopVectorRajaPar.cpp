@@ -63,9 +63,12 @@
 
 #include <RAJA/RAJA.hpp>
 
+
 namespace hiop
 {
 
+using hiop_raja_policy = RAJA::cuda_exec<128>;
+#define RAJA_LAMBDA [=] __device__
 
 hiopVectorRajaPar::hiopVectorRajaPar(const long long& glob_n, long long* col_part/*=NULL*/, MPI_Comm comm_/*=MPI_COMM_NULL*/)
   : hiopVector(),
@@ -107,20 +110,26 @@ hiopVectorRajaPar::hiopVectorRajaPar(const hiopVectorRajaPar& v)
   glob_iu = v.glob_iu;
   comm = v.comm;
   auto& resmgr = umpire::ResourceManager::getInstance();
-  umpire::Allocator allocator = resmgr.getAllocator("HOST");
+  umpire::Allocator hostalloc = resmgr.getAllocator("HOST");
+  umpire::Allocator devalloc  = resmgr.getAllocator("DEVICE");
 
   //  data = new double[n_local];
-  data = static_cast<double*>(allocator.allocate(n_local*sizeof(double)));
+  data = static_cast<double*>(hostalloc.allocate(n_local*sizeof(double)));
+  data_dev = static_cast<double*>(devalloc.allocate(n_local*sizeof(double)));
 }
 
 hiopVectorRajaPar::~hiopVectorRajaPar()
 {
   auto& resmgr = umpire::ResourceManager::getInstance();
-  umpire::Allocator allocator = resmgr.getAllocator("HOST");
+  umpire::Allocator hostalloc = resmgr.getAllocator("HOST");
+  umpire::Allocator devalloc  = resmgr.getAllocator("DEVICE");
 
-  allocator.deallocate(data);
+  hostalloc.deallocate(data);
+  devalloc.deallocate(data_dev);
   //delete[] data;
+
   data=nullptr;
+  data_dev = nullptr;
 }
 
 hiopVectorRajaPar* hiopVectorRajaPar::alloc_clone() const
@@ -150,12 +159,17 @@ void hiopVectorRajaPar::setToZero()
 
 void hiopVectorRajaPar::setToConstant(double c)
 {
+  //copyToDev(); // Temporary, until all data is moved to device
   //for(int i=0; i<n_local; i++)
   //  data[i] = c;
-  RAJA::forall<RAJA::omp_parallel_for_exec>(RAJA::RangeSegment(0, n_local), 
-    [=] (int i) {
-      data[i] = c;
-    });
+  //RAJA::forall<RAJA::omp_parallel_for_exec>(RAJA::RangeSegment(0, n_local), 
+  RAJA::forall<hiop_raja_policy>( RAJA::RangeSegment(0, n_local),
+				  RAJA_LAMBDA(RAJA::Index_type i) {
+				    data_dev[i] = c;
+				  });
+  //copyFromDev();
+  //  for(int i=0; i<n_local; i++) std::cout << data[i] << "\n";
+  
 }
 
 void hiopVectorRajaPar::setToConstant_w_patternSelect(double c, const hiopVector& select)
@@ -333,12 +347,11 @@ double hiopVectorRajaPar::infnorm_local() const
 double hiopVectorRajaPar::onenorm() const
 {
   //double nrm1=0.; for(int i=0; i<n_local; i++) nrm1 += fabs(data[i]);
-
-  RAJA::ReduceSum< RAJA::omp_reduce, double > norm(0.0);
-  RAJA::forall<RAJA::omp_parallel_for_exec>( RAJA::RangeSegment(0, n_local),
-					     [=](RAJA::Index_type i) {
-					       norm += std::abs(data[i]);
-					     });
+  RAJA::ReduceSum< RAJA::cuda_reduce, double > norm(0.0);
+  RAJA::forall<hiop_raja_policy>( RAJA::RangeSegment(0, n_local),
+				  RAJA_LAMBDA(RAJA::Index_type i) {
+				    norm += std::abs(data_dev[i]);
+				  });
   double nrm1 = static_cast<double>(norm.get());
 #ifdef HIOP_USE_MPI
   double nrm1_global;

@@ -14,7 +14,7 @@ target_link_libraries(hiop_warnings_3 INTERFACE hiop_warnings_2)
 
 target_compile_features(hiop_options
     INTERFACE
-        cxx_std_17
+        cxx_std_11
         cxx_alignas
         cxx_alignof
         cxx_attributes
@@ -87,6 +87,14 @@ project (hiop)
 # enable Fortran for Fortran name mangling
 enable_language(Fortran)
 
+# Enable CUDA for build and execution on NVIDIA GPUs
+enable_language(CUDA)
+if(NOT DEFINED CMAKE_CUDA_STANDARD)
+    set(CMAKE_CUDA_STANDARD 11)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+endif()
+set(CMAKE_CUDA_FLAGS "-arch=sm_35 --extended-lambda")
+
 # Create header for Fortran name mangling
 include(FortranCInterface)
 FortranCInterface_HEADER(FortranCInterface.hpp MACRO_NAMESPACE "FC_")
@@ -94,8 +102,8 @@ FortranCInterface_HEADER(FortranCInterface.hpp MACRO_NAMESPACE "FC_")
 file(WRITE "src/Interface/hiop_defs.hpp" "")
 
 
-option(HIOP_USE_MPI "Build with MPI support" ON)
-option(HIOP_USE_GPU "Build with support for GPUs - Magma and cuda libraries" OFF)
+option(HIOP_USE_MPI "Build with MPI support" OFF)
+option(HIOP_USE_GPU "Build with support for GPUs - Magma and cuda libraries" ON)
 option(HIOP_USE_UMPIRE "Build with portable memory management library Umpire" ON)
 option(HIOP_USE_RAJA   "Build with portability abstraction library RAJA" ON)
 option(HIOP_DEEPCHECKS "Extra checks and asserts in the code with a high penalty on performance" ON)
@@ -183,7 +191,7 @@ endif(HIOP_DEEPCHECKS)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 
-find_package(OpenMP)
+#find_package(OpenMP)
 
 if(NOT DEFINED LAPACK_LIBRARIES)
   # in case the toolchain defines them

@@ -8,8 +8,10 @@ namespace hiop::tests {
 void VectorTestsRajaPar::setElement(hiop::hiopVector* x, local_ordinal_type i, real_type value)
 {
     hiop::hiopVectorRajaPar* xvec = dynamic_cast<hiop::hiopVectorRajaPar*>(x);
+    xvec->copyFromDev();
     real_type* xdat = xvec->local_data();
     xdat[i] = value;
+    xvec->copyToDev();
 }
 
 /// Returns element _i_ of vector _x_.
@@ -17,7 +19,9 @@ void VectorTestsRajaPar::setElement(hiop::hiopVector* x, local_ordinal_type i, r
 real_type VectorTestsRajaPar::getElement(const hiop::hiopVector* x, local_ordinal_type i)
 {
     const hiop::hiopVectorRajaPar* xvec = dynamic_cast<const hiop::hiopVectorRajaPar*>(x);
-    return xvec->local_data_const()[i];
+    hiop::hiopVectorRajaPar* xv = const_cast<hiop::hiopVectorRajaPar*>(xvec);
+    xv->copyFromDev();
+    return xv->local_data_const()[i];
 }
 
 /// Returns pointer to local ector data
@@ -61,13 +65,19 @@ bool VectorTestsRajaPar::reduceReturn(int failures, hiop::hiopVector* x)
 /// Checks if _local_ vector elements are set to `answer`.
 int VectorTestsRajaPar::verifyAnswer(hiop::hiopVector* x, real_type answer)
 {
+  hiop::hiopVectorRajaPar* xvec = dynamic_cast<hiop::hiopVectorRajaPar*>(x);                            
+
+  xvec->copyFromDev();
     const local_ordinal_type N = getLocalSize(x);
     const real_type* xdata = getLocalData(x);
 
     int local_fail = 0;
     for(local_ordinal_type i=0; i<N; ++i)
         if(!isEqual(xdata[i], answer))
+	{
+	    //std::cout << xdata[i] << " ?= " << answer << "\n";
             ++local_fail;
+	}
 
     return local_fail;
 }
