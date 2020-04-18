@@ -93,7 +93,7 @@ if(NOT DEFINED CMAKE_CUDA_STANDARD)
     set(CMAKE_CUDA_STANDARD 11)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 endif()
-set(CMAKE_CUDA_FLAGS "-arch=sm_35 --extended-lambda")
+set(CMAKE_CUDA_FLAGS "-arch=sm_35 --expt-extended-lambda")
 
 # Create header for Fortran name mangling
 include(FortranCInterface)

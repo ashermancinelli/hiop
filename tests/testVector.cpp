@@ -44,7 +44,6 @@ int main(int argc, char** argv)
     int fail = 0;
 
     // Test parallel vector
-    if(0)
     {
         if (rank == 0)
           std::cout << "\nTesting default HiOp vector:\n";
