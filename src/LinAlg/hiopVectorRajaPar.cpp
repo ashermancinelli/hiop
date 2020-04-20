@@ -170,9 +170,10 @@ void hiopVectorRajaPar::setToConstant(double c)
 {
   //for(int i=0; i<n_local; i++)
   //  data[i] = c;
+  double* local_data_dev = data_dev;
   RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
 				  RAJA_LAMBDA(RAJA::Index_type i) {
-				    data_dev[i] = c;
+				    local_data_dev[i] = c;
 				  });
 }
 
@@ -351,10 +352,11 @@ double hiopVectorRajaPar::infnorm_local() const
 double hiopVectorRajaPar::onenorm() const
 {
   //double nrm1=0.; for(int i=0; i<n_local; i++) nrm1 += fabs(data[i]);
+  double* local_data_dev = data_dev;
   RAJA::ReduceSum< hiop_raja_reduce, double > norm(0.0);
   RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
 				  RAJA_LAMBDA(RAJA::Index_type i) {
-				    norm += std::abs(data_dev[i]);
+				    norm += std::abs(local_data_dev[i]);
 				  });
   double nrm1 = static_cast<double>(norm.get());
 #ifdef HIOP_USE_MPI
