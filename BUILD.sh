@@ -13,14 +13,18 @@ if [ "$MY_CLUSTER" == "newell" ]; then
     export MY_OPENMPI_VERSION=3.1.5
     export MY_CMAKE_VERSION=3.16.4
     export MY_MAGMA_VERSION=2.5.2_cuda10.2
+    module load magma/$MY_MAGMA_VERSION
+    export MY_HIOP_MAGMA_DIR=/share/apps/magma/2.5.2/cuda10.2
 else
     #  NOTE: The following is required when running from Gitlab CI via slurm job
     export MY_CLUSTER="marianas"
     export MY_GCC_VERSION=7.3.0
-    export MY_CUDA_VERSION=10.2.89
+    export MY_CUDA_VERSION=10.1.243
     export MY_OPENMPI_VERSION=3.1.3
     export MY_CMAKE_VERSION=3.15.3
-    export MY_MAGMA_VERSION=2.5.2_cuda10.2
+    #export MY_MAGMA_VERSION=2.5.2_cuda10.2
+    export MY_HIOP_MAGMA_DIR=/qfs/projects/exasgd/marianas/magma
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MY_HIOP_MAGMA_DIR
 fi
 
 module purge
@@ -31,7 +35,6 @@ module load cmake/$MY_CMAKE_VERSION
 
 export MY_RAJA_DIR=/qfs/projects/exasgd/$MY_CLUSTER/raja
 export MY_UMPIRE_DIR=/qfs/projects/exasgd/$MY_CLUSTER/umpire
-export MY_HIOP_MAGMA_DIR=/share/apps/magma/2.5.2/cuda10.2
 
 base_path=`dirname $0`
 #  NOTE: The following is required when running from Gitlab CI via slurm job
