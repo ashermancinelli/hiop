@@ -13,8 +13,9 @@ if [ "$MY_CLUSTER" == "newell" ]; then
     export MY_OPENMPI_VERSION=3.1.5
     export MY_CMAKE_VERSION=3.16.4
     export MY_MAGMA_VERSION=2.5.2_cuda10.2
-    module load magma/$MY_MAGMA_VERSION
     export MY_HIOP_MAGMA_DIR=/share/apps/magma/2.5.2/cuda10.2
+    module load magma/$MY_MAGMA_VERSION
+    export MY_NVCC_GENCODE_FLAGS="sm_70"
 else
     #  NOTE: The following is required when running from Gitlab CI via slurm job
     export MY_CLUSTER="marianas"
@@ -22,9 +23,11 @@ else
     export MY_CUDA_VERSION=10.1.243
     export MY_OPENMPI_VERSION=3.1.3
     export MY_CMAKE_VERSION=3.15.3
-    #export MY_MAGMA_VERSION=2.5.2_cuda10.2
+    # export MY_MAGMA_VERSION=2.5.2_cuda10.2
+    # export MY_HIOP_MAGMA_DIR=/share/apps/magma/2.5.2/cuda10.2
     export MY_HIOP_MAGMA_DIR=/qfs/projects/exasgd/marianas/magma
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MY_HIOP_MAGMA_DIR
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MY_HIOP_MAGMA_DIR/lib
+    export MY_NVCC_GENCODE_FLAGS="sm_60"
 fi
 
 module purge
@@ -42,9 +45,18 @@ if [ -z "$SLURM_SUBMIT_DIR" ]; then
     cd $base_path          || exit 1
 fi
 
-#export MAKEFLAGS="-j 8"
-#export CMAKE_OPTIONS="-GNinja -DCMAKE_BUILD_TYPE=Debug -DENABLE_TESTS=ON"
-export CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DENABLE_TESTS=ON -DHIOP_USE_MPI=Off -DHIOP_DEEPCHECKS=ON -DHIOP_USE_RAJA=On -DRAJA_DIR=$MY_RAJA_DIR -DHIOP_ENABLE_UMPIRE=On -Dumpire_DIR=$MY_UMPIRE_DIR -DHIOP_USE_GPU=On -DHIOP_MAGMA_DIR=$MY_HIOP_MAGMA_DIR"
+export CMAKE_OPTIONS="\
+    -DCMAKE_BUILD_TYPE=Debug \
+    -DENABLE_TESTS=ON \
+    -DHIOP_USE_MPI=Off \
+    -DHIOP_DEEPCHECKS=ON \
+    -DHIOP_USE_RAJA=On \
+    -DRAJA_DIR=$MY_RAJA_DIR \
+    -DHIOP_USE_UMPIRE=On \
+    -Dumpire_DIR=$MY_UMPIRE_DIR \
+    -DHIOP_USE_GPU=On \
+    -DHIOP_MAGMA_DIR=$MY_HIOP_MAGMA_DIR \
+    -DHIOP_NVCC_GENCODE_FLAGS=$MY_NVCC_GENCODE_FLAGS"
 
 BUILDDIR="build"
 rm -rf $BUILDDIR                            || exit 1

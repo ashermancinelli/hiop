@@ -84,6 +84,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 endif()
 
 project (hiop)
+
 # enable Fortran for Fortran name mangling
 enable_language(Fortran)
 
@@ -93,7 +94,15 @@ if(NOT DEFINED CMAKE_CUDA_STANDARD)
     set(CMAKE_CUDA_STANDARD 11)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 endif()
-set(CMAKE_CUDA_FLAGS "-arch=sm_35 --expt-extended-lambda")
+
+# Set CUDA flags
+if(HIOP_NVCC_GENCODE_FLAGS)
+    set(CMAKE_CUDA_FLAGS "-arch=${HIOP_NVCC_GENCODE_FLAGS} --expt-extended-lambda")
+    message(STATUS "Using CUDA arch ${HIOP_NVCC_GENCODE_FLAGS}")
+else()
+    set(CMAKE_CUDA_FLAGS "-arch=sm_35 --expt-extended-lambda")
+    message(STATUS "Using CUDA arch sm_35")
+endif()
 
 # Create header for Fortran name mangling
 include(FortranCInterface)
