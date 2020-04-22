@@ -114,10 +114,21 @@ int main(int argc, char** argv)
 
         hiop::hiopVectorRajaPar x(Nglobal, partition, comm);
         hiop::hiopVectorRajaPar y(Nglobal, partition, comm);
+        hiop::hiopVectorRajaPar z(Nglobal, partition, comm);
+        hiop::hiopVectorRajaPar a(Nglobal, partition, comm);
         hiop::tests::VectorTestsRajaPar test;
 
         fail += test.vectorSetToConstant(x, rank);
+        fail += test.vectorSetToConstant_w_patternSelect(x, y, rank);
+        fail += test.vectorSetToZero(x, rank);
         fail += test.vectorOnenorm(x, rank);
+        fail += test.vectorIsfinite(x, rank);
+        fail += test.vectorIsinf(x, rank);
+        fail += test.vectorIsnan(x, rank);
+        fail += test.vectorAllPositive_w_patternSelect(x, y, rank);
+        fail += test.vectorAdjustDuals_plh(x, y, z, a, rank);
+        // fail += test.vectorAxdzpy_w_patternSelect(x, y, z, rank);
+        fail += test.vectorFractionToTheBdry_w_pattern(x, y, z, rank);
     }
 
 

@@ -313,6 +313,17 @@ addMDinvNtransToSymDeMatUTri(int row_dest_start, int col_dest_start,
 
   double acc;
 
+  // only parallelize these two outter loops
+  //
+  // sort amount of work per thread/exe unit
+  // assign in order of most-> least work to better
+  // distribute workload
+  //
+  // These are multiplied many times, but sparsity pattern
+  // remains the same. We can do some preprocessing to save on 
+  // thread execution time
+  //
+  // compressed row/col patterns?
   for(int i=0; i<m1; i++) {
     // j>=i
     for(int j=0; j<m2; j++) {
@@ -321,16 +332,24 @@ addMDinvNtransToSymDeMatUTri(int row_dest_start, int col_dest_start,
       acc = 0.;
       int ki=M1.row_starts->idx_start[i], kj=M2.row_starts->idx_start[j];
       while(ki<M1.row_starts->idx_start[i+1] && kj<M2.row_starts->idx_start[j+1]) {
-   	assert(ki<M1.nnz); 
-   	assert(kj<M2.nnz);
-   	if(M1.jCol[ki] == M2.jCol[kj]) { 
-	  acc += M1.values[ki] / DM[this->jCol[ki]] * M2.values[kj];
-   	  ki++;
-   	  kj++;
-   	} else {
-   	  if(this->jCol[ki]<this->jCol[kj]) ki++;
-   	  else                              kj++;
-   	}
+          assert(ki<M1.nnz); 
+          assert(kj<M2.nnz);
+
+          // Sort these before dipatchign to GPU?
+          //
+          // TODO sort such that we iterate over i,j out of order
+          // same sparsity pattern, so keep sorted pattern to
+          // reuse next kernel launch
+          //
+          // similar to petsc sparse coloring alg for sparse matmul
+          if(M1.jCol[ki] == M2.jCol[kj]) { 
+              acc += M1.values[ki] / DM[this->jCol[ki]] * M2.values[kj];
+              ki++;
+              kj++;
+          } else {
+              if(this->jCol[ki]<this->jCol[kj]) ki++;
+              else                              kj++;
+          }
       } //end of loop over ki and kj
 
 #ifdef HIOP_DEEPCHECKS

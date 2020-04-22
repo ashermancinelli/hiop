@@ -51,6 +51,9 @@
 
 #include <cstdio>
 
+#include <umpire/Allocator.hpp>
+#include <umpire/ResourceManager.hpp>
+
 #include "hiopVector.hpp"
 
 namespace hiop
@@ -143,13 +146,14 @@ public:
   void copyToDev();
   void copyFromDev();
 
-protected:
+private:
+  umpire::Allocator hostalloc;
+  umpire::Allocator devalloc;
   MPI_Comm comm;
   double* data;
   double* data_dev;
   long long glob_il, glob_iu;
   long long n_local;
-private:
   /** copy constructor, for internal/private use only (it doesn't copy the elements.) */
   hiopVectorRajaPar(const hiopVectorRajaPar&);
 
