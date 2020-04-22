@@ -14,14 +14,14 @@ public:
     MatrixTests() {}
     virtual ~MatrixTests(){}
 
-    int matrixNumRows(const hiop::hiopMatrix& A, global_ordinal_type M, const int rank)
+    int matrixNumRows(hiop::hiopMatrix& A, global_ordinal_type M, const int rank)
     {
         const bool fail = A.m() == M ? 0 : 1;
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
     }
 
-    int matrixNumCols(const hiop::hiopMatrix& A, global_ordinal_type N, const int rank)
+    int matrixNumCols(hiop::hiopMatrix& A, global_ordinal_type N, const int rank)
     {
         const bool fail = A.n() == N ? 0 : 1;
         printMessage(fail, __func__, rank);
