@@ -79,6 +79,7 @@ int main(int argc, char** argv)
         }
 
         fail += test.matrixAddToSymDenseMatrixUpperTriangle(A_nxn, A_mxk, rank);
+        fail += test.matrixTransAddToSymDenseMatrixUpperTriangle(A_nxn, A_mxk, rank);
         fail += test.matrixAddMatrix(A_mxn, B_mxn, rank);
         fail += test.matrixAssertSymmetry(A_nxn, rank);
     }

@@ -412,6 +412,57 @@ public:
         return reduceReturn(fail, &A);
     }
 
+    /*
+     * Block of W += alpha*A
+     *
+     * Block of W summed with A is in the trasposed
+     * location of the same call to addToSymDenseMatrixUpperTriangle
+     *
+     * Precondition: W is square
+     */
+    int matrixTransAddToSymDenseMatrixUpperTriangle(
+            hiop::hiopMatrix& _W,
+            hiop::hiopMatrix& A,
+            const int rank)
+    {
+        // This method only takes hiopMatrixDense
+        auto W = dynamic_cast<hiop::hiopMatrixDense*>(&_W);
+        const local_ordinal_type M = getNumLocRows(W);
+        const local_ordinal_type N_loc = getNumLocCols(W);
+        const local_ordinal_type A_M = getNumLocRows(&A);
+        const local_ordinal_type A_N_loc = getNumLocCols(&A);
+        assert(W->m() == W->n());
+        assert(M >= getNumLocRows(&A));
+        assert(W->n() >= A.n());
+
+        const local_ordinal_type start_idx_row = 0;
+        const local_ordinal_type start_idx_col = W->n() - A.n();
+        int fail = 0;
+
+        // Check with alpha=1 (only the matrix addition)
+        A.setToConstant(one);
+        W->setToConstant(one);
+        A.transAddToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, one, *W);
+        real_type expected = two;
+        for (int i=0; i<A_M; i++)
+            for (int j=0; j<A_N_loc; j++)
+                if (!isEqual(getLocalElement(W, start_idx_row+j, start_idx_col+i), expected))
+                    fail++;
+
+        // Check with non-1 alpha
+        A.setToConstant(one);
+        W->setToConstant(one);
+        A.transAddToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, two, *W);
+        expected = two * one + one;
+        for (int i=0; i<A_M; i++)
+            for (int j=0; j<A_N_loc; j++)
+                if (!isEqual(getLocalElement(W, start_idx_row+j, start_idx_col+i), expected))
+                    fail++;
+
+        printMessage(fail, __func__, rank);
+        return reduceReturn(fail, &A);
+    }
+
     int matrixAssertSymmetry(
             hiop::hiopMatrix& A,
             const int rank)
