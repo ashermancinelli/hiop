@@ -48,6 +48,7 @@ int main(int argc, char** argv)
         hiop::hiopMatrixDense A_mxn(M_global, N_global, n_partition, comm);
         hiop::hiopMatrixDense B_mxn(M_global, N_global, n_partition, comm);
         hiop::hiopMatrixDense A_nxn(N_global, N_global, n_partition, comm);
+        hiop::hiopMatrixDense B_nxn(N_global, N_global, n_partition, comm);
         hiop::hiopMatrixDense A_kxn(K_global, N_global, n_partition, comm);
         hiop::hiopMatrixDense A_mxk(M_global, K_global, k_partition, comm);
         //                      ^^^
@@ -77,7 +78,9 @@ int main(int argc, char** argv)
             fail += test.matrixAddSubDiagonal(A_nxn, x_n, rank);
         }
 
+        fail += test.matrixAddToSymDenseMatrixUpperTriangle(A_nxn, A_mxk, rank);
         fail += test.matrixAddMatrix(A_mxn, B_mxn, rank);
+        fail += test.matrixAssertSymmetry(A_nxn, rank);
     }
 
     // Test RAJA matrix
