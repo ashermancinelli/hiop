@@ -46,6 +46,7 @@ int main(int argc, char** argv)
     {
         // Matrix dimensions denoted by subscript
         hiop::hiopMatrixDense A_mxn(M_global, N_global, n_partition, comm);
+        hiop::hiopMatrixDense B_mxn(M_global, N_global, n_partition, comm);
         hiop::hiopMatrixDense A_nxn(N_global, N_global, n_partition, comm);
         hiop::hiopMatrixDense A_kxn(K_global, N_global, n_partition, comm);
         hiop::hiopMatrixDense A_mxk(M_global, K_global, k_partition, comm);
@@ -72,10 +73,11 @@ int main(int argc, char** argv)
             fail += test.matrixTransTimesMat(A_mxk, A_kxn, A_mxn, rank);
             fail += test.matrixTimesMatTrans(A_mxk, A_kxn, A_mxn, rank);
             */
-
             fail += test.matrixAddDiagonal(A_nxn, x_n, rank);
             fail += test.matrixAddSubDiagonal(A_nxn, x_n, rank);
         }
+
+        fail += test.matrixAddMatrix(A_mxn, B_mxn, rank);
     }
 
     // Test RAJA matrix
