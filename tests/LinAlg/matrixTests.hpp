@@ -263,27 +263,31 @@ public:
         int fail = 0;
         const local_ordinal_type M = getNumLocRows(&A);
         const local_ordinal_type N = getNumLocCols(&A);
+        assert(x.get_size()==A.n());
+        assert(x.get_size()==A.m());
         assert(N == getLocalSize(&x));
         assert(M == getLocalSize(&x));
-        assert(M == A.n());
-        assert(A.n() == x.get_size());
-        assert(A.m() == x.get_size());
         constexpr real_type alpha = two;
 
         A.setToConstant(one);
         x.setToConstant(two);
         A.addDiagonal(alpha, x);
         real_type expected = one + (alpha * two);
+        real_type tmp = 0.0;
         for (local_ordinal_type i=0; i<M; i++)
-            if (getLocalElement(&A, i, i) != expected)
-                fail++;
+            for (local_ordinal_type j=0; j<N; j++)
+                if ((tmp=getLocalElement(&A, i, j)) != expected)
+                    if (!(i != j && tmp == one))
+                        fail++;
 
         A.setToConstant(one);
         A.addDiagonal(alpha);
         expected = one + alpha;
         for (local_ordinal_type i=0; i<M; i++)
-            if (getLocalElement(&A, i, i) != expected)
-                fail++;
+            for (local_ordinal_type j=0; j<N; j++)
+                if ((tmp=getLocalElement(&A, i, j)) != expected)
+                    if (!(i != j && tmp == one))
+                        fail++;
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
@@ -323,6 +327,38 @@ public:
             if (getLocalElement(&A, i, i) != (one + two * two))
                 fail++;
         }
+
+        printMessage(fail, __func__, rank);
+        return reduceReturn(fail, &A);
+    }
+    
+    /*
+     * this += alpha * B
+     */
+    int matrixAddMatrix(
+            hiop::hiopMatrix& A,
+            hiop::hiopMatrix& B,
+            const int rank)
+    {
+        const local_ordinal_type M = getNumLocRows(&A);
+        const local_ordinal_type N = getNumLocCols(&A);
+        assert(M == getNumLocRows(&B));
+        assert(N == getNumLocCols(&B));
+
+        A.setToConstant(one);
+        B.setToConstant(one);
+        A.addMatrix(zero, B);
+        int fail = verifyAnswer(&A, one);
+
+        A.setToConstant(one);
+        B.setToConstant(one);
+        A.addMatrix(one, B);
+        fail += verifyAnswer(&A, two);
+
+        A.setToConstant(one);
+        B.setToConstant(one);
+        A.addMatrix(two, B);
+        fail += verifyAnswer(&A, one + two);
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
