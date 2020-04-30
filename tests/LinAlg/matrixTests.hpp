@@ -267,27 +267,45 @@ public:
         assert(x.get_size()==A.m());
         assert(N == getLocalSize(&x));
         assert(M == getLocalSize(&x));
-        constexpr real_type alpha = two;
 
+        // Test alpha==1
         A.setToConstant(one);
-        x.setToConstant(two);
-        A.addDiagonal(alpha, x);
-        real_type expected = one + (alpha * two);
-        real_type tmp = 0.0;
+        x.setToConstant(one);
+        A.addDiagonal(one, x);
+        real_type expected = 0.;
         for (local_ordinal_type i=0; i<M; i++)
             for (local_ordinal_type j=0; j<N; j++)
-                if ((tmp=getLocalElement(&A, i, j)) != expected)
-                    if (!(i != j && tmp == one))
-                        fail++;
+            {
+                if (i==j) expected = one + one;
+                else      expected = one;
 
+                if (getLocalElement(&A, i, j) != expected) fail++;
+            }
+
+        // Test alpha!=1
         A.setToConstant(one);
-        A.addDiagonal(alpha);
-        expected = one + alpha;
+        x.setToConstant(one);
+        A.addDiagonal(two, x);
         for (local_ordinal_type i=0; i<M; i++)
             for (local_ordinal_type j=0; j<N; j++)
-                if ((tmp=getLocalElement(&A, i, j)) != expected)
-                    if (!(i != j && tmp == one))
-                        fail++;
+            {
+                if (i==j) expected = one + two * one;
+                else      expected = one;
+
+                if (getLocalElement(&A, i, j) != expected) fail++;
+            }
+
+        // Test only using alpha (no vec)
+        A.setToConstant(one);
+        A.addDiagonal(one);
+        for (local_ordinal_type i=0; i<M; i++)
+            for (local_ordinal_type j=0; j<N; j++)
+            {
+                if (i==j) expected = one + one;
+                else      expected = one;
+
+                if (getLocalElement(&A, i, j) != expected) fail++;
+            }
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
@@ -296,7 +314,7 @@ public:
     /*
      * this += alpha * subdiag
      */
-    int matrixAddSubDiagonal(
+    int matrixAddSubDiagonalLocal(
             hiop::hiopMatrix& A,
             hiop::hiopVector& x,
             const int rank)
@@ -304,29 +322,58 @@ public:
         int fail = 0;
         const local_ordinal_type M = getNumLocRows(&A);
         const local_ordinal_type N = getNumLocCols(&A);
-        assert(N == getLocalSize(&x));
-        assert(M == getLocalSize(&x));
-        assert(M == A.n());
-        assert(A.n() == x.get_size());
-        assert(A.m() == x.get_size());
+        const local_ordinal_type x_len = getLocalSize(&x);
+        real_type expected = 0.;
+
+        // We're only going to add n-1 elements of the vector
+        local_ordinal_type start_idx = (N - x_len) + 1;
 
         A.setToConstant(one);
-        x.setToConstant(two);
-        A.addSubDiagonal(two, 0, x);
-        for (global_ordinal_type i=0; i<M; i++)
-        {
-            if (getLocalElement(&A, i, i) != (one + two * two))
-                fail++;
-        }
+        x.setToConstant(one);
+        A.addSubDiagonal(start_idx, two, x, 1, x_len-1);
+        for (local_ordinal_type i=0; i<M; i++)
+            for (local_ordinal_type j=0; j<N; j++)
+            {
+                if (i>=start_idx && i==j)
+                    expected = one + two * one;
+                else
+                    expected = one;
+
+                if (getLocalElement(&A, i, j) != expected) fail++;
+            }
+
+        printMessage(fail, __func__, rank);
+        return reduceReturn(fail, &A);
+    }
+
+    /*
+     * this += alpha * subdiag
+     */
+    int matrixAddSubDiagonalDistributed(
+            hiop::hiopMatrix& A,
+            hiop::hiopVector& x,
+            const int rank)
+    {
+        int fail = 0;
+        const local_ordinal_type M = getNumLocRows(&A);
+        const local_ordinal_type N = getNumLocCols(&A);
+        const local_ordinal_type x_len = getLocalSize(&x);
+        local_ordinal_type start_idx = N - x_len;
+        real_type expected = 0.;
 
         A.setToConstant(one);
-        x.setToConstant(two);
-        A.addSubDiagonal(0, two, x, 0, N);
-        for (global_ordinal_type i=0; i<M; i++)
-        {
-            if (getLocalElement(&A, i, i) != (one + two * two))
-                fail++;
-        }
+        x.setToConstant(one);
+        A.addSubDiagonal(two, start_idx, x);
+        for (local_ordinal_type i=0; i<M; i++)
+            for (local_ordinal_type j=0; j<N; j++)
+            {
+                if (i>=start_idx && i==j)
+                    expected = one + two * one;
+                else
+                    expected = one;
+
+                if (getLocalElement(&A, i, j) != expected) fail++;
+            }
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
