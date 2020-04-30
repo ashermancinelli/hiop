@@ -393,8 +393,8 @@ public:
         W->setToConstant(one);
         A.addToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, one, *W);
         real_type expected = two;
-        for (int i=0; i<A_M; i++)
-            for (int j=0; j<A_N_loc; j++)
+        for (local_ordinal_type i=0; i<A_M; i++)
+            for (local_ordinal_type j=0; j<A_N_loc; j++)
                 if (!isEqual(getLocalElement(W, start_idx_row+i, start_idx_col+j), expected))
                     fail++;
 
@@ -403,8 +403,8 @@ public:
         W->setToConstant(one);
         A.addToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, two, *W);
         expected = two * one + one;
-        for (int i=0; i<A_M; i++)
-            for (int j=0; j<A_N_loc; j++)
+        for (local_ordinal_type i=0; i<A_M; i++)
+            for (local_ordinal_type j=0; j<A_N_loc; j++)
                 if (!isEqual(getLocalElement(W, start_idx_row+i, start_idx_col+j), expected))
                     fail++;
 
@@ -444,8 +444,8 @@ public:
         W->setToConstant(one);
         A.transAddToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, one, *W);
         real_type expected = two;
-        for (int i=0; i<A_M; i++)
-            for (int j=0; j<A_N_loc; j++)
+        for (local_ordinal_type i=0; i<A_M; i++)
+            for (local_ordinal_type j=0; j<A_N_loc; j++)
                 if (!isEqual(getLocalElement(W, start_idx_row+j, start_idx_col+i), expected))
                     fail++;
 
@@ -454,10 +454,76 @@ public:
         W->setToConstant(one);
         A.transAddToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, two, *W);
         expected = two * one + one;
-        for (int i=0; i<A_M; i++)
-            for (int j=0; j<A_N_loc; j++)
+        for (local_ordinal_type i=0; i<A_M; i++)
+            for (local_ordinal_type j=0; j<A_N_loc; j++)
                 if (!isEqual(getLocalElement(W, start_idx_row+j, start_idx_col+i), expected))
                     fail++;
+
+        printMessage(fail, __func__, rank);
+        return reduceReturn(fail, &A);
+    }
+
+    /*
+     * Upper diagonal block of W += alpha * A
+     *
+     * Preconditions:
+     * W is square
+     * A is square
+     * degree of A <= degree of W
+     */
+    int matrixAddUpperTriangleToSymDenseMatrixUpperTriangle(
+            hiop::hiopMatrix& _W,
+            hiop::hiopMatrix& A,
+            const int rank)
+    {
+        const local_ordinal_type A_M = getNumLocRows(&A);
+        const local_ordinal_type A_N = getNumLocCols(&A);
+        const local_ordinal_type W_M = getNumLocRows(&_W);
+        const local_ordinal_type W_N = getNumLocCols(&_W);
+        assert(_W.m() == _W.n());
+        assert(A.m() == A.n());
+        assert(_W.n() >= A.n());
+        assert(getNumLocCols(&A) <= getNumLocCols(&_W));
+        auto W = dynamic_cast<hiop::hiopMatrixDense*>(&_W);
+        // Map the upper triangle of A to W starting
+        // at W's upper left corner
+        const local_ordinal_type diag_start = 0;
+        int fail = 0;
+
+        // Test with alpha==1
+        A.setToConstant(one);
+        W->setToConstant(one);
+        A.addUpperTriangleToSymDenseMatrixUpperTriangle(diag_start, one, *W);
+        real_type expected = 0;
+        for (local_ordinal_type i=0; i<W_M; i++)
+            for (local_ordinal_type j=0; j<W_N; j++)
+            {
+                // Is the index inside the mapped upper right triangle of A?
+                if (i>=diag_start && i<diag_start+A_N && j>=i && j<diag_start+A_M)
+                    expected = one + one;
+                // Otherwise, we expect the value to remain unchanged
+                else
+                    expected = one;
+                real_type aux = getLocalElement(W, i, j);
+                if (!isEqual(aux, expected)) fail++;
+            }
+
+        // Test with alpha!=1
+        A.setToConstant(one);
+        W->setToConstant(one);
+        A.addUpperTriangleToSymDenseMatrixUpperTriangle(diag_start, two, *W);
+        for (local_ordinal_type i=0; i<W_M; i++)
+            for (local_ordinal_type j=0; j<W_N; j++)
+            {
+                // Is the index inside the mapped upper right triangle of A?
+                if (i>=diag_start && i<diag_start+A_N && j>=i && j<diag_start+A_M)
+                    expected = two * one + one;
+                // Otherwise, we expect the value to remain unchanged
+                else
+                    expected = one;
+                real_type aux = getLocalElement(W, i, j);
+                if (!isEqual(aux, expected)) fail++;
+            }
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
