@@ -71,11 +71,11 @@ int main(int argc, char** argv)
             /* 
              * Note that these ended up not being used
              * and are not as high of a priority
-            fail += test.matrixTimesMat(A_mxk, A_kxn, A_mxn, rank);
-            fail += test.matrixTransTimesMat(A_mxk, A_kxn, A_mxn, rank);
-            fail += test.matrixTimesMatTrans(A_mxk, A_kxn, A_mxn, rank);
-            */
-            // fail += test.matrixAddDiagonal(A_nxn, x_n, rank);
+             */
+            // fail += test.matrixTimesMat(A_mxk, A_kxn, A_mxn, rank);
+            // fail += test.matrixTransTimesMat(A_mxk, A_kxn, A_mxn, rank);
+            // fail += test.matrixTimesMatTrans(A_mxk, A_kxn, A_mxn, rank);
+            fail += test.matrixAddDiagonal(A_nxn, x_n, rank);
             fail += test.matrixAddSubDiagonalLocal(A_nxn, x_m, rank);
         }
         else
@@ -83,10 +83,12 @@ int main(int argc, char** argv)
             fail += test.matrixAddSubDiagonalDistributed(A_nxn, x_m, rank);
         }
 
+        fail += test.matrixAddMatrix(A_mxn, B_mxn, rank);
         fail += test.matrixAddToSymDenseMatrixUpperTriangle(A_nxn, A_mxk, rank);
         fail += test.matrixTransAddToSymDenseMatrixUpperTriangle(A_nxn, A_mxk, rank);
         fail += test.matrixAddUpperTriangleToSymDenseMatrixUpperTriangle(A_nxn, A_kxk, rank);
-        fail += test.matrixAddMatrix(A_mxn, B_mxn, rank);
+        fail += test.matrixMaxAbsValue(A_mxn, rank);
+        fail += test.matrixIsFinite(A_mxn, rank);
         fail += test.matrixAssertSymmetry(A_nxn, rank);
     }
 
