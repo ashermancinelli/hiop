@@ -767,6 +767,43 @@ public:
         return reduceReturn(fail, &A);
     }
 
+    int matrixIsFinite(
+            hiop::hiopMatrix& A,
+            const int rank)
+    {
+        int fail = 0;
+
+        A.setToConstant(zero);
+        if (!A.isfinite()) fail++;
+
+        A.setToConstant(zero);
+        if (rank == 0) setLocalElement(&A, 0, 0, INFINITY);
+        if (!A.isfinite() && rank != 0) fail++;
+
+        printMessage(fail, __func__, rank);
+        return reduceReturn(fail, &A);
+    }
+
+    int matrixMaxAbsValue(
+            hiop::hiopMatrix& A,
+            const int rank)
+    {
+        int fail = 0;
+
+        // Positive largest value
+        A.setToConstant(zero);
+        if (rank == 0) setLocalElement(&A, 0, 0, one);
+        fail += A.max_abs_value() != one;
+
+        // Negative largest value
+        A.setToConstant(zero);
+        if (rank == 0) setLocalElement(&A, 0, 0, -one);
+        fail += A.max_abs_value() != one;
+
+        printMessage(fail, __func__, rank);
+        return reduceReturn(fail, &A);
+    }
+
 protected:
     virtual void setLocalElement(
             hiop::hiopMatrix* a,
