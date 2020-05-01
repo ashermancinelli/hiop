@@ -96,9 +96,9 @@ if(NOT DEFINED CMAKE_CUDA_STANDARD)
 endif()
 
 # Set CUDA flags
-if(HIOP_NVCC_GENCODE_FLAGS)
-    set(CMAKE_CUDA_FLAGS "-arch=${HIOP_NVCC_GENCODE_FLAGS} --expt-extended-lambda")
-    message(STATUS "Using CUDA arch ${HIOP_NVCC_GENCODE_FLAGS}")
+if(HIOP_NVCC_ARCH)
+    set(CMAKE_CUDA_FLAGS "-arch=${HIOP_NVCC_ARCH} --expt-extended-lambda")
+    message(STATUS "Using CUDA arch ${HIOP_NVCC_ARCH}")
 else()
     set(CMAKE_CUDA_FLAGS "-arch=sm_35 --expt-extended-lambda")
     message(STATUS "Using CUDA arch sm_35")
@@ -218,6 +218,14 @@ string(STRIP "${HIOP_MATH_LIBRARIES}" HIOP_MATH_LIBRARIES)
 message("HiOp will use LAPACK/BLAS libs: ${LAPACK_LIBRARIES}")
 message("HiOp: the so-called math libraries are: '${HIOP_MATH_LIBRARIES}'")
 
+file(WRITE "${CMAKE_SOURCE_DIR}/nvblas.conf" "
+NVBLAS_LOGFILE  nvblas.log
+NVBLAS_TRACE_LOG_ENABLED
+NVBLAS_CPU_BLAS_LIB  ${LAPACK_LIBRARIES}
+NVBLAS_GPU_LIST ALL0
+NVBLAS_TILE_DIM 2048
+NVBLAS_AUTOPIN_MEM_ENABLED")
+
 # include build directory for Fortran name mangling header
 include_directories(${CMAKE_BINARY_DIR})
 
@@ -251,6 +259,7 @@ add_library(hiop STATIC $<TARGET_OBJECTS:hiopOptimization>
 add_subdirectory(tests)
 
 install(TARGETS hiop DESTINATION lib)
+install(FILES "${CMAKE_SOURCE_DIR}/nvblas.conf" DESTINATION lib)
 install(FILES src/Interface/hiopInterface.hpp
 	      src/Optimization/hiopNlpFormulation.hpp
 	      src/Optimization/hiopNlpTransforms.hpp

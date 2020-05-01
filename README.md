@@ -1,5 +1,4 @@
 
-
 # HiOp - HPC solver for optimization
 HiOp is an optimization solver for solving certain mathematical optimization problems expressed as nonlinear programming problems. HiOp is a lightweight HPC solver that leverages application's existing data parallelism to parallelize the optimization iterations by using specialized linear algebra kernels.
 
@@ -51,6 +50,20 @@ $> cmake -DHIOP_USE_GPU=ON -DHIOP_MAGMA_DIR=/home/petra1/work/installs/magma-2.5
 For custom CUDA Toolkit installations, an example of the cmake command would be
 ```shell 
 $> cmake -DHIOP_USE_GPU=ON -DHIOP_MAGMA_DIR=/home/petra1/work/installs/magma-2.5.2/lib -DHIOP_CUDA_INCLUDE_DIR=/usr/local/cuda-10.2/include/ -DHIOP_CUDA_LIB_DIR=/usr/local/cuda-10.2/lib64 -DHIOP_CUBLAS_LIB_DIR=/usr/local/cuda-10.2/targets/x86_64-linux/lib/lib64 ..
+```
+
+## Running HiOp tests and applications
+
+HiOp is using NVBlas library when built with CUDA support. If you don't specify
+location of the `nvblas.conf` configuration file, you may get an annoying
+warnings. HiOp provides default `nvblas.conf` file and installs it at the same
+location as HiOp libraries. To use it, set environment variable as
+```bash
+$ export NVBLAS_CONFIG_FILE=<hiop install dir>/lib/nvblas.conf
+```
+or, if you are using C-shell, as
+```shell
+$ setenv NVBLAS_CONFIG_FILE <hiop install dir>/lib/nvblas.conf
 ```
 
 ## Acknowledgments
