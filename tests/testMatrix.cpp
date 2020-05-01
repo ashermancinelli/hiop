@@ -20,9 +20,9 @@ int main(int argc, char** argv)
         printf("Support for MPI is enabled\n");
 #endif
 
-    global_ordinal_type M_global  = 10;
-    global_ordinal_type K_local   = 15;
-    global_ordinal_type N_local   = 100;
+    global_ordinal_type M_local = 10;
+    global_ordinal_type K_local = 15;
+    global_ordinal_type N_local = 100;
 
     // all distribution occurs column-wise, so any length 
     // that will be used as a column of a matrix will have
@@ -45,21 +45,27 @@ int main(int argc, char** argv)
     // Test dense matrix
     {
         // Matrix dimensions denoted by subscript
-        hiop::hiopMatrixDense A_mxn(M_global, N_global, n_partition, comm);
-        hiop::hiopMatrixDense B_mxn(M_global, N_global, n_partition, comm);
+        // Distributed matrices:
+        hiop::hiopMatrixDense A_mxn(M_local, N_global, n_partition, comm);
+        hiop::hiopMatrixDense B_mxn(M_local, N_global, n_partition, comm);
         hiop::hiopMatrixDense A_nxn(N_global, N_global, n_partition, comm);
         hiop::hiopMatrixDense B_nxn(N_global, N_global, n_partition, comm);
         hiop::hiopMatrixDense A_kxn(K_global, N_global, n_partition, comm);
         hiop::hiopMatrixDense A_kxk(K_global, K_global, k_partition, comm);
-        hiop::hiopMatrixDense A_mxk(M_global, K_global, k_partition, comm);
-        //                      ^^^
+        hiop::hiopMatrixDense A_mxk(M_local, K_global, k_partition, comm);
+
+        // Local matrices:
+        hiop::hiopMatrixDense A_mxn_local(M_local, N_local, NULL, comm);
+        hiop::hiopMatrixDense A_mxk_local(M_local, K_local, NULL, comm);
+        hiop::hiopMatrixDense A_kxn_local(K_local, N_local, NULL, comm);
+
         hiop::hiopVectorPar x_n(N_global, n_partition, comm);
         //                   ^^^
-        hiop::hiopVectorPar x_m(M_global);
+        hiop::hiopVectorPar x_m(M_local);
         //                   ^^^
         hiop::tests::MatrixTestsDense test;
 
-        fail += test.matrixNumRows(A_mxn, M_global, rank);
+        fail += test.matrixNumRows(A_mxn, M_local, rank);
         fail += test.matrixNumCols(A_mxn, N_global, rank);
         fail += test.matrixSetToZero(A_mxn, rank);
         fail += test.matrixSetToConstant(A_mxn, rank);
@@ -68,13 +74,11 @@ int main(int argc, char** argv)
 
         if (numRanks == 1)
         {
-            /* 
-             * Note that these ended up not being used
-             * and are not as high of a priority
-             */
-            // fail += test.matrixTimesMat(A_mxk, A_kxn, A_mxn, rank);
+            fail += test.matrixTimesMatLocal(A_mxk_local, A_kxn_local, A_mxn_local, rank);
             // fail += test.matrixTransTimesMat(A_mxk, A_kxn, A_mxn, rank);
             // fail += test.matrixTimesMatTrans(A_mxk, A_kxn, A_mxn, rank);
+
+            // This function is only meant to be called locally
             fail += test.matrixAddDiagonal(A_nxn, x_n, rank);
             fail += test.matrixAddSubDiagonalLocal(A_nxn, x_m, rank);
         }
