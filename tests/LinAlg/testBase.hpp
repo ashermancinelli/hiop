@@ -19,6 +19,7 @@ protected:
     static constexpr real_type half      = 0.5;
     static constexpr real_type one       = 1.0;
     static constexpr real_type two       = 2.0;
+    static constexpr real_type four      = 4.0;
     static constexpr real_type eps =
         10*std::numeric_limits<real_type>::epsilon();
     static constexpr int SKIP_TEST = -1;

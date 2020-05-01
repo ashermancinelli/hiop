@@ -497,7 +497,7 @@ public:
     }
 
     /*
-     * this += C
+     * this[i] += C
      */
     bool vectorAddConstant(hiop::hiopVector& x, int rank)
     {
@@ -513,7 +513,7 @@ public:
     }
 
     /*
-     * if (pattern[i] > 0.0) this[i] += C
+     * if (pattern[i] != 0.0) this[i] += C
      */
     bool vectorAddConstant_w_patternSelect(
             hiop::hiopVector& x, 
@@ -524,17 +524,18 @@ public:
         assert(pattern.get_size() == x.get_size());
         assert(N == getLocalSize(&pattern));
 
-        x.setToConstant(zero);
-        x.addConstant(half);
+        pattern.setToConstant(one);
+        x.setToConstant(two);
+        x.addConstant_w_patternSelect(two, pattern);
 
-        if (rank== 0)
-            setElement(&x, N - 1, zero);
+        if (rank == 0)
+            setElement(&pattern, N - 1, zero);
 
         int fail = 0;
         for (local_ordinal_type i=0; i<N; ++i)
         {
             real_type val = getElement(&x, i);
-            if ((val != half) && !((rank==0) && (i == N-1) && (val == zero)))
+            if ((val != four) && !((rank==0) && (i == N-1) && (val == zero)))
                 fail++;
         }
 
