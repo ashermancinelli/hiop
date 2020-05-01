@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iomanip>
 #include <iostream>
 #include <functional>
 #include <cassert>
@@ -31,20 +32,8 @@ public:
 
     int matrixSetToZero(hiop::hiopMatrix& A, const int rank)
     {
-        local_ordinal_type M = getNumLocRows(&A);
-        local_ordinal_type N = getNumLocCols(&A);
-
         A.setToZero();
-
-        int fail = 0;
-        for(local_ordinal_type i=0; i<M; ++i)
-            for(local_ordinal_type j=0; j<N; ++j)
-                if(getLocalElement(&A,i,j) != 0)
-                {
-                    std::cerr << "Element (" << i << "," << j << ") not set to zero\n";
-                    fail++;
-                }
-
+        const int fail = verifyAnswer(&A, zero);
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
     }
@@ -53,12 +42,11 @@ public:
     {
         const local_ordinal_type M = getNumLocRows(&A);
         const local_ordinal_type N = getNumLocCols(&A);
-        int fail = 0;
         for (local_ordinal_type i=0; i<M; i++)
             for (local_ordinal_type j=0; j<N; j++)
                 setLocalElement(&A, i, j, one);
         A.setToConstant(two);
-        fail = verifyAnswer(&A, two);
+        const int fail = verifyAnswer(&A, two);
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
     }
@@ -68,72 +56,68 @@ public:
      */
     int matrixTimesVec(
             hiop::hiopMatrix& A,
-            hiop::hiopVector& m_vec,
-            hiop::hiopVector& n_vec,
+            hiop::hiopVector& y,
+            hiop::hiopVector& x,
             const int rank)
     {
         int fail = 0;
         A.setToConstant(one);
         const local_ordinal_type M = getNumLocRows(&A);
         const local_ordinal_type N = getNumLocCols(&A);
-        const global_ordinal_type N_glob = n_vec.get_size();
-        assert(getLocalSize(&m_vec) == M && "Did you pass in vectors of the correct sizes?");
-        assert(getLocalSize(&n_vec) == N && "Did you pass in vectors of the correct sizes?");
+        const global_ordinal_type N_glob = A.n();
+        assert(getLocalSize(&y) == M && "Did you pass in vectors of the correct sizes?");
+        assert(getLocalSize(&x) == N && "Did you pass in vectors of the correct sizes?");
+        const real_type alpha = one,
+                        beta  = one,
+                        A_val = one,
+                        y_val = three,
+                        x_val = three;
 
-        // First, check A_{MxN} \times x_N
-        // beta = zero so y \leftarrow alpha * A * x
-        m_vec.setToConstant(zero);
-        n_vec.setToConstant(two);
-        A.setToConstant(one);
-        A.timesVec(zero, m_vec, one, n_vec);
-        real_type expected = two * N_glob;
-        fail += verifyAnswerVec(&m_vec, expected);
+        y.setToConstant(y_val);
+        x.setToConstant(x_val);
+        A.setToConstant(A_val);
+        A.timesVec(beta, y, alpha, x);
 
-        // Now, check y \leftarrow beta * y + alpha * A * x
-        m_vec.setToConstant(half);
-        n_vec.setToConstant(two);
-        A.setToConstant(one);
-        A.timesVec(half, m_vec, two, n_vec);
-
-        //          beta   * y     +  alpha * A   * x
-        expected = (half   * half) + (two   * one * two * N_glob);
-        //                                                ^^^
-        // Sum over num global columns <-------------------+
-        fail += verifyAnswerVec(&m_vec, expected);
+        real_type expected = (beta * y_val) + (alpha * A_val * x_val * N_glob);
+        fail += verifyAnswerVec(&y, expected);
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
     }
 
     /*
-     * y_{loc} \leftarrow \beta y_{loc} + \alpha A_{glob \times loc}^T x_{glob}
+     * y = beta * y + alpha * A^T * x
      *
      * Notice that since A^T, x must not be distributed in this case, whereas
      * the plain `timesVec' nessecitated that x be distributed and y not be.
      */
     int matrixTransTimesVec(
             hiop::hiopMatrix& A,
-            hiop::hiopVector& m_vec,
-            hiop::hiopVector& n_vec,
+            hiop::hiopVector& x,
+            hiop::hiopVector& y,
             const int rank)
     {
         const local_ordinal_type M = getNumLocRows(&A);
         const local_ordinal_type N = getNumLocCols(&A);
-        const global_ordinal_type N_glob = n_vec.get_size();
-        assert(getLocalSize(&m_vec) == M && "Did you pass in vectors of the correct sizes?");
-        assert(getLocalSize(&n_vec) == N && "Did you pass in vectors of the correct sizes?");
+
+        // Take m() because A will be transposed
+        const global_ordinal_type N_glob = A.m();
+        assert(getLocalSize(&x) == M && "Did you pass in vectors of the correct sizes?");
+        assert(getLocalSize(&y) == N && "Did you pass in vectors of the correct sizes?");
+        const real_type alpha = one,
+                        beta  = one,
+                        A_val = one,
+                        y_val = three,
+                        x_val = three;
         int fail = 0;
 
-        A.setToConstant(half);
-        n_vec.setToConstant(half);
-        m_vec.setToConstant(one);
-        A.transTimesVec(two, n_vec, half, m_vec);
+        A.setToConstant(A_val);
+        y.setToConstant(y_val);
+        x.setToConstant(x_val);
+        A.transTimesVec(beta, y, alpha, x);
 
-        //                    beta * y     + alpha * A^T  * x
-        real_type expected = (two  * half) + half  * half * one * M;
-        //                                                       ^^^
-        // Sum over num global rows <-----------------------------|
-        fail += verifyAnswerVec(&n_vec, expected);
+        real_type expected = (beta * y_val) + (alpha * A_val * x_val * N_glob);
+        fail += verifyAnswerVec(&y, expected);
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
@@ -258,42 +242,19 @@ public:
         assert(x.get_size()==A.m());
         assert(N == getLocalSize(&x));
         assert(M == getLocalSize(&x));
+        const real_type alpha = half,
+                        A_val = half,
+                        x_val = one;
 
         // Test alpha==1
-        A.setToConstant(one);
-        x.setToConstant(one);
-        A.addDiagonal(one, x);
-        real_type expected = 0.;
-        for (local_ordinal_type i=0; i<M; i++)
-            for (local_ordinal_type j=0; j<N; j++)
-            {
-                if (i==j) expected = one + one;
-                else      expected = one;
-
-                if (getLocalElement(&A, i, j) != expected) fail++;
-            }
-
-        // Test alpha!=1
-        A.setToConstant(one);
-        x.setToConstant(half);
-        A.addDiagonal(half, x);
+        A.setToConstant(A_val);
+        x.setToConstant(x_val);
+        A.addDiagonal(alpha, x);
         fail += verifyAnswerDynamic(&A,
                 [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
                 {
-                    if (i==j)
-                        return one + quarter;
-                    return one;
-                });
-
-        // Test only using alpha (no vec)
-        A.setToConstant(one);
-        A.addDiagonal(one);
-        fail += verifyAnswerDynamic(&A,
-                [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
-                {
-                    if (i==j)
-                        return two;
-                    return one;
+                    const bool isOnDiagonal = (i==j);
+                    return isOnDiagonal ? A_val + x_val * alpha : A_val;
                 });
 
         printMessage(fail, __func__, rank);
@@ -312,20 +273,21 @@ public:
         const local_ordinal_type M = getNumLocRows(&A);
         const local_ordinal_type N = getNumLocCols(&A);
         const local_ordinal_type x_len = getLocalSize(&x);
-        real_type expected = 0.;
+        const real_type alpha = half,
+                        A_val = half,
+                        x_val = one;
 
         // We're only going to add n-1 elements of the vector
         local_ordinal_type start_idx = (N - x_len) + 1;
 
-        A.setToConstant(one);
-        x.setToConstant(half);
-        A.addSubDiagonal(start_idx, half, x, 1, x_len-1);
+        A.setToConstant(A_val);
+        x.setToConstant(x_val);
+        A.addSubDiagonal(start_idx, alpha, x, 1, x_len-1);
         fail += verifyAnswerDynamic(&A,
                 [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
                 {
-                    if (i>=start_idx && i==j)
-                        return one + quarter;
-                    return one;
+                    const bool isOnSubDiagonal = (i>=start_idx && i==j);
+                    return isOnSubDiagonal ? A_val + x_val * alpha : A_val;
                 });
 
         printMessage(fail, __func__, rank);
@@ -345,17 +307,18 @@ public:
         const local_ordinal_type N = getNumLocCols(&A);
         const local_ordinal_type x_len = getLocalSize(&x);
         local_ordinal_type start_idx = N - x_len;
-        real_type expected = 0.;
+        const real_type alpha = half,
+                        A_val = half,
+                        x_val = one;
 
-        A.setToConstant(one);
-        x.setToConstant(half);
-        A.addSubDiagonal(half, start_idx, x);
+        A.setToConstant(A_val);
+        x.setToConstant(x_val);
+        A.addSubDiagonal(alpha, start_idx, x);
         fail += verifyAnswerDynamic(&A,
                 [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
                 {
-                    if (i>=start_idx && i==j)
-                        return one + quarter;
-                    return one;
+                    const bool isOnDiagonal = (i>=start_idx && i==j);
+                    return isOnDiagonal ? A_val + x_val * alpha : A_val;
                 });
 
         printMessage(fail, __func__, rank);
@@ -543,7 +506,7 @@ public:
     }
     
     /*
-     * this += alpha * B
+     * A += alpha * B
      */
     int matrixAddMatrix(
             hiop::hiopMatrix& A,
@@ -554,11 +517,14 @@ public:
         const local_ordinal_type N = getNumLocCols(&A);
         assert(M == getNumLocRows(&B));
         assert(N == getNumLocCols(&B));
+        const real_type alpha = half,
+                        A_val = half,
+                        B_val = one;
 
-        A.setToConstant(one);
-        B.setToConstant(half);
-        A.addMatrix(half, B);
-        const int fail = verifyAnswer(&A, one + quarter);
+        A.setToConstant(A_val);
+        B.setToConstant(B_val);
+        A.addMatrix(alpha, B);
+        const int fail = verifyAnswer(&A, A_val + B_val * alpha);
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
@@ -586,18 +552,22 @@ public:
 
         const local_ordinal_type start_idx_row = 0;
         const local_ordinal_type start_idx_col = N_loc - A_N_loc;
+        const real_type alpha = half,
+                        A_val = half,
+                        W_val = one;
+        int fail = 0;
 
         // Check with non-1 alpha
-        A.setToConstant(half);
-        W->setToConstant(one);
-        A.addToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, half, *W);
-        const int fail = verifyAnswerDynamic(W,
+        A.setToConstant(A_val);
+        W->setToConstant(W_val);
+        A.addToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, alpha, *W);
+        fail += verifyAnswerDynamic(W,
                 [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
                 {
-                    if (i>=start_idx_row && i<start_idx_row+A_M &&
-                        j>=start_idx_col && j<start_idx_col+A_N_loc)
-                        return one+quarter;
-                    return one;
+                    const bool isUpperTriangle = (
+                        i>=start_idx_row && i<start_idx_row+A_M &&
+                        j>=start_idx_col && j<start_idx_col+A_N_loc);
+                    return isUpperTriangle ? W_val + A_val*alpha : W_val;
                 });
 
         printMessage(fail, __func__, rank);
@@ -629,18 +599,22 @@ public:
 
         const local_ordinal_type start_idx_row = 0;
         const local_ordinal_type start_idx_col = N_loc - A_N_loc;
+        const real_type alpha = half,
+                        A_val = half,
+                        W_val = one;
         int fail = 0;
 
-        A.setToConstant(half);
-        W->setToConstant(one);
-        A.transAddToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, half, *W);
+        A.setToConstant(A_val);
+        W->setToConstant(W_val);
+        A.transAddToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, alpha, *W);
         fail += verifyAnswerDynamic(W,
                 [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
                 {
-                    if (i>=start_idx_row && i<start_idx_row+A_N_loc &&
-                        j>=start_idx_col && j<start_idx_col+A_M)
-                        return one+quarter;
-                    return one;
+                    const bool isTransUpperTriangle = (
+                        i>=start_idx_row && i<start_idx_row+A_N_loc &&
+                        j>=start_idx_col && j<start_idx_col+A_M);
+
+                    return isTransUpperTriangle ? W_val + A_val*alpha : W_val;
                 });
 
         printMessage(fail, __func__, rank);
@@ -673,16 +647,18 @@ public:
         // at W's upper left corner
         const local_ordinal_type diag_start = 0;
         int fail = 0;
+        const real_type alpha = half,
+                        A_val = half,
+                        W_val = one;
 
-        A.setToConstant(half);
-        W->setToConstant(one);
-        A.addUpperTriangleToSymDenseMatrixUpperTriangle(diag_start, half, *W);
+        A.setToConstant(A_val);
+        W->setToConstant(W_val);
+        A.addUpperTriangleToSymDenseMatrixUpperTriangle(diag_start, alpha, *W);
         fail += verifyAnswerDynamic(W,
                 [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
                 {
-                    if (i>=diag_start && i<diag_start+A_N && j>=i && j<diag_start+A_M)
-                        return one+quarter;
-                    return one;
+                    bool isUpperTriangle = (i>=diag_start && i<diag_start+A_N && j>=i && j<diag_start+A_M);
+                    return isUpperTriangle ? W_val + A_val*alpha : W_val;
                 });
 
         printMessage(fail, __func__, rank);
