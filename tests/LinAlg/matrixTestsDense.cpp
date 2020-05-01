@@ -92,6 +92,26 @@ int MatrixTestsDense::verifyAnswer(hiop::hiopMatrix* A, const double answer)
     return fail;
 }
 
+/*
+ * Pass a function-like object to calculate the expected
+ * answer dynamically, based on the row and column
+ */
+[[nodiscard]]
+int MatrixTestsDense::verifyAnswerDynamic(
+            hiop::hiopMatrix* A,
+            std::function<real_type(local_ordinal_type, local_ordinal_type)> expect)
+{
+    const local_ordinal_type M = getNumLocRows(A);
+    const local_ordinal_type N = getNumLocCols(A);
+    int fail = 0;
+    for (local_ordinal_type i=0; i<M; i++)
+        for (local_ordinal_type j=0; j<N; j++)
+            if (!isEqual(getLocalElement(A, i, j), expect(i, j)))
+                fail++;
+
+    return fail;
+}
+
 /// Checks if _local_ vector elements are set to `answer`.
 [[nodiscard]]
 int MatrixTestsDense::verifyAnswerVec(hiop::hiopVector* x, double answer)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <functional>
 #include <cassert>
 #include <hiopVector.hpp>
 #include <hiopMatrix.hpp>
@@ -612,28 +613,34 @@ public:
         assert(W->n() >= A.n());
 
         const local_ordinal_type start_idx_row = 0;
-        const local_ordinal_type start_idx_col = W->n() - A.n();
+        const local_ordinal_type start_idx_col = N_loc - A_N_loc;
         int fail = 0;
 
         // Check with alpha=1 (only the matrix addition)
         A.setToConstant(one);
-        W->setToConstant(one);
+        W->setToConstant(half);
         A.addToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, one, *W);
-        real_type expected = two;
-        for (local_ordinal_type i=0; i<A_M; i++)
-            for (local_ordinal_type j=0; j<A_N_loc; j++)
-                if (!isEqual(getLocalElement(W, start_idx_row+i, start_idx_col+j), expected))
-                    fail++;
+        fail += verifyAnswerDynamic(W,
+                [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+                {
+                    if (i>=start_idx_row && i<start_idx_row+A_M &&
+                        j>=start_idx_col && j<start_idx_col+A_N_loc)
+                        return one+half;
+                    return half;
+                });
 
         // Check with non-1 alpha
         A.setToConstant(one);
-        W->setToConstant(one);
+        W->setToConstant(half);
         A.addToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, two, *W);
-        expected = two * one + one;
-        for (local_ordinal_type i=0; i<A_M; i++)
-            for (local_ordinal_type j=0; j<A_N_loc; j++)
-                if (!isEqual(getLocalElement(W, start_idx_row+i, start_idx_col+j), expected))
-                    fail++;
+        fail += verifyAnswerDynamic(W,
+                [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+                {
+                    if (i>=start_idx_row && i<start_idx_row+A_M &&
+                        j>=start_idx_col && j<start_idx_col+A_N_loc)
+                        return two*one+half;
+                    return half;
+                });
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
@@ -663,28 +670,34 @@ public:
         assert(W->n() >= A.n());
 
         const local_ordinal_type start_idx_row = 0;
-        const local_ordinal_type start_idx_col = W->n() - A.n();
+        const local_ordinal_type start_idx_col = N_loc - A_N_loc;
         int fail = 0;
 
         // Check with alpha=1 (only the matrix addition)
-        A.setToConstant(one);
+        A.setToConstant(half);
         W->setToConstant(one);
         A.transAddToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, one, *W);
-        real_type expected = two;
-        for (local_ordinal_type i=0; i<A_M; i++)
-            for (local_ordinal_type j=0; j<A_N_loc; j++)
-                if (!isEqual(getLocalElement(W, start_idx_row+j, start_idx_col+i), expected))
-                    fail++;
+        fail += verifyAnswerDynamic(W,
+                [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+                {
+                    if (i>=start_idx_row && i<start_idx_row+A_N_loc &&
+                        j>=start_idx_col && j<start_idx_col+A_M)
+                        return one+half;
+                    return one;
+                });
 
         // Check with non-1 alpha
-        A.setToConstant(one);
+        A.setToConstant(half);
         W->setToConstant(one);
         A.transAddToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, two, *W);
-        expected = two * one + one;
-        for (local_ordinal_type i=0; i<A_M; i++)
-            for (local_ordinal_type j=0; j<A_N_loc; j++)
-                if (!isEqual(getLocalElement(W, start_idx_row+j, start_idx_col+i), expected))
-                    fail++;
+        fail += verifyAnswerDynamic(W,
+                [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+                {
+                    if (i>=start_idx_row && i<start_idx_row+A_N_loc &&
+                        j>=start_idx_col && j<start_idx_col+A_M)
+                        return two;
+                    return one;
+                });
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
@@ -721,36 +734,27 @@ public:
         A.setToConstant(one);
         W->setToConstant(one);
         A.addUpperTriangleToSymDenseMatrixUpperTriangle(diag_start, one, *W);
-        real_type expected = 0;
-        for (local_ordinal_type i=0; i<W_M; i++)
-            for (local_ordinal_type j=0; j<W_N; j++)
-            {
-                // Is the index inside the mapped upper right triangle of A?
-                if (i>=diag_start && i<diag_start+A_N && j>=i && j<diag_start+A_M)
-                    expected = one + one;
-                // Otherwise, we expect the value to remain unchanged
-                else
-                    expected = one;
-                real_type aux = getLocalElement(W, i, j);
-                if (!isEqual(aux, expected)) fail++;
-            }
+        fail += verifyAnswerDynamic(W,
+                [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+                {
+                    // Is the index inside the mapped upper right triangle of A?
+                    if (i>=diag_start && i<diag_start+A_N && j>=i && j<diag_start+A_M)
+                        return one + one;
+                    // Otherwise, we expect the value to remain unchanged
+                    return one;
+                });
 
         // Test with alpha!=1
         A.setToConstant(one);
         W->setToConstant(one);
         A.addUpperTriangleToSymDenseMatrixUpperTriangle(diag_start, two, *W);
-        for (local_ordinal_type i=0; i<W_M; i++)
-            for (local_ordinal_type j=0; j<W_N; j++)
-            {
-                // Is the index inside the mapped upper right triangle of A?
-                if (i>=diag_start && i<diag_start+A_N && j>=i && j<diag_start+A_M)
-                    expected = two * one + one;
-                // Otherwise, we expect the value to remain unchanged
-                else
-                    expected = one;
-                real_type aux = getLocalElement(W, i, j);
-                if (!isEqual(aux, expected)) fail++;
-            }
+        fail += verifyAnswerDynamic(W,
+                [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+                {
+                    if (i>=diag_start && i<diag_start+A_N && j>=i && j<diag_start+A_M)
+                        return two * one + one;
+                    return one;
+                });
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
@@ -819,9 +823,12 @@ protected:
             local_ordinal_type i) = 0;
     virtual local_ordinal_type getNumLocRows(hiop::hiopMatrix* a) = 0;
     virtual local_ordinal_type getNumLocCols(hiop::hiopMatrix* a) = 0;
-    virtual int getLocalSize(const hiop::hiopVector* x) = 0;
-    virtual int verifyAnswer(hiop::hiopMatrix* A, double answer) = 0;
-    virtual int verifyAnswerVec(hiop::hiopVector* x, double answer) = 0;
+    virtual local_ordinal_type getLocalSize(const hiop::hiopVector* x) = 0;
+    virtual int verifyAnswer(hiop::hiopMatrix* A, real_type answer) = 0;
+    virtual int verifyAnswerDynamic(
+            hiop::hiopMatrix* A,
+            std::function<real_type(local_ordinal_type, local_ordinal_type)> expect) = 0;
+    virtual int verifyAnswerVec(hiop::hiopVector* x, real_type answer) = 0;
     virtual bool reduceReturn(int failures, hiop::hiopMatrix* A) = 0;
 };
 
