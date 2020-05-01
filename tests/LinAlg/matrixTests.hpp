@@ -124,52 +124,55 @@ public:
     }
 
     /**
-     *  W = beta * W + alpha * this * X
+     *  W = beta * W + alpha * A * M
      *
      * Shapes:
-     *   A: MxK
-     *   X: KxN
-     *   W: MxN
+     *   A: KxM
+     *   M: MxN
+     *   W: KxN
      */
     int matrixTimesMat(
             hiop::hiopMatrix& A,
-            hiop::hiopMatrix& X,
+            hiop::hiopMatrix& M,
             hiop::hiopMatrix& W,
             const int rank)
     {
-        const local_ordinal_type M = getNumLocRows(&A);
-        const local_ordinal_type K_loc = getNumLocCols(&A);
-        const global_ordinal_type K_glob = A.n();
-        const local_ordinal_type N_loc = getNumLocCols(&X);
-        const global_ordinal_type N_glob = X.n();
-        assert(K_glob == getNumLocRows(&X)  && "Matrices have mismatched shapes");
-        assert(M == getNumLocRows(&W)       && "Matrices have mismatched shapes");
+        const local_ordinal_type K = getNumLocRows(&A);
+        const local_ordinal_type M_loc = getNumLocCols(&A);
+        const global_ordinal_type M_glob = A.n();
+        const local_ordinal_type N_loc = getNumLocCols(&M);
+        const global_ordinal_type N_glob = M.n();
+        assert(M_glob == getNumLocRows(&M)  && "Matrices have mismatched shapes");
+        assert(K == getNumLocRows(&W)       && "Matrices have mismatched shapes");
         assert(N_loc == getNumLocCols(&W)   && "Matrices have mismatched shapes");
         assert(N_glob == W.n()              && "Matrices have mismatched shapes");
-        int fail = 0;
+        const real_type A_val = two,
+                        M_val = three,
+                        W_val = two,
+                        alpha = two,
+                        beta  = two;
 
-        A.setToConstant(one);
-        W.setToConstant(one);
-        X.setToConstant(one);
-
-        // Beta = 0 to just test matmul portion
-        // this fails
-        A.timesMat(one, W, one, X);
+        A.setToConstant(A_val);
+        W.setToConstant(W_val);
+        M.setToConstant(M_val);
+        A.timesMat(beta, W, alpha, M);
+        real_type expected = (beta * W_val) + (alpha * A_val * M_val);
+        const int fail = verifyAnswer(&W, expected);
 
         /*
          * This is commented out until we successfully
          * test the previous lines
          *
-        //     W        = 0 * W + A   * X
+        //     W        = 0 * W + A   * M
         real_type expected =         one * one * N_glob;
         fail += verifyAnswer(&W, expected);
 
         A.setToConstant(one);
         W.setToConstant(two);
-        X.setToConstant(half);
-        A.timesMat(one, W, one, X);
+        M.setToConstant(half);
+        A.timesMat(one, W, one, M);
 
-        //     W = 0   * W   + \sum_0^{N_glob} A   * X
+        //     W = 0   * W   + \sum_0^{N_glob} A   * M
         expected = one * two + N_glob        * one * half;
         fail += verifyAnswer(&W, expected);
 
