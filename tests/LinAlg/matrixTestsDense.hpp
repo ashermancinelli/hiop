@@ -18,6 +18,9 @@ private:
     virtual local_ordinal_type getNumLocCols(hiop::hiopMatrix* a);
     virtual local_ordinal_type getLocalSize(const hiop::hiopVector* x);
     virtual int verifyAnswer(hiop::hiopMatrix* A, real_type answer);
+    virtual int verifyAnswerDynamic(
+            hiop::hiopMatrix* A,
+            std::function<real_type(local_ordinal_type, local_ordinal_type)> expect);
     virtual int verifyAnswerVec(hiop::hiopVector* x, real_type answer);
     virtual bool reduceReturn(int failures, hiop::hiopMatrix* A);
 
