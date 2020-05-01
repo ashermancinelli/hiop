@@ -90,12 +90,13 @@ public:
         fail += verifyAnswerVec(&m_vec, expected);
 
         // Now, check y \leftarrow beta * y + alpha * A * x
-        m_vec.setToConstant(two);
+        m_vec.setToConstant(half);
         n_vec.setToConstant(two);
         A.setToConstant(one);
-        A.timesVec(one, m_vec, two, n_vec);
-        //          beta   * y    +  alpha * A   * x
-        expected = (one    * two) + (two   * one * two * N_glob);
+        A.timesVec(half, m_vec, two, n_vec);
+
+        //          beta   * y     +  alpha * A   * x
+        expected = (half   * half) + (two   * one * two * N_glob);
         //                                                ^^^
         // Sum over num global columns <-------------------+
         fail += verifyAnswerVec(&m_vec, expected);
@@ -123,26 +124,15 @@ public:
         assert(getLocalSize(&n_vec) == N && "Did you pass in vectors of the correct sizes?");
         int fail = 0;
 
-        // First, test with \beta = 0
-        A.setToConstant(one);
+        A.setToConstant(half);
+        n_vec.setToConstant(half);
         m_vec.setToConstant(one);
-        n_vec.setToConstant(zero);
-        A.transTimesVec(zero, n_vec, two, m_vec);
-        //                 0 * y + alpha * A^T   * 1
-        real_type expected =          two   * one   * one * M;
-        //                                              ^^^
-        // Sum over num global rows <--------------------|
-        fail += verifyAnswerVec(&n_vec, expected);
+        A.transTimesVec(two, n_vec, half, m_vec);
 
-        // Now test with \beta != 0 \and y != 0
-        A.setToConstant(one);
-        m_vec.setToConstant(one);
-        n_vec.setToConstant(one);
-        A.transTimesVec(two, n_vec, two, m_vec);
-        //          beta * y    + alpha * A^T   * X
-        expected = (two  * one) + two   * one   * one * M;
-        //                                             ^^^
-        // Sum over num global rows <-------------------|
+        //                    beta * y     + alpha * A^T  * x
+        real_type expected = (two  * half) + half  * half * one * M;
+        //                                                       ^^^
+        // Sum over num global rows <-----------------------------|
         fail += verifyAnswerVec(&n_vec, expected);
 
         printMessage(fail, __func__, rank);
@@ -285,28 +275,26 @@ public:
 
         // Test alpha!=1
         A.setToConstant(one);
-        x.setToConstant(one);
-        A.addDiagonal(two, x);
-        for (local_ordinal_type i=0; i<M; i++)
-            for (local_ordinal_type j=0; j<N; j++)
-            {
-                if (i==j) expected = one + two * one;
-                else      expected = one;
-
-                if (getLocalElement(&A, i, j) != expected) fail++;
-            }
+        x.setToConstant(half);
+        A.addDiagonal(half, x);
+        fail += verifyAnswerDynamic(&A,
+                [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+                {
+                    if (i==j)
+                        return one + quarter;
+                    return one;
+                });
 
         // Test only using alpha (no vec)
         A.setToConstant(one);
         A.addDiagonal(one);
-        for (local_ordinal_type i=0; i<M; i++)
-            for (local_ordinal_type j=0; j<N; j++)
-            {
-                if (i==j) expected = one + one;
-                else      expected = one;
-
-                if (getLocalElement(&A, i, j) != expected) fail++;
-            }
+        fail += verifyAnswerDynamic(&A,
+                [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+                {
+                    if (i==j)
+                        return two;
+                    return one;
+                });
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
@@ -330,18 +318,15 @@ public:
         local_ordinal_type start_idx = (N - x_len) + 1;
 
         A.setToConstant(one);
-        x.setToConstant(one);
-        A.addSubDiagonal(start_idx, two, x, 1, x_len-1);
-        for (local_ordinal_type i=0; i<M; i++)
-            for (local_ordinal_type j=0; j<N; j++)
-            {
-                if (i>=start_idx && i==j)
-                    expected = one + two * one;
-                else
-                    expected = one;
-
-                if (getLocalElement(&A, i, j) != expected) fail++;
-            }
+        x.setToConstant(half);
+        A.addSubDiagonal(start_idx, half, x, 1, x_len-1);
+        fail += verifyAnswerDynamic(&A,
+                [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+                {
+                    if (i>=start_idx && i==j)
+                        return one + quarter;
+                    return one;
+                });
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
@@ -363,18 +348,15 @@ public:
         real_type expected = 0.;
 
         A.setToConstant(one);
-        x.setToConstant(one);
-        A.addSubDiagonal(two, start_idx, x);
-        for (local_ordinal_type i=0; i<M; i++)
-            for (local_ordinal_type j=0; j<N; j++)
-            {
-                if (i>=start_idx && i==j)
-                    expected = one + two * one;
-                else
-                    expected = one;
-
-                if (getLocalElement(&A, i, j) != expected) fail++;
-            }
+        x.setToConstant(half);
+        A.addSubDiagonal(half, start_idx, x);
+        fail += verifyAnswerDynamic(&A,
+                [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+                {
+                    if (i>=start_idx && i==j)
+                        return one + quarter;
+                    return one;
+                });
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
@@ -394,19 +376,9 @@ public:
         assert(N == getNumLocCols(&B));
 
         A.setToConstant(one);
-        B.setToConstant(one);
-        A.addMatrix(zero, B);
-        int fail = verifyAnswer(&A, one);
-
-        A.setToConstant(one);
-        B.setToConstant(one);
-        A.addMatrix(one, B);
-        fail += verifyAnswer(&A, two);
-
-        A.setToConstant(one);
-        B.setToConstant(one);
-        A.addMatrix(two, B);
-        fail += verifyAnswer(&A, one + two);
+        B.setToConstant(half);
+        A.addMatrix(half, B);
+        const int fail = verifyAnswer(&A, one + quarter);
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
@@ -434,32 +406,18 @@ public:
 
         const local_ordinal_type start_idx_row = 0;
         const local_ordinal_type start_idx_col = N_loc - A_N_loc;
-        int fail = 0;
-
-        // Check with alpha=1 (only the matrix addition)
-        A.setToConstant(one);
-        W->setToConstant(half);
-        A.addToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, one, *W);
-        fail += verifyAnswerDynamic(W,
-                [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
-                {
-                    if (i>=start_idx_row && i<start_idx_row+A_M &&
-                        j>=start_idx_col && j<start_idx_col+A_N_loc)
-                        return one+half;
-                    return half;
-                });
 
         // Check with non-1 alpha
-        A.setToConstant(one);
-        W->setToConstant(half);
-        A.addToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, two, *W);
-        fail += verifyAnswerDynamic(W,
+        A.setToConstant(half);
+        W->setToConstant(one);
+        A.addToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, half, *W);
+        const int fail = verifyAnswerDynamic(W,
                 [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
                 {
                     if (i>=start_idx_row && i<start_idx_row+A_M &&
                         j>=start_idx_col && j<start_idx_col+A_N_loc)
-                        return two*one+half;
-                    return half;
+                        return one+quarter;
+                    return one;
                 });
 
         printMessage(fail, __func__, rank);
@@ -493,29 +451,15 @@ public:
         const local_ordinal_type start_idx_col = N_loc - A_N_loc;
         int fail = 0;
 
-        // Check with alpha=1 (only the matrix addition)
         A.setToConstant(half);
         W->setToConstant(one);
-        A.transAddToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, one, *W);
+        A.transAddToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, half, *W);
         fail += verifyAnswerDynamic(W,
                 [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
                 {
                     if (i>=start_idx_row && i<start_idx_row+A_N_loc &&
                         j>=start_idx_col && j<start_idx_col+A_M)
-                        return one+half;
-                    return one;
-                });
-
-        // Check with non-1 alpha
-        A.setToConstant(half);
-        W->setToConstant(one);
-        A.transAddToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, two, *W);
-        fail += verifyAnswerDynamic(W,
-                [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
-                {
-                    if (i>=start_idx_row && i<start_idx_row+A_N_loc &&
-                        j>=start_idx_col && j<start_idx_col+A_M)
-                        return two;
+                        return one+quarter;
                     return one;
                 });
 
@@ -550,29 +494,14 @@ public:
         const local_ordinal_type diag_start = 0;
         int fail = 0;
 
-        // Test with alpha==1
-        A.setToConstant(one);
+        A.setToConstant(half);
         W->setToConstant(one);
-        A.addUpperTriangleToSymDenseMatrixUpperTriangle(diag_start, one, *W);
-        fail += verifyAnswerDynamic(W,
-                [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
-                {
-                    // Is the index inside the mapped upper right triangle of A?
-                    if (i>=diag_start && i<diag_start+A_N && j>=i && j<diag_start+A_M)
-                        return one + one;
-                    // Otherwise, we expect the value to remain unchanged
-                    return one;
-                });
-
-        // Test with alpha!=1
-        A.setToConstant(one);
-        W->setToConstant(one);
-        A.addUpperTriangleToSymDenseMatrixUpperTriangle(diag_start, two, *W);
+        A.addUpperTriangleToSymDenseMatrixUpperTriangle(diag_start, half, *W);
         fail += verifyAnswerDynamic(W,
                 [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
                 {
                     if (i>=diag_start && i<diag_start+A_N && j>=i && j<diag_start+A_M)
-                        return two * one + one;
+                        return one+quarter;
                     return one;
                 });
 
