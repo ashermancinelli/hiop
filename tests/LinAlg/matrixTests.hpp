@@ -131,7 +131,7 @@ public:
      *   M: MxN
      *   W: KxN
      */
-    int matrixTimesMat(
+    int matrixTimesMatLocal(
             hiop::hiopMatrix& A,
             hiop::hiopMatrix& M,
             hiop::hiopMatrix& W,
