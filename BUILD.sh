@@ -6,7 +6,9 @@ set -x
 source /etc/profile.d/modules.sh
 
 export MY_CLUSTER=`uname -n | sed -e 's/[0-9]//g' -e 's/\..*//'`
+export NVBLAS_CONFIG_FILE=$(pwd)/nvblas.conf
 
+module purge
 if [ "$MY_CLUSTER" == "newell" ]; then
     export MY_GCC_VERSION=7.4.0
     export MY_CUDA_VERSION=10.2
@@ -15,7 +17,7 @@ if [ "$MY_CLUSTER" == "newell" ]; then
     export MY_MAGMA_VERSION=2.5.2_cuda10.2
     export MY_HIOP_MAGMA_DIR=/share/apps/magma/2.5.2/cuda10.2
     module load magma/$MY_MAGMA_VERSION
-    export MY_NVCC_GENCODE_FLAGS="sm_70"
+    export MY_NVCC_ARCH="sm_70"
 else
     #  NOTE: The following is required when running from Gitlab CI via slurm job
     export MY_CLUSTER="marianas"
@@ -27,10 +29,9 @@ else
     # export MY_HIOP_MAGMA_DIR=/share/apps/magma/2.5.2/cuda10.2
     export MY_HIOP_MAGMA_DIR=/qfs/projects/exasgd/marianas/magma
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MY_HIOP_MAGMA_DIR/lib
-    export MY_NVCC_GENCODE_FLAGS="sm_60"
+    export MY_NVCC_ARCH="sm_60"
 fi
 
-module purge
 module load gcc/$MY_GCC_VERSION
 module load cuda/$MY_CUDA_VERSION
 module load openmpi/$MY_OPENMPI_VERSION
@@ -50,13 +51,13 @@ export CMAKE_OPTIONS="\
     -DENABLE_TESTS=ON \
     -DHIOP_USE_MPI=Off \
     -DHIOP_DEEPCHECKS=ON \
-    -DHIOP_USE_RAJA=On \
     -DRAJA_DIR=$MY_RAJA_DIR \
-    -DHIOP_USE_UMPIRE=On \
+    -DHIOP_USE_RAJA=On \
     -Dumpire_DIR=$MY_UMPIRE_DIR \
+    -DHIOP_USE_UMPIRE=On \
     -DHIOP_USE_GPU=On \
     -DHIOP_MAGMA_DIR=$MY_HIOP_MAGMA_DIR \
-    -DHIOP_NVCC_GENCODE_FLAGS=$MY_NVCC_GENCODE_FLAGS"
+    -DHIOP_NVCC_ARCH=$MY_NVCC_ARCH"
 
 BUILDDIR="build"
 rm -rf $BUILDDIR                            || exit 1
