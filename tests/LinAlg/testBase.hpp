@@ -9,12 +9,13 @@ using local_ordinal_type    = int;
 using global_ordinal_type   = long long;
 
 static constexpr real_type zero = 0.0;
+static constexpr real_type quarter = 0.25;
 static constexpr real_type half = 0.5;
-static constexpr real_type one  = 1.0;
-static constexpr real_type two  = 2.0;
-static constexpr real_type eps  =
+static constexpr real_type one = 1.0;
+static constexpr real_type two = 2.0;
+static constexpr real_type eps =
     10*std::numeric_limits<real_type>::epsilon();
-static constexpr int SKIP_TEST  = -1;
+static constexpr int SKIP_TEST = -1;
 
 // must be const pointer and const dest for
 // const string declarations to pass
