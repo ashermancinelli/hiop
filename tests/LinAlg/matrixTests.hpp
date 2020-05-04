@@ -79,7 +79,7 @@ public:
         A.timesVec(beta, y, alpha, x);
 
         real_type expected = (beta * y_val) + (alpha * A_val * x_val * N_glob);
-        fail += verifyAnswerVec(&y, expected);
+        fail += verifyAnswer(&y, expected);
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
@@ -117,7 +117,7 @@ public:
         A.transTimesVec(beta, y, alpha, x);
 
         real_type expected = (beta * y_val) + (alpha * A_val * x_val * N_glob);
-        fail += verifyAnswerVec(&y, expected);
+        fail += verifyAnswer(&y, expected);
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
@@ -133,30 +133,29 @@ public:
      */
     int matrixTimesMatLocal(
             hiop::hiopMatrix& A,
-            hiop::hiopMatrix& M,
+            hiop::hiopMatrix& X,
             hiop::hiopMatrix& W,
             const int rank)
     {
-        const local_ordinal_type K = getNumLocRows(&A);
-        const local_ordinal_type M_loc = getNumLocCols(&A);
-        const global_ordinal_type M_glob = A.n();
-        const local_ordinal_type N_loc = getNumLocCols(&M);
-        const global_ordinal_type N_glob = M.n();
-        assert(M_glob == getNumLocRows(&M)  && "Matrices have mismatched shapes");
-        assert(K == getNumLocRows(&W)       && "Matrices have mismatched shapes");
-        assert(N_loc == getNumLocCols(&W)   && "Matrices have mismatched shapes");
-        assert(N_glob == W.n()              && "Matrices have mismatched shapes");
+        const local_ordinal_type M = getNumLocRows(&A);
+        const local_ordinal_type K = getNumLocCols(&A);
+        const local_ordinal_type N = getNumLocCols(&X);
+        assert(K == A.n());
+        assert(N == X.n());
+        assert(K == getNumLocRows(&X));
+        assert(M == getNumLocRows(&W));
+        assert(N == getNumLocCols(&W));
         const real_type A_val = two,
-                        M_val = three,
+                        X_val = three,
                         W_val = two,
                         alpha = two,
                         beta  = two;
 
         A.setToConstant(A_val);
         W.setToConstant(W_val);
-        M.setToConstant(M_val);
-        A.timesMat(beta, W, alpha, M);
-        real_type expected = (beta * W_val) + (alpha * A_val * M_val);
+        X.setToConstant(X_val);
+        A.timesMat(beta, W, alpha, X);
+        real_type expected = (beta * W_val) + (alpha * A_val * X_val * N);
         const int fail = verifyAnswer(&W, expected);
 
         /*
@@ -253,7 +252,7 @@ public:
         A.setToConstant(A_val);
         x.setToConstant(x_val);
         A.addDiagonal(alpha, x);
-        fail += verifyAnswerDynamic(&A,
+        fail += verifyAnswer(&A,
                 [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
                 {
                     const bool isOnDiagonal = (i==j);
@@ -286,7 +285,7 @@ public:
         A.setToConstant(A_val);
         x.setToConstant(x_val);
         A.addSubDiagonal(start_idx, alpha, x, 1, x_len-1);
-        fail += verifyAnswerDynamic(&A,
+        fail += verifyAnswer(&A,
                 [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
                 {
                     const bool isOnSubDiagonal = (i>=start_idx && i==j);
@@ -317,7 +316,7 @@ public:
         A.setToConstant(A_val);
         x.setToConstant(x_val);
         A.addSubDiagonal(alpha, start_idx, x);
-        fail += verifyAnswerDynamic(&A,
+        fail += verifyAnswer(&A,
                 [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
                 {
                     const bool isOnDiagonal = (i>=start_idx && i==j);
@@ -384,7 +383,7 @@ public:
         A.setToConstant(A_val);
         W->setToConstant(W_val);
         A.addToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, alpha, *W);
-        fail += verifyAnswerDynamic(W,
+        fail += verifyAnswer(W,
                 [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
                 {
                     const bool isUpperTriangle = (
@@ -430,7 +429,7 @@ public:
         A.setToConstant(A_val);
         W->setToConstant(W_val);
         A.transAddToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, alpha, *W);
-        fail += verifyAnswerDynamic(W,
+        fail += verifyAnswer(W,
                 [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
                 {
                     const bool isTransUpperTriangle = (
@@ -477,7 +476,7 @@ public:
         A.setToConstant(A_val);
         W->setToConstant(W_val);
         A.addUpperTriangleToSymDenseMatrixUpperTriangle(diag_start, alpha, *W);
-        fail += verifyAnswerDynamic(W,
+        fail += verifyAnswer(W,
                 [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
                 {
                     bool isUpperTriangle = (i>=diag_start && i<diag_start+A_N && j>=i && j<diag_start+A_M);
@@ -553,10 +552,10 @@ protected:
     virtual local_ordinal_type getNumLocCols(hiop::hiopMatrix* a) = 0;
     virtual local_ordinal_type getLocalSize(const hiop::hiopVector* x) = 0;
     virtual int verifyAnswer(hiop::hiopMatrix* A, real_type answer) = 0;
-    virtual int verifyAnswerDynamic(
+    virtual int verifyAnswer(
             hiop::hiopMatrix* A,
             std::function<real_type(local_ordinal_type, local_ordinal_type)> expect) = 0;
-    virtual int verifyAnswerVec(hiop::hiopVector* x, real_type answer) = 0;
+    virtual int verifyAnswer(hiop::hiopVector* x, real_type answer) = 0;
     virtual bool reduceReturn(int failures, hiop::hiopMatrix* A) = 0;
 };
 
