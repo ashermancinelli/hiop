@@ -97,7 +97,7 @@ int MatrixTestsDense::verifyAnswer(hiop::hiopMatrix* A, const double answer)
  * answer dynamically, based on the row and column
  */
 [[nodiscard]]
-int MatrixTestsDense::verifyAnswerDynamic(
+int MatrixTestsDense::verifyAnswer(
             hiop::hiopMatrix* A,
             std::function<real_type(local_ordinal_type, local_ordinal_type)> expect)
 {
@@ -114,7 +114,7 @@ int MatrixTestsDense::verifyAnswerDynamic(
 
 /// Checks if _local_ vector elements are set to `answer`.
 [[nodiscard]]
-int MatrixTestsDense::verifyAnswerVec(hiop::hiopVector* x, double answer)
+int MatrixTestsDense::verifyAnswer(hiop::hiopVector* x, double answer)
 {
     const local_ordinal_type N = getLocalSize(x);
 
