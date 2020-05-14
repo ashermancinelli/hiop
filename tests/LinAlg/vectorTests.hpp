@@ -481,7 +481,7 @@ public:
         assert(v.get_size() == x.get_size());
         assert(N == getLocalSize(&x));
 
-        const int alpha = two;
+        const real_type alpha = two;
         x.setToConstant(-one);
         z.setToConstant(half);
         v.setToConstant(two);
@@ -1057,7 +1057,7 @@ public:
      */
     bool vectorIsnan(hiop::hiopVector& x, const int rank)
     {
-        const int N = getLocalSize(&x);
+        const local_ordinal_type N = getLocalSize(&x);
         int fail = 0;
         x.setToConstant(zero);
         if (x.isnan())
@@ -1114,8 +1114,8 @@ public:
 
 protected:
     // Interface to methods specific to vector implementation
-    virtual void setLocalElement(hiop::hiopVector* x, int i, real_type val) = 0;
-    virtual real_type getLocalElement(const hiop::hiopVector* x, int i) = 0;
+    virtual void   setLocalElement(hiop::hiopVector* x, local_ordinal_type i, real_type val) = 0;
+    virtual real_type getLocalElement(const hiop::hiopVector* x, local_ordinal_type i) = 0;
     virtual local_ordinal_type getLocalSize(const hiop::hiopVector* x) = 0;
     virtual real_type* getLocalData(hiop::hiopVector* x) = 0;
     virtual int verifyAnswer(hiop::hiopVector* x, real_type answer) = 0;

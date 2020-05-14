@@ -203,19 +203,7 @@ public:
         assert(N_glob == getNumLocRows(&X) && "Matrices have mismatched shapes");
         int fail = 0;
 
-        A.setToConstant(one);
-        W.setToConstant(one);
-        X.setToConstant(one);
-
-        // Beta = 0 to just test matmul portion
-        // this fails
-        // A.timesMat(zero, W, one, X);
-
-        //        W        = 0 * W + A   * X
-        // real_type expected =         one * one * N_glob;
-        // fail += verifyAnswer(&W, expected);
-
-        printMessage(SKIP_TEST, __func__, rank);
+        printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
     }
 
@@ -252,42 +240,11 @@ public:
         x.setToConstant(x_val);
         A.addSubDiagonal(start_idx, alpha, x, 1, x_len-1);
         fail += verifyAnswer(&A,
-                [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
-                {
-                    const bool isOnSubDiagonal = (i>=start_idx && i==j);
-                    return isOnSubDiagonal ? A_val + x_val * alpha : A_val;
-                });
-
-        printMessage(fail, __func__, rank);
-        return reduceReturn(fail, &A);
-    }
-
-    /*
-     * this += alpha * subdiag
-     */
-    int matrixAddSubDiagonalDistributed(
-            hiop::hiopMatrix& A,
-            hiop::hiopVector& x,
-            const int rank)
-    {
-        int fail = 0;
-        const local_ordinal_type M = getNumLocRows(&A);
-        const local_ordinal_type N = getNumLocCols(&A);
-        const local_ordinal_type x_len = getLocalSize(&x);
-        local_ordinal_type start_idx = N - x_len;
-        const real_type alpha = half,
-                        A_val = half,
-                        x_val = one;
-
-        A.setToConstant(A_val);
-        x.setToConstant(x_val);
-        A.addSubDiagonal(alpha, start_idx, x);
-        fail += verifyAnswer(&A,
-                [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
-                {
-                    const bool isOnDiagonal = (i>=start_idx && i==j);
-                    return isOnDiagonal ? A_val + x_val * alpha : A_val;
-                });
+          [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+          {
+            const bool isOnSubDiagonal = (i>=start_idx && i==j);
+            return isOnSubDiagonal ? A_val + x_val * alpha : A_val;
+          });
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
@@ -388,7 +345,7 @@ public:
     /*
      * this += alpha * subdiag
      */
-    int matrixAddSubDiagonal(
+    int matrixAddSubDiagonalDistributed(
             hiop::hiopMatrix& A,
             hiop::hiopVector& x,
             const int rank)
@@ -396,29 +353,21 @@ public:
         int fail = 0;
         const local_ordinal_type M = getNumLocRows(&A);
         const local_ordinal_type N = getNumLocCols(&A);
-        assert(N == getLocalSize(&x));
-        assert(M == getLocalSize(&x));
-        assert(M == A.n());
-        assert(A.n() == x.get_size());
-        assert(A.m() == x.get_size());
+        const local_ordinal_type x_len = getLocalSize(&x);
+        local_ordinal_type start_idx = N - x_len;
+        const real_type alpha = half,
+                        A_val = half,
+                        x_val = one;
 
-        A.setToConstant(one);
-        x.setToConstant(two);
-        A.addSubDiagonal(two, 0, x);
-        for (global_ordinal_type i=0; i<M; i++)
-        {
-            if (getLocalElement(&A, i, i) != (one + two * two))
-                fail++;
-        }
-
-        A.setToConstant(one);
-        x.setToConstant(two);
-        A.addSubDiagonal(0, two, x, 0, N);
-        for (global_ordinal_type i=0; i<M; i++)
-        {
-            if (getLocalElement(&A, i, i) != (one + two * two))
-                fail++;
-        }
+        A.setToConstant(A_val);
+        x.setToConstant(x_val);
+        A.addSubDiagonal(alpha, start_idx, x);
+        fail += verifyAnswer(&A,
+                [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+                {
+                    const bool isOnDiagonal = (i>=start_idx && i==j);
+                    return isOnDiagonal ? A_val + x_val * alpha : A_val;
+                });
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
