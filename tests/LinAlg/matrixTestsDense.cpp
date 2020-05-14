@@ -114,7 +114,7 @@ int MatrixTestsDense::verifyAnswer(
 
 /// Checks if _local_ vector elements are set to `answer`.
 [[nodiscard]]
-int MatrixTestsDense::verifyAnswer(hiop::hiopVector* x, double answer)
+int MatrixTestsDense::verifyAnswer(hiop::hiopVector* x, real_type answer)
 {
     const local_ordinal_type N = getLocalSize(x);
 

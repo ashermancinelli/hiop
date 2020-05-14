@@ -12,11 +12,10 @@ public:
 
 private:
     virtual void setLocalElement(hiop::hiopMatrix* a, local_ordinal_type i, local_ordinal_type j, real_type val);
-    virtual real_type getLocalElement(hiop::hiopMatrix* a, local_ordinal_type i, local_ordinal_type j);
+    virtual real_type getLocalElement(const hiop::hiopMatrix* a, local_ordinal_type i, local_ordinal_type j);
     virtual real_type getLocalElementVec(const hiop::hiopVector* x, local_ordinal_type i);
     virtual local_ordinal_type getNumLocRows(hiop::hiopMatrix* a);
     virtual local_ordinal_type getNumLocCols(hiop::hiopMatrix* a);
-    virtual int verifyAnswerVec(hiop::hiopVector* x, double answer);
     virtual local_ordinal_type getLocalSize(const hiop::hiopVector* x);
     virtual int verifyAnswer(hiop::hiopMatrix* A, real_type answer);
     virtual int verifyAnswer(

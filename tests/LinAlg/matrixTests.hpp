@@ -230,40 +230,6 @@ public:
     }
 
     /*
-     * this += alpha * diag
-     */
-    int matrixAddDiagonal(
-            hiop::hiopMatrix& A,
-            hiop::hiopVector& x,
-            const int rank)
-    {
-        int fail = 0;
-        const local_ordinal_type M = getNumLocRows(&A);
-        const local_ordinal_type N = getNumLocCols(&A);
-        assert(x.get_size()==A.n());
-        assert(x.get_size()==A.m());
-        assert(N == getLocalSize(&x));
-        assert(M == getLocalSize(&x));
-        const real_type alpha = half,
-                        A_val = half,
-                        x_val = one;
-
-        // Test alpha==1
-        A.setToConstant(A_val);
-        x.setToConstant(x_val);
-        A.addDiagonal(alpha, x);
-        fail += verifyAnswer(&A,
-                [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
-                {
-                    const bool isOnDiagonal = (i==j);
-                    return isOnDiagonal ? A_val + x_val * alpha : A_val;
-                });
-
-        printMessage(fail, __func__, rank);
-        return reduceReturn(fail, &A);
-    }
-
-    /*
      * this += alpha * subdiag
      */
     int matrixAddSubDiagonalLocal(
@@ -380,55 +346,6 @@ public:
         */
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
-    }
-
-    /*
-     *  W = beta * W + alpha * this^T * X
-     *
-     *  A: mxn
-     *  W: mxk
-     *  X: nxk
-     *
-     */
-    int matrixTransTimesMat(
-            hiop::hiopMatrix& A,
-            hiop::hiopMatrix& W,
-            hiop::hiopMatrix& X,
-            const int rank)
-    {
-        const local_ordinal_type M = getNumLocRows(&A);
-        const local_ordinal_type N_loc = getNumLocCols(&A);
-        const global_ordinal_type N_glob = A.n();
-        assert(M == getNumLocRows(&W) && "Matrices have mismatched shapes");
-        assert(N_loc == getNumLocCols(&W) && "Matrices have mismatched shapes");
-        assert(N_loc == getNumLocCols(&X) && "Matrices have mismatched shapes");
-        assert(N_glob == getNumLocRows(&X) && "Matrices have mismatched shapes");
-        int fail = 0;
-
-        A.setToConstant(one);
-        W.setToConstant(one);
-        X.setToConstant(one);
-
-        // Beta = 0 to just test matmul portion
-        // this fails
-        // A.timesMat(zero, W, one, X);
-
-        //        W        = 0 * W + A   * X
-        // real_type expected =         one * one * N_glob;
-        // fail += verifyAnswer(&W, expected);
-
-        printMessage(SKIP_TEST, __func__, rank);
-        return reduceReturn(fail, &A);
-    }
-
-    int matrixTimesMatTrans(
-            hiop::hiopMatrix& A,
-            hiop::hiopMatrix& W,
-            hiop::hiopMatrix& X,
-            const int rank)
-    {
-        printMessage(SKIP_TEST, __func__, rank);
-        return 0;
     }
 
     /*

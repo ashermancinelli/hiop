@@ -55,9 +55,9 @@ int main(int argc, char** argv)
         hiop::hiopMatrixDense A_mxk(M_local, K_global, k_partition, comm);
 
         // Local matrices:
-        hiop::hiopMatrixDense A_mxn_local(M_local, N_local, NULL, comm);
-        hiop::hiopMatrixDense A_mxk_local(M_local, K_local, NULL, comm);
-        hiop::hiopMatrixDense A_kxn_local(K_local, N_local, NULL, comm);
+        hiop::hiopMatrixDense A_mxn_local(M_local, N_local);
+        hiop::hiopMatrixDense A_mxk_local(M_local, K_local);
+        hiop::hiopMatrixDense A_kxn_local(K_local, N_local);
 
         hiop::hiopVectorPar x_n(N_global, n_partition, comm);
         //                   ^^^
