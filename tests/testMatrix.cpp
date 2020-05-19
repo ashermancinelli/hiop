@@ -74,9 +74,9 @@ int main(int argc, char** argv)
 
         if (numRanks == 1)
         {
-            // fail += test.matrixTimesMatLocal(A_mxk_local, A_kxn_local, A_mxn_local, rank);
-            // fail += test.matrixTransTimesMat(A_mxk, A_kxn, A_mxn, rank);
-            // fail += test.matrixTimesMatTrans(A_mxk, A_kxn, A_mxn, rank);
+            fail += test.matrixTimesMatLocal(A_mxk_local, A_kxn_local, A_mxn_local, rank);
+            fail += test.matrixTransTimesMat(A_mxk, A_kxn, A_mxn, rank);
+            fail += test.matrixTimesMatTrans(A_mxk, A_kxn, A_mxn, rank);
 
             // This function is only meant to be called locally
             fail += test.matrixAddDiagonal(A_nxn, x_n, rank);
