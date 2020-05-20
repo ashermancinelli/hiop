@@ -117,7 +117,7 @@ int main(int argc, char** argv)
         }
 
         fail += test.matrixTransTimesMat(A_mxk_local, A_kxn, A_mxn, rank);
-        // fail += test.matrixTimesMatTrans(A_kxm, A_kxn_local, A_nxm, rank);
+        fail += test.matrixTimesMatTrans(A_kxm, A_kxn_local, A_nxm, rank);
         fail += test.matrixAddMatrix(A_mxn, B_mxn, rank);
         fail += test.matrixAddToSymDenseMatrixUpperTriangle(A_nxn, A_mlxk, rank);
         fail += test.matrixTransAddToSymDenseMatrixUpperTriangle(A_nxn, A_klxm, rank);
