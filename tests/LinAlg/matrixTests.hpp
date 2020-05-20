@@ -130,15 +130,14 @@ public:
      *   A: KxM
      *   M: MxN
      *   W: KxN
+     *   all local
      */
-    int matrixTimesMatLocal(
+    int matrixTimesMat(
             hiop::hiopMatrix& A,
             hiop::hiopMatrix& X,
             hiop::hiopMatrix& W,
             const int rank)
     {
-        printMessage(SKIP_TEST, __func__, rank);
-        return 0;
         const local_ordinal_type M = getNumLocRows(&A);
         const local_ordinal_type K = getNumLocCols(&A);
         const local_ordinal_type N = getNumLocCols(&X);
@@ -157,27 +156,10 @@ public:
         W.setToConstant(W_val);
         X.setToConstant(X_val);
         A.timesMat(beta, W, alpha, X);
-        real_type expected = (beta * W_val) + (alpha * A_val * X_val * N);
+        real_type expected = (beta * W_val) + (alpha * A_val * X_val * K);
+
         const int fail = verifyAnswer(&W, expected);
 
-        /*
-         * This is commented out until we successfully
-         * test the previous lines
-         *
-        //     W        = 0 * W + A   * M
-        real_type expected =         one * one * N_glob;
-        fail += verifyAnswer(&W, expected);
-
-        A.setToConstant(one);
-        W.setToConstant(two);
-        M.setToConstant(half);
-        A.timesMat(one, W, one, M);
-
-        //     W = 0   * W   + \sum_0^{N_glob} A   * M
-        expected = one * two + N_glob        * one * half;
-        fail += verifyAnswer(&W, expected);
-
-        */
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
     }
@@ -185,40 +167,79 @@ public:
     /*
      *  W = beta * W + alpha * this^T * X
      *
-     *  A: mxn
+     *  A: mxn local
      *  W: mxk
      *  X: nxk
      *
      */
     int matrixTransTimesMat(
-            hiop::hiopMatrix& A,
+            hiop::hiopMatrix& A_local,
             hiop::hiopMatrix& W,
             hiop::hiopMatrix& X,
             const int rank)
     {
-        printMessage(SKIP_TEST, __func__, rank);
-        return 0;
-        const local_ordinal_type M = getNumLocRows(&A);
-        const local_ordinal_type N_loc = getNumLocCols(&A);
-        const global_ordinal_type N_glob = A.n();
+        const local_ordinal_type K = getNumLocRows(&A_local);
+        const local_ordinal_type M = getNumLocCols(&A_local);
+        const global_ordinal_type N_loc = getNumLocCols(&X);
+        const global_ordinal_type N = X.n();
         assert(M == getNumLocRows(&W) && "Matrices have mismatched shapes");
+        assert(N == W.n() && "Matrices have mismatched shapes");
         assert(N_loc == getNumLocCols(&W) && "Matrices have mismatched shapes");
-        assert(N_loc == getNumLocCols(&X) && "Matrices have mismatched shapes");
-        assert(N_glob == getNumLocRows(&X) && "Matrices have mismatched shapes");
-        int fail = 0;
+        assert(K == getNumLocRows(&X) && "Matrices have mismatched shapes");
+        const real_type A_val = two,
+                        X_val = three,
+                        W_val = two,
+                        alpha = two,
+                        beta  = two;
 
-        printMessage(SKIP_TEST, __func__, rank);
-        return 0;
+        A_local.setToConstant(A_val);
+        W.setToConstant(W_val);
+        X.setToConstant(X_val);
+        A_local.transTimesMat(beta, W, alpha, X);
+
+        real_type expected = (beta * W_val) + (alpha * A_val * X_val * K);
+
+        const int fail = verifyAnswer(&W, expected);
+        printMessage(fail, __func__, rank);
+        return reduceReturn(fail, &W);
     }
 
+    /*
+     *  W = beta * W + alpha * this * X^T
+     *
+     *  A: mxn
+     *  W: mxk local
+     *  X: nxk
+     *
+     */
     int matrixTimesMatTrans(
             hiop::hiopMatrix& A,
-            hiop::hiopMatrix& W,
+            hiop::hiopMatrix& W_local,
             hiop::hiopMatrix& X,
             const int rank)
     {
-        printMessage(SKIP_TEST, __func__, rank);
-        return 0;
+        const local_ordinal_type K = getNumLocRows(&A);
+        const local_ordinal_type M = getNumLocCols(&A);
+        const global_ordinal_type N = getNumLocRows(&X);
+        assert(K == getNumLocRows(&W_local) && "Matrices have mismatched shapes");
+        assert(N == getNumLocCols(&W_local) && "Matrices have mismatched shapes");
+        assert(M == getNumLocCols(&X) && "Matrices have mismatched shapes");
+        const real_type A_val = two,
+                        X_val = three,
+                        W_val = two,
+                        alpha = two,
+                        beta  = two;
+
+        A.setToConstant(A_val);
+        W_local.setToConstant(W_val);
+        X.setToConstant(X_val);
+        A.timesMatTrans(beta, W_local, alpha, X);
+
+        real_type expected = (beta * W_val) + (alpha * A_val * X_val * M);
+
+        const int fail = verifyAnswer(&W_local, expected);
+        printMessage(fail, __func__, rank);
+        return reduceReturn(fail, &A);
     }
 
     /*
@@ -230,7 +251,6 @@ public:
             const int rank)
     {
         int fail = 0;
-        const local_ordinal_type M = getNumLocRows(&A);
         const local_ordinal_type N = getNumLocCols(&A);
         const local_ordinal_type x_len = getLocalSize(&x);
         const real_type alpha = half,
@@ -250,61 +270,6 @@ public:
             return isOnSubDiagonal ? A_val + x_val * alpha : A_val;
           });
 
-        printMessage(fail, __func__, rank);
-        return reduceReturn(fail, &A);
-    }
-
-    /* 
-     * W = beta*W + alpha*this*X
-     * For A with shape M x N,
-     * X must have shape N x L, and
-     * W must have shape M x L
-     *
-     * Shapes:
-     *   A: MxK
-     *   X: KxN
-     *   W: MxN
-     */
-    int matrixTimesMat(
-            hiop::hiopMatrix& A,
-            hiop::hiopMatrix& X,
-            hiop::hiopMatrix& W,
-            const int rank)
-    {
-        const int M = getNumLocRows(&A);
-        const int K_loc = getNumLocCols(&A);
-        const int K_glob = A.n();
-        const int N_loc = getNumLocCols(&X);
-        const int N_glob = X.n();
-        assert(K_glob == getNumLocRows(&X)  && "Matrices have mismatched shapes");
-        assert(M == getNumLocRows(&W)       && "Matrices have mismatched shapes");
-        assert(N_loc == getNumLocCols(&W)   && "Matrices have mismatched shapes");
-        assert(N_glob == W.n()              && "Matrices have mismatched shapes");
-        int fail = 0;
-
-        A.setToConstant(one);
-        W.setToConstant(one);
-        X.setToConstant(one);
-
-        // Beta = 0 to just test matmul portion
-        // this fails
-        A.timesMat(one, W, one, X);
-
-        /*
-        //     W        = 0 * W + A   * X
-        real_type expected =         one * one * N_glob;
-        fail += verifyAnswer(&W, expected);
-
-        A.setToConstant(one);
-        W.setToConstant(two);
-        X.setToConstant(half);
-        A.timesMat(one, W, one, X);
-
-        //     W = 0   * W   + \sum_0^{N_glob} A   * X
-        expected = one * two + N_glob        * one * half;
-        fail += verifyAnswer(&W, expected);
-
-        */
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
     }
@@ -355,7 +320,6 @@ public:
             const int rank)
     {
         int fail = 0;
-        const local_ordinal_type M = getNumLocRows(&A);
         const local_ordinal_type N = getNumLocCols(&A);
         const local_ordinal_type x_len = getLocalSize(&x);
         local_ordinal_type start_idx = N - x_len;
@@ -470,16 +434,15 @@ public:
         assert(W->n() >= A.n());
 
         const local_ordinal_type start_idx_row = 0;
-        const local_ordinal_type start_idx_col = N_loc - A_N_loc;
+        const local_ordinal_type start_idx_col = N_loc - A_M;
         const real_type alpha = half,
                         A_val = half,
                         W_val = one;
-        int fail = 0;
 
         A.setToConstant(A_val);
         W->setToConstant(W_val);
         A.transAddToSymDenseMatrixUpperTriangle(start_idx_row, start_idx_col, alpha, *W);
-        fail += verifyAnswer(W,
+        const int fail = verifyAnswer(W,
                 [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
                 {
                     const bool isTransUpperTriangle = (
@@ -537,6 +500,7 @@ public:
         return reduceReturn(fail, &A);
     }
 
+#ifdef HIOP_DEEPCHECKS
     int matrixAssertSymmetry(
             hiop::hiopMatrix& A,
             const int rank)
@@ -547,6 +511,7 @@ public:
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
     }
+#endif
 
     int matrixIsFinite(
             hiop::hiopMatrix& A,
