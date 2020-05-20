@@ -68,9 +68,7 @@ int main(int argc, char** argv)
         hiop::hiopMatrixDense A_mxn_local(M_global, N_global);
 
         hiop::hiopVectorPar x_n(N_global, n_partition, comm);
-        //                   ^^^
         hiop::hiopVectorPar x_m(M_global);
-        //                   ^^^
         hiop::tests::MatrixTestsDense test;
 
         fail += test.matrixNumRows(A_mxn, M_global, rank);
@@ -93,7 +91,7 @@ int main(int argc, char** argv)
         }
 
         fail += test.matrixTransTimesMat(A_mxk_local, A_kxn, A_mxn, rank);
-        fail += test.matrixTimesMatTrans(A_kxm, A_kxn_local, A_nxm, rank);
+        // fail += test.matrixTimesMatTrans(A_kxm, A_kxn_local, A_nxm, rank);
         fail += test.matrixAddMatrix(A_mxn, B_mxn, rank);
         fail += test.matrixAddToSymDenseMatrixUpperTriangle(A_nxn, A_mxk, rank);
         fail += test.matrixTransAddToSymDenseMatrixUpperTriangle(A_nxn, A_mxk, rank);
