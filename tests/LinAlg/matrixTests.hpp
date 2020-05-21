@@ -219,7 +219,7 @@ public:
             const int rank)
     {
         // Skip for now - undetermined error in timeMatTrans call
-        printMessage(SKIP_TEST, __func__, rank); return 0;
+        // printMessage(SKIP_TEST, __func__, rank); return 0;
 
         const local_ordinal_type K = getNumLocRows(&A);
         const local_ordinal_type M = getNumLocCols(&A);

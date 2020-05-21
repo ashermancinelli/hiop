@@ -3,6 +3,7 @@
 
 #include <hiopVector.hpp>
 #include <hiopMatrix.hpp>
+#include <hiop_defs.hpp>
 
 int main(int argc, char** argv)
 {
@@ -18,19 +19,25 @@ int main(int argc, char** argv)
     printf("Support for MPI is enabled\n");
 #endif
 
-  global_ordinal_type M_local = 5 * numRanks;
-  global_ordinal_type N_local = 10 * M_local;
-  global_ordinal_type M_global = M_local * numRanks;
-  global_ordinal_type N_global = N_local * numRanks;
+  long long int M_local = 5 * numRanks;
+  long long int K_local = 5 * M_local;
+  long long int N_local = 10 * M_local;
 
-  auto n_partition = new global_ordinal_type[numRanks+1];
-  auto m_partition = new global_ordinal_type[numRanks+1];
+  long long int M_global = M_local * numRanks;
+  long long int K_global = K_local * numRanks;
+  long long int N_global = N_local * numRanks;
+
+  auto n_partition = new long long int[numRanks+1];
+  auto m_partition = new long long int[numRanks+1];
+  auto k_partition = new long long int[numRanks+1];
   n_partition[0] = 0;
   m_partition[0] = 0;
+  k_partition[0] = 0;
 
   for(int i = 1; i < numRanks + 1; ++i)
   {
     n_partition[i] = i*N_local;
+    k_partition[i] = i*K_local;
     m_partition[i] = i*M_local;
   }
 
@@ -38,27 +45,22 @@ int main(int argc, char** argv)
   hiop::hiopMatrixDense W(K_global, N_global);
   hiop::hiopMatrixDense X(N_global, M_global, m_partition, comm);
 
-  fail += test.matrixTimesMatTrans(A_kxm, A_kxn_local, A_nxm, rank);
-
-  const real_type A_val = 2.,
+  const double A_val = 2.,
         X_val = 3.,
         W_val = 2.,
         alpha = 2.,
         beta  = 2.;
 
   A.setToConstant(A_val);
-  W_local.setToConstant(W_val);
+  W.setToConstant(W_val);
   X.setToConstant(X_val);
-  A.timesMatTrans(beta, W_local, alpha, X);
+  A.timesMatTrans(beta, W, alpha, X);
 
-  real_type expected = (beta * W_val) + (alpha * A_val * X_val * M);
-
-  const int fail = verifyAnswer(&W_local, expected);
-  std::cout "-- Fail: " << fail << "\n";
+  double expected = (beta * W_val) + (alpha * A_val * X_val * M_global);
 
 #ifdef HIOP_USE_MPI
   MPI_Finalize();
 #endif
 
-  return fail;
+  return 0;
 }

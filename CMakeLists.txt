@@ -179,6 +179,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 add_subdirectory(tests)
+add_subdirectory(minimal_error)
 add_library(hiop STATIC $<TARGET_OBJECTS:hiopOptimization>
   $<TARGET_OBJECTS:hiopLinAlg>
   $<TARGET_OBJECTS:hiopUtils>)
