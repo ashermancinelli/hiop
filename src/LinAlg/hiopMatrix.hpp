@@ -334,6 +334,7 @@ public:
   virtual bool assertSymmetry(double tol=1e-16) const;
 #endif
 private:
+  double* data_;
   double** M; //local storage
   long long n_global; //total / global number of columns
   int m_local, n_local; //local number of rows and cols, respectively

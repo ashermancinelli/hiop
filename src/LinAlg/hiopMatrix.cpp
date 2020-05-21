@@ -87,22 +87,26 @@ hiopMatrixDense::hiopMatrixDense(const long long& m,
   assert(max_rows>=m_local && "the requested extra allocation is smaller than the allocation needed by the matrix");
 
   //M=new double*[m_local==0?1:m_local];
-  M=new double*[max_rows==0?1:max_rows];
-  M[0] = max_rows==0?NULL:new double[max_rows*n_local];
-  for(int i=1; i<max_rows; i++)
-    M[i]=M[0]+i*n_local;
+  data_ = new double[max_rows * n_local];
+  M = new double*[max_rows];
 
-  //! valgrind reports a shit load of errors without this; check this
-  for(int i=0; i<max_rows*n_local; i++) M[0][i]=0.0;
+  for(int i=0; i<max_rows; i++)
+    M[i] = &data_[n_local * i];
 
   //internal buffers 
   _buff_mxnlocal = NULL;//new double[max_rows*n_local];
 }
+
 hiopMatrixDense::~hiopMatrixDense()
 {
   if(_buff_mxnlocal) delete[] _buff_mxnlocal;
-  if(M) {
-    if(M[0]) delete[] M[0];
+
+  if(data_)
+  {
+    delete[] data_;
+  }
+  if (M)
+  {
     delete[] M;
   }
 }
@@ -604,7 +608,7 @@ void hiopMatrixDense::timesMatTrans_local(double beta, hiopMatrix& W_, double al
   int M=X.m(), N=m_local, K=n_local;
   double** XM=X.local_data(); double** WM=W.local_data();
 
-  DGEMM(&transX, &transM, &M,&N,&K, &alpha,XM[0],&ldx, this->M[0],&ldm, &beta,WM[0],&ldw);
+  DGEMM(&transX, &transM, &M,&N,&K, &alpha,XM[0],&ldx, data_, &ldm, &beta,WM[0],&ldw);
 }
 /* W = beta*W + alpha*this*X^T */
 void hiopMatrixDense::timesMatTrans(double beta, hiopMatrix& W_, double alpha, const hiopMatrix& X_) const
