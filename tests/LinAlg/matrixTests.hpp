@@ -281,16 +281,34 @@ public:
                         A_val = half,
                         x_val = one;
 
-        // We're only going to add n-1 elements of the vector
-        local_ordinal_type start_idx = (N - x_len) + 1;
+        // Test the overload that assumes the entire source vector
+        // will be added to the subdiagonal
+        local_ordinal_type start_idx = N - x_len;
 
         A.setToConstant(A_val);
         x.setToConstant(x_val);
-        A.addSubDiagonal(start_idx, alpha, x, 1, x_len-1);
+        A.addSubDiagonal(alpha, start_idx, x);
         fail += verifyAnswer(&A,
           [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
           {
             const bool isOnSubDiagonal = (i>=start_idx && i==j);
+            return isOnSubDiagonal ? A_val + x_val * alpha : A_val;
+          });
+
+        // We're only going to add n-1 elements of the vector
+        // Test the overload that specifies subset of the vector
+        // to be added to subdiagonal
+        local_ordinal_type start_idx_src = 1,
+                           num_elements_to_add = x_len - start_idx_src,
+                           start_idx_dest = (N - x_len) + start_idx_src;
+
+        A.setToConstant(A_val);
+        x.setToConstant(x_val);
+        A.addSubDiagonal(start_idx_dest, alpha, x, start_idx_src, num_elements_to_add);
+        fail += verifyAnswer(&A,
+          [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+          {
+            const bool isOnSubDiagonal = (i>=start_idx_dest && i==j);
             return isOnSubDiagonal ? A_val + x_val * alpha : A_val;
           });
 
