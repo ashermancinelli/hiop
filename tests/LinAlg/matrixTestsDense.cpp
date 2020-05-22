@@ -29,7 +29,7 @@ real_type MatrixTestsDense::getLocalElement(
 
 /// Returns element _i_ of vector _x_.
 /// First need to retrieve hiopVectorPar from the abstract interface
-real_type MatrixTestsDense::getLocalElementVec(
+real_type MatrixTestsDense::getLocalElement(
         const hiop::hiopVector* x,
         local_ordinal_type i)
 {
@@ -122,9 +122,31 @@ int MatrixTestsDense::verifyAnswer(hiop::hiopVector* x, double answer)
 
     int local_fail = 0;
     for(local_ordinal_type i=0; i<N; ++i)
-        if(!isEqual(getLocalElementVec(x, i), answer))
+    {
+        if(!isEqual(getLocalElement(x, i), answer))
+        {
             ++local_fail;
+        }
+    }
 
+    return local_fail;
+}
+
+[[nodiscard]]
+int MatrixTestsDense::verifyAnswer(
+    hiop::hiopVector* x,
+    std::function<real_type(local_ordinal_type)> expect)
+{
+    const local_ordinal_type N = getLocalSize(x);
+
+    int local_fail = 0;
+    for (int i=0; i<N; i++)
+    {
+        if(!isEqual(getLocalElement(x, i), expect(i)))
+        {
+            ++local_fail;
+        }
+    }
     return local_fail;
 }
 

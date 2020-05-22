@@ -111,13 +111,33 @@ public:
                         x_val = three;
         int fail = 0;
 
+        // Index of row of A that will be set to zero,
+        // and index of y that will be beta * y_val
+        const local_ordinal_type index_to_zero = N-1;
+
         A.setToConstant(A_val);
         y.setToConstant(y_val);
         x.setToConstant(x_val);
-        A.transTimesVec(beta, y, alpha, x);
 
-        real_type expected = (beta * y_val) + (alpha * A_val * x_val * N_glob);
-        fail += verifyAnswer(&y, expected);
+        /*
+         * Zero a row of A to test that the resulting vector 
+         * has its initial value as the first element, ensuring that
+         * the matrix is correctly transposed.
+         */
+        for (int i=0; i<M; i++)
+        {
+            setLocalElement(&A, i, index_to_zero, zero);
+        }
+
+        A.transTimesVec(beta, y, alpha, x);
+        fail += verifyAnswer(&y, 
+            [=] (local_ordinal_type i) -> real_type
+            {
+              const bool isZerodRow = (i == index_to_zero);
+              return isZerodRow ? 
+                beta * y_val : 
+                (beta * y_val) + (alpha * A_val * x_val * N_glob);
+            });
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
@@ -567,7 +587,7 @@ protected:
             const hiop::hiopMatrix* a,
             local_ordinal_type i,
             local_ordinal_type j) = 0;
-    virtual real_type getLocalElementVec(
+    virtual real_type getLocalElement(
             const hiop::hiopVector* x,
             local_ordinal_type i) = 0;
     virtual local_ordinal_type getNumLocRows(hiop::hiopMatrix* a) = 0;
@@ -578,6 +598,9 @@ protected:
             hiop::hiopMatrix* A,
             std::function<real_type(local_ordinal_type, local_ordinal_type)> expect) = 0;
     virtual int verifyAnswer(hiop::hiopVector* x, real_type answer) = 0;
+    virtual int verifyAnswer(
+            hiop::hiopVector* x,
+            std::function<real_type(local_ordinal_type)> expect) = 0;
     virtual bool reduceReturn(int failures, hiop::hiopMatrix* A) = 0;
 };
 
