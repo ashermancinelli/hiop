@@ -268,13 +268,14 @@ public:
     /*
      * this += alpha * subdiag
      */
-    int matrixAddSubDiagonalLocal(
+    int matrixAddSubDiagonal(
             hiop::hiopMatrix& A,
             hiop::hiopVector& x,
             const int rank)
     {
         int fail = 0;
         const local_ordinal_type N = getNumLocCols(&A);
+        assert(N == A.n() && "Test should only be ran sequentially.");
         const local_ordinal_type x_len = getLocalSize(&x);
         const real_type alpha = half,
                         A_val = half,
@@ -340,36 +341,6 @@ public:
         return reduceReturn(fail, &A);
     }
 
-    /*
-     * this += alpha * subdiag
-     */
-    int matrixAddSubDiagonalDistributed(
-            hiop::hiopMatrix& A,
-            hiop::hiopVector& x,
-            const int rank)
-    {
-        int fail = 0;
-        const local_ordinal_type N = getNumLocCols(&A);
-        const local_ordinal_type x_len = getLocalSize(&x);
-        local_ordinal_type start_idx = N - x_len;
-        const real_type alpha = half,
-                        A_val = half,
-                        x_val = one;
-
-        A.setToConstant(A_val);
-        x.setToConstant(x_val);
-        A.addSubDiagonal(alpha, start_idx, x);
-        fail += verifyAnswer(&A,
-                [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
-                {
-                    const bool isOnDiagonal = (i>=start_idx && i==j);
-                    return isOnDiagonal ? A_val + x_val * alpha : A_val;
-                });
-
-        printMessage(fail, __func__, rank);
-        return reduceReturn(fail, &A);
-    }
-    
     /*
      * A += alpha * B
      */

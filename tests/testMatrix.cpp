@@ -109,11 +109,7 @@ int main(int argc, char** argv)
             // These functions are only meant to be called locally
             fail += test.matrixTimesMat(A_mxk_local, A_kxn_local, A_mxn_local, rank);
             fail += test.matrixAddDiagonal(A_nxn, x_n_global_local, rank);
-            fail += test.matrixAddSubDiagonalLocal(A_nxn, x_m_global_local, rank);
-        }
-        else
-        {
-            fail += test.matrixAddSubDiagonalDistributed(A_nxn, x_m_local_local, rank);
+            fail += test.matrixAddSubDiagonal(A_nxn, x_m_global_local, rank);
         }
 
         fail += test.matrixTransTimesMat(A_mxk_local, A_kxn, A_mxn, rank);
