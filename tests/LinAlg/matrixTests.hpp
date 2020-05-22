@@ -293,22 +293,28 @@ public:
         assert(M == A.n());
         assert(A.n() == x.get_size());
         assert(A.m() == x.get_size());
-        constexpr real_type alpha = two;
+        constexpr real_type alpha = two,
+                  A_val = quarter,
+                  x_val = half;
 
-        A.setToConstant(one);
-        x.setToConstant(two);
+        A.setToConstant(A_val);
+        x.setToConstant(x_val);
         A.addDiagonal(alpha, x);
-        real_type expected = one + (alpha * two);
-        for (local_ordinal_type i=0; i<M; i++)
-            if (getLocalElement(&A, i, i) != expected)
-                fail++;
+        fail += verifyAnswer(&A,
+          [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+          {
+            const bool isOnDiagonal = (i == j);
+            return isOnDiagonal ? A_val + x_val * alpha : A_val;
+          });
 
-        A.setToConstant(one);
+        A.setToConstant(A_val);
         A.addDiagonal(alpha);
-        expected = one + alpha;
-        for (local_ordinal_type i=0; i<M; i++)
-            if (getLocalElement(&A, i, i) != expected)
-                fail++;
+        fail += verifyAnswer(&A,
+          [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+          {
+            const bool isOnDiagonal = (i == j);
+            return isOnDiagonal ? A_val + alpha : A_val;
+          });
 
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &A);
