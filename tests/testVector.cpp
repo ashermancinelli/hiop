@@ -116,6 +116,7 @@ int main(int argc, char** argv)
         hiop::hiopVectorRajaPar y(Nglobal, partition, comm);
         hiop::hiopVectorRajaPar z(Nglobal, partition, comm);
         hiop::hiopVectorRajaPar a(Nglobal, partition, comm);
+        hiop::hiopVectorRajaPar b(Nglobal, partition, comm);
         hiop::tests::VectorTestsRajaPar test;
 
         fail += test.vectorSetToConstant(x, rank);
@@ -129,6 +130,23 @@ int main(int argc, char** argv)
         fail += test.vectorAdjustDuals_plh(x, y, z, a, rank);
         // fail += test.vectorAxdzpy_w_patternSelect(x, y, z, rank);
         fail += test.vectorFractionToTheBdry_w_pattern(x, y, z, rank);
+        fail += test.vectorInfnorm(x, rank);
+        fail += test.vectorComponentMult(x, y, rank);
+        fail += test.vectorComponentDiv(x, y, rank);
+        fail += test.vectorComponentDiv_p_selectPattern(x, y, z, rank);
+
+        fail += test.vectorAxzpy(x, y, z, rank);
+        fail += test.vectorAxdzpy(x, y, z, rank);
+
+        fail += test.vectorAddConstant(x, rank);
+        fail += test.vectorAddConstant_w_patternSelect(x, y, rank);
+        fail += test.vectorInvert(x, rank);
+        fail += test.vectorLogBarrier(x, y, rank);
+        fail += test.vectorAddLogBarrierGrad(x, y, z, rank);
+        fail += test.vectorLinearDampingTerm(x, y, z, rank);
+
+        fail += test.vectorAllPositive(x, rank);
+        fail += test.vectorProjectIntoBounds(x, y, z, a, b, rank);
     }
 
 

@@ -21,7 +21,7 @@ protected:
     static constexpr real_type two       = 2.0;
     static constexpr real_type four      = 4.0;
     static constexpr real_type eps =
-        10*std::numeric_limits<real_type>::epsilon();
+        100*std::numeric_limits<real_type>::epsilon();
     static constexpr int SKIP_TEST = -1;
 
     // must be const pointer and const dest for
@@ -37,7 +37,7 @@ protected:
     [[nodiscard]] constexpr
     bool isEqual(const real_type a, const real_type b)
     {
-        return (std::abs(a - b) < eps);
+        return (std::abs(a - b)/(1.0+std::abs(b)) < eps);
     }
 
     /// Prints error output for each rank
