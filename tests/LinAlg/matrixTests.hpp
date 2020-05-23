@@ -327,7 +327,7 @@ public:
     assert(getNumLocRows(&A) == A.n());
     assert(A.n() == x.get_size());
     assert(A.m() == x.get_size());
-    constexpr real_type alpha = two,
+    static const real_type alpha = two,
               A_val = quarter,
               x_val = half;
 
