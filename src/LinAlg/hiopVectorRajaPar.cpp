@@ -335,16 +335,23 @@ double hiopVectorRajaPar::dotProductWith( const hiopVector& v_ ) const
 double hiopVectorRajaPar::infnorm() const
 {
   assert(n_local>=0);
-  double nrm=0.;
-  if(n_local!=0) {
-    nrm=fabs(data[0]);
-    double aux;
+  //double nrm=0.;
+  //if(n_local!=0) {
+  //  nrm=fabs(data[0]);
+  //  double aux;
   
-    for(int i=1; i<n_local; i++) {
-      aux=fabs(data[i]);
-      if(aux>nrm) nrm=aux;
-    }
-  }
+  //  for(int i=1; i<n_local; i++) {
+  //    aux=fabs(data[i]);
+  //    if(aux>nrm) nrm=aux;
+  //  }
+  //}
+  double* self_data = data_dev;
+  RAJA::ReduceMax< hiop_raja_reduce, double > norm(0.0);
+  RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
+				  RAJA_LAMBDA(RAJA::Index_type i) {
+				    norm.max(std::abs(self_data[i]));
+				  });
+  double nrm = static_cast<double>(norm.get());
 #ifdef HIOP_USE_MPI
   double nrm_glob;
   int ierr = MPI_Allreduce(&nrm, &nrm_glob, 1, MPI_DOUBLE, MPI_MAX, comm); assert(MPI_SUCCESS==ierr);
@@ -395,31 +402,33 @@ double hiopVectorRajaPar::onenorm_local() const
   return nrm1;
 }
 
+// Multiply elements in this by corresponding elements in v_ and store result in
+// this
 void hiopVectorRajaPar::componentMult( const hiopVector& v_ )
 {
   const hiopVectorRajaPar& v = dynamic_cast<const hiopVectorRajaPar&>(v_);
   assert(n_local==v.n_local);
-  //for(int i=0; i<n_local; i++) data[i] *= v.data[i];
-  double*s = data,*x=v.data; 
-  int n2=(n_local/8)*8; double *send2=s+n2, *send=s+n_local;
-  while(s<send2) {
-    *s *= *x; s++; x++; //s[i] *= x[i]; i++;      
-    *s *= *x; s++; x++;
-    *s *= *x; s++; x++;
-    *s *= *x; s++; x++;
-    *s *= *x; s++; x++;
-    *s *= *x; s++; x++;
-    *s *= *x; s++; x++;
-    *s *= *x; s++; x++;
-  }
-  while(s<send) { *s *= *x; s++; x++; }
+  double* self_data = data_dev;
+  double* v_data = v.data_dev;
+  RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
+				  RAJA_LAMBDA(RAJA::Index_type i) {
+				    self_data[i] = self_data[i]*v_data[i];
+				  });
 }
 
+// Divide elements in this by corresponding elements in v_ and store result in
+// this. Evidently assuming that no elements in v_ vanish
 void hiopVectorRajaPar::componentDiv ( const hiopVector& v_ )
 {
   const hiopVectorRajaPar& v = dynamic_cast<const hiopVectorRajaPar&>(v_);
   assert(n_local==v.n_local);
-  for(int i=0; i<n_local; i++) data[i] /= v.data[i];
+  //for(int i=0; i<n_local; i++) data[i] /= v.data[i];
+  double* self_data = data_dev;
+  double* v_data = v.data_dev;
+  RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
+				  RAJA_LAMBDA(RAJA::Index_type i) {
+				    self_data[i] = self_data[i]/v_data[i];
+				  });
 }
 
 void hiopVectorRajaPar::componentDiv_p_selectPattern( const hiopVector& v_, const hiopVector& ix_)
@@ -430,10 +439,17 @@ void hiopVectorRajaPar::componentDiv_p_selectPattern( const hiopVector& v_, cons
   assert(v.n_local==n_local);
   assert(n_local==ix.n_local);
 #endif
-  double *s=this->data, *x=v.data, *pattern=ix.data; 
-  for(int i=0; i<n_local; i++)
-    if(pattern[i]==0.0) s[i]=0.0;
-    else                s[i]/=x[i];
+  //double *s=this->data, *x=v.data, *pattern=ix.data; 
+  //for(int i=0; i<n_local; i++)
+  //  if(pattern[i]==0.0) s[i]=0.0;
+  //  else                s[i]/=x[i];
+  double* self_data = data_dev;
+  double* v_data = v.data_dev;
+  double* ix_data = ix.data_dev;
+  RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
+				  RAJA_LAMBDA(RAJA::Index_type i) {
+				    self_data[i] = ix_data[i]*self_data[i]/v_data[i];
+				  });
 }
 
 void hiopVectorRajaPar::scale(double num)
@@ -458,52 +474,26 @@ void hiopVectorRajaPar::axzpy(double alpha, const hiopVector& x_, const hiopVect
   assert(vx.n_local==vz.n_local);
   assert(   n_local==vz.n_local);
 #endif  
-  // this += alpha * x * z   (s+=alpha*x*z)
-  double*s = data;
-  const double *x = vx.local_data_const(), *z=vz.local_data_const();
-
-  //unroll loops to save on comparison; hopefully the compiler will take it from here
-  int nn=(n_local/8)*8; double *send1=s+nn, *send2=s+n_local;
-
+  double *self_data = data_dev;
+  const double *x_data = vx.local_data_dev_const();
+  const double *z_data = vz.local_data_dev_const();
   if(alpha== 1.0) { 
-    while(s<send1) {
-      *s += *x * *z; s++; x++; z++; //s[i] += x[i]*z[i]; i++;      
-      *s += *x * *z; s++; x++; z++; 
-      *s += *x * *z; s++; x++; z++;
-      *s += *x * *z; s++; x++; z++;
-      *s += *x * *z; s++; x++; z++; 
-      *s += *x * *z; s++; x++; z++;
-      *s += *x * *z; s++; x++; z++;
-      *s += *x * *z; s++; x++; z++;
-    }
-    while(s<send2) { *s += *x * *z; s++; x++; z++; }
-
+    RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
+        RAJA_LAMBDA(RAJA::Index_type i) {
+        self_data[i] += x_data[i]*z_data[i];
+        });
   } else if(alpha==-1.0) { 
-    while(s<send1) {
-      *s -= *x * *z; s++; x++; z++; //s[i] += x[i]*z[i]; i++;      
-      *s -= *x * *z; s++; x++; z++; 
-      *s -= *x * *z; s++; x++; z++;
-      *s -= *x * *z; s++; x++; z++;
-      *s -= *x * *z; s++; x++; z++; 
-      *s -= *x * *z; s++; x++; z++;
-      *s -= *x * *z; s++; x++; z++;
-      *s -= *x * *z; s++; x++; z++;
-    }
-    while(s<send2) { 
-      *s -= *x * *z; s++; x++; z++; 
-    }    
-
+    RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
+        RAJA_LAMBDA(RAJA::Index_type i) {
+        self_data[i] -= x_data[i]*z_data[i];
+        });
   } else { // alpha is neither 1.0 nor -1.0
-    while(s<send1) {
-      *s += *x * *z * alpha; s++; x++; z++; //s[i] += x[i]*z[i]; i++;      
-      *s += *x * *z * alpha; s++; x++; z++; 
-      *s += *x * *z * alpha; s++; x++; z++; 
-      *s += *x * *z * alpha; s++; x++; z++; 
-      *s += *x * *z * alpha; s++; x++; z++; 
-      *s += *x * *z * alpha; s++; x++; z++; 
-      *s += *x * *z * alpha; s++; x++; z++; 
-    }
-    while(s<send2) { *s += *x * *z * alpha; s++; x++; z++; }
+    // Question: does compiler automatically move alpha to device (if necessary)
+    // or is this something we should do manually?
+    RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
+        RAJA_LAMBDA(RAJA::Index_type i) {
+        self_data[i] += alpha*x_data[i]*z_data[i];
+        });
   }
 }
 
@@ -515,53 +505,26 @@ void hiopVectorRajaPar::axdzpy( double alpha, const hiopVector& x_, const hiopVe
   assert(vx.n_local==vz.n_local);
   assert(   n_local==vz.n_local);
 #endif  
-  // this += alpha * x / z   (s+=alpha*x/z)
-  double*s = data;
-  const double *x = vx.local_data_const(), *z=vz.local_data_const();
-
-  //unroll loops to save on comparison; hopefully the compiler will take it from here
-  int nn=(n_local/3)*3; double *send1=s+nn, *send2=s+n_local;
-
+  double *self_data = data_dev;
+  const double *x_data = vx.local_data_dev_const();
+  const double *z_data = vz.local_data_dev_const();
   if(alpha== 1.0) { 
-    while(s<send1) {
-      *s += *x / *z; s++; x++; z++; //s[i] += x[i]*z[i]; i++;      
-      *s += *x / *z; s++; x++; z++; 
-      *s += *x / *z; s++; x++; z++;
-      //*s += *x / *z; s++; x++; z++;
-      //*s += *x / *z; s++; x++; z++; 
-      //*s += *x / *z; s++; x++; z++;
-      //*s += *x / *z; s++; x++; z++;
-      //*s += *x / *z; s++; x++; z++;
-    }
-    while(s<send2) { *s += *x * *z; s++; x++; z++; }
-
+    RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
+        RAJA_LAMBDA(RAJA::Index_type i) {
+        self_data[i] += x_data[i]/z_data[i];
+        });
   } else if(alpha==-1.0) { 
-    while(s<send1) {
-      *s -= *x / *z; s++; x++; z++; //s[i] += x[i]*z[i]; i++;      
-      *s -= *x / *z; s++; x++; z++; 
-      *s -= *x / *z; s++; x++; z++;
-      //*s -= *x / *z; s++; x++; z++;
-      //*s -= *x / *z; s++; x++; z++; 
-      //*s -= *x / *z; s++; x++; z++;
-      //*s -= *x / *z; s++; x++; z++;
-      //*s -= *x / *z; s++; x++; z++;
-    }
-    while(s<send2) { 
-      *s -= *x / *z; s++; x++; z++; 
-    }    
-
+    RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
+        RAJA_LAMBDA(RAJA::Index_type i) {
+        self_data[i] -= x_data[i]/z_data[i];
+        });
   } else { // alpha is neither 1.0 nor -1.0
-    while(s<send1) {
-      *s += *x / *z * alpha; s++; x++; z++; //s[i] += x[i]*z[i]; i++;      
-      *s += *x / *z * alpha; s++; x++; z++; 
-      *s += *x / *z * alpha; s++; x++; z++; 
-      //!opt *s += *x / *z * alpha; s++; x++; z++; 
-      //*s += *x / *z * alpha; s++; x++; z++; 
-      //*s += *x / *z * alpha; s++; x++; z++; 
-      //*s += *x / *z * alpha; s++; x++; z++; 
-      //*s += *x / *z * alpha; s++; x++; z++; 
-    }
-    while(s<send2) { *s += *x / *z * alpha; s++; x++; z++; }
+    // Question: does compiler automatically move alpha to device (if necessary)
+    // or is this something we should do manually?
+    RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
+        RAJA_LAMBDA(RAJA::Index_type i) {
+        self_data[i] += alpha*x_data[i]/z_data[i];
+        });
   }
 }
 
@@ -604,15 +567,27 @@ void hiopVectorRajaPar::axdzpy_w_pattern( double alpha, const hiopVector& x_, co
 
 void hiopVectorRajaPar::addConstant( double c )
 {
-  for(long long i=0; i<n_local; i++) data[i]+=c;
+  //for(long long i=0; i<n_local; i++) data[i]+=c;
+  double *y = data_dev;
+  RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
+      RAJA_LAMBDA(RAJA::Index_type i) {
+      y[i] += c;
+      });
+
 }
 
 void  hiopVectorRajaPar::addConstant_w_patternSelect(double c, const hiopVector& ix_)
 {
   const hiopVectorRajaPar& ix = dynamic_cast<const hiopVectorRajaPar&>(ix_);
   assert(this->n_local == ix.n_local);
-  const double* ix_vec = ix.data;
-  for(int i=0; i<n_local; i++) if(ix_vec[i]==1.) data[i]+=c;
+  //const double* ix_vec = ix.data;
+  //for(int i=0; i<n_local; i++) if(ix_vec[i]==1.) data[i]+=c;
+  double *s = data_dev;
+  const double *sel = ix.local_data_dev_const();
+  RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
+      RAJA_LAMBDA(RAJA::Index_type i) {
+      s[i] += sel[i]*c;
+      });
 }
 
 void hiopVectorRajaPar::min( double& /* m */, int& /* index */) const
@@ -628,24 +603,47 @@ void hiopVectorRajaPar::negate()
 
 void hiopVectorRajaPar::invert()
 {
-  for(int i=0; i<n_local; i++) {
+  //for(int i=0; i<n_local; i++) {
 #ifdef HIOP_DEEPCHECKS
-    if(fabs(data[i])<1e-35) assert(false);
+  //  if(fabs(data[i])<1e-35) assert(false);
 #endif
-    data[i]=1./data[i];
-  }
+  //  data[i]=1./data[i];
+  //}
+  double *s = data_dev;
+  RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
+      RAJA_LAMBDA(RAJA::Index_type i) {
+#ifdef HIOP_DEEPCHECKS
+      if (std::abs(s[i])<1e-35) assert(false);
+#endif
+      s[i] = 1.0/s[i];
+      });
 }
 
 double hiopVectorRajaPar::logBarrier(const hiopVector& select) const
 {
-  double res=0.0;
   const hiopVectorRajaPar& ix = dynamic_cast<const hiopVectorRajaPar&>(select);
   assert(this->n_local == ix.n_local);
-  const double* ix_vec = ix.data;
-  for(int i=0; i<n_local; i++) 
-    if(ix_vec[i]==1.) 
-      res += log(data[i]);
-  return res;
+  //const double* ix_vec = ix.data;
+  //double res = 0.0;
+  //for(int i=0; i<n_local; i++) 
+  //  if(ix_vec[i]==1.) 
+  //    res += log(data[i]);
+  //return res;
+  double* self_data = data_dev;
+  const double* ix_vec = ix.local_data_dev_const();
+  RAJA::ReduceSum< hiop_raja_reduce, double > res(0.0);
+  RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
+				  RAJA_LAMBDA(RAJA::Index_type i) {
+				//    res += (ix_vec[i] == 1.0) ? log(data[i]) : 0.0;
+               if (ix_vec[i] == 1.0) res += std::log(self_data[i]);
+				  });
+  double sum = static_cast<double>(res.get());
+#ifdef HIOP_USE_MPI
+  double sum_global;
+  int ierr = MPI_Allreduce(&sum, &sum_global, 1, MPI_DOUBLE, MPI_SUM, comm); assert(MPI_SUCCESS==ierr);
+  return sum_global;
+#endif
+  return sum;
 }
 
 /* adds the gradient of the log barrier, namely this=this+alpha*1/select(x) */
@@ -655,28 +653,45 @@ void  hiopVectorRajaPar::addLogBarrierGrad(double alpha, const hiopVector& x, co
   assert(this->n_local == dynamic_cast<const hiopVectorRajaPar&>(ix).n_local);
   assert(this->n_local == dynamic_cast<const hiopVectorRajaPar&>( x).n_local);
 #endif
-  const double* ix_vec = dynamic_cast<const hiopVectorRajaPar&>(ix).data;
-  const double*  x_vec = dynamic_cast<const hiopVectorRajaPar&>( x).data;
+  //const double* ix_vec = dynamic_cast<const hiopVectorRajaPar&>(ix).data;
+  //const double*  x_vec = dynamic_cast<const hiopVectorRajaPar&>( x).data;
 
-  for(int i=0; i<n_local; i++) 
-    if(ix_vec[i]==1.) 
-      data[i] += alpha/x_vec[i];
+  //for(int i=0; i<n_local; i++) 
+  //  if(ix_vec[i]==1.) 
+  //    data[i] += alpha/x_vec[i];
+  double* self_data = data_dev;
+  const double* ix_vec = dynamic_cast<const hiopVectorRajaPar&>(ix).local_data_dev_const();
+  const double*  x_vec = dynamic_cast<const hiopVectorRajaPar&>( x).local_data_dev_const();
+  RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
+				  RAJA_LAMBDA(RAJA::Index_type i) {
+               if (ix_vec[i] == 1.0) self_data[i] += alpha/x_vec[i];
+				  });
 }
 
 
 double hiopVectorRajaPar::linearDampingTerm(const hiopVector& ixleft, const hiopVector& ixright,
 				   const double& mu, const double& kappa_d) const
 {
-  const double* ixl= (dynamic_cast<const hiopVectorRajaPar&>(ixleft)).local_data_const();
-  const double* ixr= (dynamic_cast<const hiopVectorRajaPar&>(ixright)).local_data_const();
+  //const double* ixl= (dynamic_cast<const hiopVectorRajaPar&>(ixleft)).local_data_const();
+  //const double* ixr= (dynamic_cast<const hiopVectorRajaPar&>(ixright)).local_data_const();
 #ifdef HIOP_DEEPCHECKS
   assert(n_local==(dynamic_cast<const hiopVectorRajaPar&>(ixleft) ).n_local);
   assert(n_local==(dynamic_cast<const hiopVectorRajaPar&>(ixright) ).n_local);
 #endif
-  double term=0.0;
-  for(long long i=0; i<n_local; i++) {
-    if(ixl[i]==1. && ixr[i]==0.) term += data[i];
-  }
+  //double term=0.0;
+  //for(long long i=0; i<n_local; i++) {
+  //  if(ixl[i]==1. && ixr[i]==0.) term += data[i];
+  //}
+  // TODO: Can conditional be improved?
+  const double* ixl= (dynamic_cast<const hiopVectorRajaPar&>(ixleft)).local_data_dev_const();
+  const double* ixr= (dynamic_cast<const hiopVectorRajaPar&>(ixright)).local_data_dev_const();
+  double* self_data = data_dev;
+  RAJA::ReduceSum< hiop_raja_reduce, double > sum(0.0);
+  RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
+				  RAJA_LAMBDA(RAJA::Index_type i) {
+               if (ixl[i] == 1.0 && ixr[i] == 0.0) sum += self_data[i];
+				  });
+  double term = static_cast<double>(sum.get());
   term *= mu; 
   term *= kappa_d;
   return term;
@@ -684,8 +699,16 @@ double hiopVectorRajaPar::linearDampingTerm(const hiopVector& ixleft, const hiop
 
 int hiopVectorRajaPar::allPositive()
 {
-  int allPos=true, i=0;
-  while(i<n_local && allPos) if(data[i++]<=0) allPos=false;
+  //int allPos=true, i=0;
+  //while(i<n_local && allPos) if(data[i++]<=0) allPos=false;
+  double* self_data = data_dev;
+  RAJA::ReduceMin< hiop_raja_reduce, double > min(1.0);
+  RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
+				  RAJA_LAMBDA(RAJA::Index_type i) {
+               min.min(self_data[i]);
+				  });
+  int allPos=1;
+  if (min.get() <= 0.0) allPos = 0;
 
 #ifdef HIOP_USE_MPI
   int allPosG;
@@ -705,45 +728,85 @@ bool hiopVectorRajaPar::projectIntoBounds(const hiopVector& xl_, const hiopVecto
   assert((dynamic_cast<const hiopVectorRajaPar&>(xu_) ).n_local==n_local);
   assert((dynamic_cast<const hiopVectorRajaPar&>(ixu_)).n_local==n_local);
 #endif
-  const double* xl = (dynamic_cast<const hiopVectorRajaPar&>(xl_) ).local_data_const();
-  const double* ixl= (dynamic_cast<const hiopVectorRajaPar&>(ixl_)).local_data_const();
-  const double* xu = (dynamic_cast<const hiopVectorRajaPar&>(xu_) ).local_data_const();
-  const double* ixu= (dynamic_cast<const hiopVectorRajaPar&>(ixu_)).local_data_const();
-  double* x0=data; 
+  //const double* xl = (dynamic_cast<const hiopVectorRajaPar&>(xl_) ).local_data_const();
+  //const double* ixl= (dynamic_cast<const hiopVectorRajaPar&>(ixl_)).local_data_const();
+  //const double* xu = (dynamic_cast<const hiopVectorRajaPar&>(xu_) ).local_data_const();
+  //const double* ixu= (dynamic_cast<const hiopVectorRajaPar&>(ixu_)).local_data_const();
+  //double* x0=data; 
 
-  const double small_double = std::numeric_limits<double>::min() * 100;
+  //const double small_double = std::numeric_limits<double>::min() * 100;
 
-  double aux, aux2;
-  for(long long i=0; i<n_local; i++) {
-    if(ixl[i]!=0 && ixu[i]!=0) {
-      if(xl[i]>xu[i]) return false;
-      aux=kappa2*(xu[i]-xl[i])-small_double;
-      aux2=xl[i]+fmin(kappa1*fmax(1., fabs(xl[i])),aux);
-      if(x0[i]<aux2) {
-	x0[i]=aux2;
-      } else {
-	aux2=xu[i]-fmin(kappa1*fmax(1., fabs(xu[i])),aux);
-	if(x0[i]>aux2) {
-	  x0[i]=aux2;
-	}
-      }
+  //double aux, aux2;
+  //for(long long i=0; i<n_local; i++) {
+  //  if(ixl[i]!=0 && ixu[i]!=0) {
+  //    if(xl[i]>xu[i]) return false;
+  //    aux=kappa2*(xu[i]-xl[i])-small_double;
+  //    aux2=xl[i]+fmin(kappa1*fmax(1., fabs(xl[i])),aux);
+  //    if(x0[i]<aux2) {
+  //      x0[i]=aux2;
+  //    } else {
+  //      aux2=xu[i]-fmin(kappa1*fmax(1., fabs(xu[i])),aux);
+  //      if(x0[i]>aux2) {
+  //        x0[i]=aux2;
+  //      }
+  //    }
 #ifdef HIOP_DEEPCHECKS
       //if(x0[i]>xl[i] && x0[i]<xu[i]) {
       //} else {
       //printf("i=%d  x0=%g xl=%g xu=%g\n", i, x0[i], xl[i], xu[i]);
       //}
-      assert(x0[i]>xl[i] && x0[i]<xu[i] && "this should not happen -> HiOp bug");
-      
+  //    assert(x0[i]>xl[i] && x0[i]<xu[i] && "this should not happen -> HiOp bug");
+
 #endif
-    } else {
-      if(ixl[i]!=0.)
-	x0[i] = fmax(x0[i], xl[i]+kappa1*fmax(1, fabs(xl[i]))-small_double);
-      else 
-	if(ixu[i]!=0)
-	  x0[i] = fmin(x0[i], xu[i]-kappa1*fmax(1, fabs(xu[i]))-small_double);
-	else { /*nothing for free vars  */ }
-    }
-  }
+  //  } else {
+  //    if(ixl[i]!=0.)
+  //      x0[i] = fmax(x0[i], xl[i]+kappa1*fmax(1, fabs(xl[i]))-small_double);
+  //    else 
+  //      if(ixu[i]!=0)
+  //        x0[i] = fmin(x0[i], xu[i]-kappa1*fmax(1, fabs(xu[i]))-small_double);
+  //      else { /*nothing for free vars  */ }
+  //  }
+  //}
+  const double* xl = (dynamic_cast<const hiopVectorRajaPar&>(xl_) ).local_data_dev_const();
+  const double* ixl= (dynamic_cast<const hiopVectorRajaPar&>(ixl_)).local_data_dev_const();
+  const double* xu = (dynamic_cast<const hiopVectorRajaPar&>(xu_) ).local_data_dev_const();
+  const double* ixu= (dynamic_cast<const hiopVectorRajaPar&>(ixu_)).local_data_dev_const();
+  double* x0=data_dev; 
+  // Perform preliminary check to see of all upper value
+  RAJA::ReduceMin< hiop_raja_reduce, double > min(1.0);
+  RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
+      RAJA_LAMBDA(RAJA::Index_type i) {
+      min.min(xu[i]-xl[i]);
+      });
+  if (min.get() < 0.0) return false;
+  const double small_double = std::numeric_limits<double>::min() * 100;
+
+  RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
+      RAJA_LAMBDA(RAJA::Index_type i) {
+      double aux, aux2;
+      if(ixl[i]!=0 && ixu[i]!=0) {
+        aux=kappa2*(xu[i]-xl[i])-small_double;
+        aux2=xl[i]+fmin(kappa1*fmax(1., fabs(xl[i])),aux);
+        if(x0[i]<aux2) {
+          x0[i]=aux2;
+        } else {
+          aux2=xu[i]-fmin(kappa1*fmax(1., fabs(xu[i])),aux);
+          if(x0[i]>aux2) {
+            x0[i]=aux2;
+          }
+        }
+#ifdef HIOP_DEEPCHECKS
+        assert(x0[i]>xl[i] && x0[i]<xu[i] && "this should not happen -> HiOp bug");
+#endif
+      } else {
+        if(ixl[i]!=0.)
+          x0[i] = fmax(x0[i], xl[i]+kappa1*fmax(1, fabs(xl[i]))-small_double);
+        else 
+          if(ixu[i]!=0)
+            x0[i] = fmin(x0[i], xu[i]-kappa1*fmax(1, fabs(xu[i]))-small_double);
+          else { /*nothing for free vars  */ }
+      }
+      });
   return true;
 }
 
@@ -923,8 +986,6 @@ bool hiopVectorRajaPar::isnan() const
 
 bool hiopVectorRajaPar::isinf() const
 {
-  // for(long long i=0; i<n_local; i++) if(std::isinf(data[i])) return true;
-  // return false;
   double* local_data_dev = data_dev;
   RAJA::ReduceSum< hiop_raja_reduce, int > any(0);
   RAJA::forall< hiop_raja_exec >( RAJA::RangeSegment(0, n_local),
