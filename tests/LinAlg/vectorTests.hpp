@@ -595,16 +595,20 @@ public:
     {
         const local_ordinal_type N = getLocalSize(&x);
         assert(N == getLocalSize(&select));
+
+        // Ensure that only N-1 elements of x are
+        // used in the log calculation
         select.setToConstant(one);
-        x.setToConstant(two);
+        setLocalElement(&select, N-1, zero);
 
-        setLocalElement(&select, N-1, 0.0);
+        const real_type x_val = two;
+        x.setToConstant(x_val);
 
-        real_type expected = 0.0;
-        for (local_ordinal_type i=0; i<N-1; ++i) expected += log(two);
-        const real_type res = x.logBarrier(select);
+        // No loops such that the test captures accumulation errors
+        const real_type expected = (N - 1) * log(x_val);
+        const real_type result = x.logBarrier(select);
 
-        const bool fail = !isEqual(res, expected);
+        const bool fail = !isEqual(result, expected);
         printMessage(fail, __func__, rank);
 
         return reduceReturn(fail, &x);
