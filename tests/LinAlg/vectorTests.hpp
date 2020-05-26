@@ -3,6 +3,7 @@
 #include <cfloat>
 #include <assert.h>
 #include <limits>
+#include <functional>
 
 #include <hiopVector.hpp>
 #include "testBase.hpp"
@@ -521,23 +522,22 @@ public:
         const local_ordinal_type N = getLocalSize(&x);
         assert(pattern.get_size() == x.get_size());
         assert(N == getLocalSize(&pattern));
+        const real_type x_val = half;
+
+        pattern.setToConstant(one);
+        if (rank== 0)
+            setLocalElement(&pattern, N - 1, zero);
 
         x.setToConstant(zero);
-        x.addConstant(half);
+        x.addConstant_w_patternSelect(x_val, pattern);
 
-        if (rank== 0)
-            setLocalElement(&x, N - 1, zero);
-
-        int fail = 0;
-        for (local_ordinal_type i=0; i<N; ++i)
-        {
-            real_type val = getLocalElement(&x, i);
-            if ((val != half) && !((rank==0) && (i == N-1) && (val == zero)))
-                fail++;
-        }
+        const int fail = verifyAnswer(&x,
+            [=] (local_ordinal_type i) -> real_type
+            {
+                return (rank == 0 && i == N-1) ? zero : x_val;
+            });
 
         printMessage(fail, __func__, rank);
-
         return reduceReturn(fail, &x);
     }
 
@@ -1119,6 +1119,9 @@ protected:
     virtual local_ordinal_type getLocalSize(const hiop::hiopVector* x) = 0;
     virtual real_type* getLocalData(hiop::hiopVector* x) = 0;
     virtual int verifyAnswer(hiop::hiopVector* x, real_type answer) = 0;
+    virtual int verifyAnswer(
+        hiop::hiopVector* x,
+        std::function<real_type(local_ordinal_type)> expect) = 0;
     virtual bool reduceReturn(int failures, hiop::hiopVector* x) = 0;
 };
 
