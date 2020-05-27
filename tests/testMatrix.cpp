@@ -170,7 +170,7 @@ int main(int argc, char** argv)
         // one extra row for this purpose.
         hiop::hiopMatrixDense A_mxn_extra_row(M_global, N_global, n_partition, comm, M_global+1);
         fail += test.matrixAppendRow(A_mxn_extra_row, x_n_dist, rank);
-        fail += test.matrixCopyRowsFrom(A_mxn, B_mxn, rank);
+        fail += test.matrixCopyRowsFrom(A_kxn, A_mxn, rank);
         fail += test.matrixCopyBlockFromMatrix(A_mxn, B_mxn, rank);
         fail += test.matrixCopyFromMatrixBlock(A_mxn, B_mxn, rank);
         fail += test.matrixShiftRows(A_mxn, rank);

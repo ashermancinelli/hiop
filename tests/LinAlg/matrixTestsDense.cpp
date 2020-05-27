@@ -62,11 +62,21 @@ int MatrixTestsDense::matrixCopyFrom(
     assert(getNumLocCols(&to) == getNumLocCols(&from) && "Did you pass in matrices of the same size?");
     const real_type from_val = one;
 
+    // Test copying from another matrix
     from.setToConstant(from_val);
     to.setToZero();
 
     to.copyFrom(from);
-    const int fail = verifyAnswer(&to, from_val);
+    int fail = verifyAnswer(&to, from_val);
+
+    // test copying from a raw buffer
+    const size_t buf_len = getNumLocRows(&from) * getNumLocCols(&from);
+    real_type* from_buf = new real_type[buf_len];
+    std::fill_n(from_buf, buf_len, from_val);
+    to.setToZero();
+
+    to.copyFrom(from_buf);
+    fail += verifyAnswer(&to, from_val);
 
     printMessage(fail, __func__, rank);
     return reduceReturn(fail, &to);
@@ -107,11 +117,35 @@ int MatrixTestsDense::matrixAppendRow(
 }
 
 int MatrixTestsDense::matrixCopyRowsFrom(
-    hiopMatrixDense& to,
-    hiopMatrixDense& from,
+    hiopMatrixDense& dst,
+    hiopMatrixDense& src,
 		const int rank)
 {
-    printMessage(SKIP_TEST, __func__, rank); return 0;
+    // printMessage(SKIP_TEST, __func__, rank); return 0;
+    assert(dst.n() == src.n());
+    assert(dst.m() > src.m());
+    assert(getNumLocCols(&dst) == getNumLocCols(&src));
+    assert(getNumLocRows(&dst) > getNumLocRows(&src));
+    const real_type dst_val = one;
+    const real_type src_val = two;
+    const local_ordinal_type dst_start_idx = dst.m() - src.m();
+    const local_ordinal_type num_rows_to_copy = src.m();
+    const local_ordinal_type src_num_rows = src.m();
+
+    dst.setToConstant(dst_val);
+    src.setToConstant(src_val);
+
+    dst.copyRowsFrom(src, num_rows_to_copy, dst_start_idx);
+
+    const int fail = verifyAnswer(&dst,
+        [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+        {
+            const bool isRowCopiedOver = (i >= dst_start_idx && i < dst_start_idx + src_num_rows);
+            return isRowCopiedOver ? src_val : dst_val;
+        });
+
+    printMessage(fail, __func__, rank);
+    return reduceReturn(fail, &dst);
 }
 
 int MatrixTestsDense::matrixCopyBlockFromMatrix(
