@@ -45,8 +45,7 @@
 // herein do not necessarily state or reflect those of the United States Government or 
 // Lawrence Livermore National Security, LLC, and shall not be used for advertising or 
 // product endorsement purposes.
-#ifndef __HIOP_TESTS_COMMON_H
-#define __HIOP_TESTS_COMMON_H
+#pragma once
 
 #include <limits>
 #include <cmath>
@@ -112,5 +111,3 @@ protected:
 };
 
 } // namespace hiop::tests
-
-#endif
