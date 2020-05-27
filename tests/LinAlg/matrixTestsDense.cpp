@@ -56,7 +56,20 @@ int MatrixTestsDense::matrixCopyFrom(
     hiopMatrixDense& from,
 		const int rank)
 {
-    printMessage(SKIP_TEST, __func__, rank); return 0;
+    assert(to.n() == from.n() && "Did you pass in matrices of the same size?");
+    assert(to.m() == from.m() && "Did you pass in matrices of the same size?");
+    assert(getNumLocRows(&to) == getNumLocRows(&from) && "Did you pass in matrices of the same size?");
+    assert(getNumLocCols(&to) == getNumLocCols(&from) && "Did you pass in matrices of the same size?");
+    const real_type from_val = one;
+
+    from.setToConstant(from_val);
+    to.setToZero();
+
+    to.copyFrom(from);
+    const int fail = verifyAnswer(&to, from_val);
+
+    printMessage(fail, __func__, rank);
+    return reduceReturn(fail, &to);
 }
 
 int MatrixTestsDense::matrixAppendRow(
@@ -64,7 +77,33 @@ int MatrixTestsDense::matrixAppendRow(
     hiopVectorPar& vec,
 		const int rank)
 {
-    printMessage(SKIP_TEST, __func__, rank); return 0;
+    assert(A.n() == vec.get_size() 
+        && "Did you pass in a vector with the same length as the number of columns of the matrix?");
+    assert(getNumLocCols(&A) == vec.get_local_size()
+        && "Did you pass in a vector with the same length as the number of columns of the matrix?");
+    const local_ordinal_type init_num_rows = A.m();
+    const real_type A_val = one;
+    const real_type vec_val = two;
+    int fail = 0;
+
+    A.setToConstant(A_val);
+    vec.setToConstant(vec_val);
+    A.appendRow(vec);
+    
+    // Ensure A's num rows is updated
+    if (A.m() != init_num_rows+1)
+        fail++;
+
+    // Ensure vec's values are copied over to A's last row
+    fail += verifyAnswer(&A,
+        [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+        {
+            const bool isLastRow = (i == init_num_rows);
+            return isLastRow ? vec_val : A_val;
+        });
+
+    printMessage(fail, __func__, rank);
+    return reduceReturn(fail, &A);
 }
 
 int MatrixTestsDense::matrixCopyRowsFrom(

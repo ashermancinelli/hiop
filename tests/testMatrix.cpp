@@ -164,7 +164,12 @@ int main(int argc, char** argv)
 
         // specific to matrixTestsDense
         fail += test.matrixCopyFrom(A_mxn, B_mxn, rank);
-        fail += test.matrixAppendRow(A_mxn, x_n_dist, rank);
+
+        // This matrix is allocated only for this test, since it requires
+        // more rows to be allocated with the constructor. Here we allocate
+        // one extra row for this purpose.
+        hiop::hiopMatrixDense A_mxn_extra_row(M_global, N_global, n_partition, comm, M_global+1);
+        fail += test.matrixAppendRow(A_mxn_extra_row, x_n_dist, rank);
         fail += test.matrixCopyRowsFrom(A_mxn, B_mxn, rank);
         fail += test.matrixCopyBlockFromMatrix(A_mxn, B_mxn, rank);
         fail += test.matrixCopyFromMatrixBlock(A_mxn, B_mxn, rank);
