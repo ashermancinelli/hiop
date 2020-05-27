@@ -161,6 +161,16 @@ int main(int argc, char** argv)
         fail += test.matrixIsFinite(A_mxn, rank);
         fail += test.matrixNumRows(A_mxn, M_global, rank);
         fail += test.matrixNumCols(A_mxn, N_global, rank);
+
+        // specific to matrixTestsDense
+        fail += test.matrixCopyFrom(A_mxn, B_mxn, rank);
+        fail += test.matrixAppendRow(A_mxn, x_n_dist, rank);
+        fail += test.matrixCopyRowsFrom(A_mxn, B_mxn, rank);
+        fail += test.matrixCopyBlockFromMatrix(A_mxn, B_mxn, rank);
+        fail += test.matrixCopyFromMatrixBlock(A_mxn, B_mxn, rank);
+        fail += test.matrixShiftRows(A_mxn, rank);
+        fail += test.matrixReplaceRow(A_mxn, x_n_dist, rank);
+        fail += test.matrixGetRow(A_mxn, x_n_dist, rank);
     }
 
     // Test RAJA matrix

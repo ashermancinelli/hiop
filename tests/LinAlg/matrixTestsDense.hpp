@@ -56,16 +56,37 @@ class MatrixTestsDense : public MatrixTests
 public:
     MatrixTestsDense() {}
     virtual ~MatrixTestsDense(){}
-    // void testCopyFrom(const hiopMatrixDense& dm);
-    // void testCopyFrom(const double* buffer);
-    // void testAppendRow(const hiopVectorPar& row);
-    // void testCopyRowsFrom(const hiopMatrixDense& src, int num_rows, int row_dest);
-    // void testCopyRowsFrom(const hiopMatrix& src_gen, const long long* rows_idxs, long long n_rows);
-    // void testCopyBlockFromMatrix(const long i_block_start, const long j_block_start, const hiopMatrixDense& src);
-    // void testCopyFromMatrixBlock(const hiopMatrixDense& src, const int i_src_block_start, const int j_src_block_start);
-    // void testShiftRows(long long shift);
-    // void testReplaceRow(long long row, const hiopVectorPar& vec);
-    // void testGetRow(long long irow, hiopVector& row_vec);
+    int matrixCopyFrom(
+        hiopMatrixDense& to,
+        hiopMatrixDense& from,
+				const int rank);
+    int matrixAppendRow(
+        hiopMatrixDense& A,
+        hiopVectorPar& vec,
+				const int rank);
+    int matrixCopyRowsFrom(
+        hiopMatrixDense& to,
+        hiopMatrixDense& from,
+				const int rank);
+    int matrixCopyBlockFromMatrix(
+        hiopMatrixDense& to,
+        hiopMatrixDense& from,
+				const int rank);
+    int matrixCopyFromMatrixBlock(
+        hiopMatrixDense& to,
+        hiopMatrixDense& from,
+				const int rank);
+    int matrixShiftRows(
+        hiopMatrixDense& A,
+				const int rank);
+    int matrixReplaceRow(
+        hiopMatrixDense& A,
+				hiopVectorPar& vec,
+				const int rank);
+    int matrixGetRow(
+        hiopMatrixDense& A,
+				hiopVectorPar& vec,
+				const int rank);
 
 
 private:

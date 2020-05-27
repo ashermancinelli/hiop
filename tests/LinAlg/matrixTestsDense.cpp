@@ -50,6 +50,72 @@
 
 namespace hiop::tests {
 
+// Start hiopMatrixDense matrix tests
+int MatrixTestsDense::matrixCopyFrom(
+    hiopMatrixDense& to,
+    hiopMatrixDense& from,
+		const int rank)
+{
+    printMessage(SKIP_TEST, __func__, rank); return 0;
+}
+
+int MatrixTestsDense::matrixAppendRow(
+    hiopMatrixDense& A,
+    hiopVectorPar& vec,
+		const int rank)
+{
+    printMessage(SKIP_TEST, __func__, rank); return 0;
+}
+
+int MatrixTestsDense::matrixCopyRowsFrom(
+    hiopMatrixDense& to,
+    hiopMatrixDense& from,
+		const int rank)
+{
+    printMessage(SKIP_TEST, __func__, rank); return 0;
+}
+
+int MatrixTestsDense::matrixCopyBlockFromMatrix(
+    hiopMatrixDense& to,
+    hiopMatrixDense& from,
+		const int rank)
+{
+    printMessage(SKIP_TEST, __func__, rank); return 0;
+}
+
+int MatrixTestsDense::matrixCopyFromMatrixBlock(
+    hiopMatrixDense& to,
+    hiopMatrixDense& from,
+		const int rank)
+{
+    printMessage(SKIP_TEST, __func__, rank); return 0;
+}
+
+int MatrixTestsDense::matrixShiftRows(
+    hiopMatrixDense& A,
+		const int rank)
+{
+    printMessage(SKIP_TEST, __func__, rank); return 0;
+}
+
+int MatrixTestsDense::matrixReplaceRow(
+    hiopMatrixDense& A,
+    hiopVectorPar& vec,
+		const int rank)
+{
+    printMessage(SKIP_TEST, __func__, rank); return 0;
+}
+
+int MatrixTestsDense::matrixGetRow(
+    hiopMatrixDense& A,
+    hiopVectorPar& vec,
+		const int rank)
+{
+    printMessage(SKIP_TEST, __func__, rank); return 0;
+}
+// End hiopMatrixDense matrix tests
+
+// Start helper methods
 /// Method to set matrix _A_ element (i,j) to _val_.
 /// First need to retrieve hiopMatrixDense from the abstract interface
 void MatrixTestsDense::setLocalElement(
@@ -239,5 +305,7 @@ bool MatrixTestsDense::globalToLocalMap(
     return true;
 #endif
 }
+
+// End helper methods
 
 } // namespace hiop::tests
