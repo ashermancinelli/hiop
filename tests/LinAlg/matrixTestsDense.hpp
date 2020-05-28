@@ -94,7 +94,7 @@ private:
             hiop::hiopMatrix* a,
             local_ordinal_type i,
             local_ordinal_type j,
-            real_type val);
+            real_type val) override;
     virtual void setLocalElement(
             hiop::hiopVector* _x,
             const local_ordinal_type i,
@@ -103,26 +103,26 @@ private:
             hiop::hiopMatrixDense* A,
             const local_ordinal_type row,
             const real_type val);
-    virtual real_type getLocalElement(const hiop::hiopMatrix* a, local_ordinal_type i, local_ordinal_type j);
-    virtual real_type getLocalElement(const hiop::hiopVector* x, local_ordinal_type i);
-    virtual local_ordinal_type getNumLocRows(hiop::hiopMatrix* a);
-    virtual local_ordinal_type getNumLocCols(hiop::hiopMatrix* a);
-    virtual local_ordinal_type getLocalSize(const hiop::hiopVector* x);
-    virtual int verifyAnswer(hiop::hiopMatrix* A, real_type answer);
+    virtual real_type getLocalElement(const hiop::hiopMatrix* a, local_ordinal_type i, local_ordinal_type j) override;
+    virtual real_type getLocalElement(const hiop::hiopVector* x, local_ordinal_type i) override;
+    virtual local_ordinal_type getNumLocRows(hiop::hiopMatrix* a) override;
+    virtual local_ordinal_type getNumLocCols(hiop::hiopMatrix* a) override;
+    virtual local_ordinal_type getLocalSize(const hiop::hiopVector* x) override;
+    virtual int verifyAnswer(hiop::hiopMatrix* A, real_type answer) override;
     virtual int verifyAnswer(
             hiop::hiopMatrix* A,
-            std::function<real_type(local_ordinal_type, local_ordinal_type)> expect);
-    virtual int verifyAnswer(hiop::hiopVector* x, real_type answer);
+            std::function<real_type(local_ordinal_type, local_ordinal_type)> expect) override;
+    virtual int verifyAnswer(hiop::hiopVector* x, real_type answer) override;
     virtual int verifyAnswer(
             hiop::hiopVector* x,
-            std::function<real_type(local_ordinal_type)> expect);
-    virtual bool reduceReturn(int failures, hiop::hiopMatrix* A);
+            std::function<real_type(local_ordinal_type)> expect) override;
+    virtual bool reduceReturn(int failures, hiop::hiopMatrix* A) override;
     virtual bool globalToLocalMap(
             hiop::hiopMatrix* A,
             const global_ordinal_type row,
             const global_ordinal_type col,
             local_ordinal_type& local_row,
-            local_ordinal_type& local_col);
+            local_ordinal_type& local_col) override;
 
 #ifdef HIOP_USE_MPI
     MPI_Comm getMPIComm(hiop::hiopMatrix* A);

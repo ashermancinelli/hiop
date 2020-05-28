@@ -1232,7 +1232,7 @@ public:
 
 protected:
     // Interface to methods specific to vector implementation
-    virtual void   setLocalElement(hiop::hiopVector* x, local_ordinal_type i, real_type val) = 0;
+    virtual void setLocalElement(hiop::hiopVector* x, local_ordinal_type i, real_type val) = 0;
     virtual real_type getLocalElement(const hiop::hiopVector* x, local_ordinal_type i) = 0;
     virtual local_ordinal_type getLocalSize(const hiop::hiopVector* x) = 0;
     virtual real_type* getLocalData(hiop::hiopVector* x) = 0;
