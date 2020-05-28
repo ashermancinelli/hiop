@@ -54,7 +54,7 @@ namespace hiop::tests {
 int MatrixTestsDense::matrixCopyFrom(
     hiopMatrixDense& to,
     hiopMatrixDense& from,
-		const int rank)
+    const int rank)
 {
     assert(to.n() == from.n() && "Did you pass in matrices of the same size?");
     assert(to.m() == from.m() && "Did you pass in matrices of the same size?");
@@ -85,7 +85,7 @@ int MatrixTestsDense::matrixCopyFrom(
 int MatrixTestsDense::matrixAppendRow(
     hiopMatrixDense& A,
     hiopVectorPar& vec,
-		const int rank)
+    const int rank)
 {
     assert(A.n() == vec.get_size() 
         && "Did you pass in a vector with the same length as the number of columns of the matrix?");
@@ -120,7 +120,7 @@ int MatrixTestsDense::matrixAppendRow(
 int MatrixTestsDense::matrixCopyRowsFrom(
     hiopMatrixDense& dst,
     hiopMatrixDense& src,
-		const int rank)
+    const int rank)
 {
     // printMessage(SKIP_TEST, __func__, rank); return 0;
     assert(dst.n() == src.n());
@@ -154,7 +154,7 @@ int MatrixTestsDense::matrixCopyRowsFrom(
 int MatrixTestsDense::matrixCopyBlockFromMatrix(
     hiopMatrixDense& src,
     hiopMatrixDense& dst,
-		const int rank)
+    const int rank)
 {
     assert(src.n() < dst.n()
         && "Did you pass in a dest matrix larger than the source matrix?");
@@ -189,7 +189,7 @@ int MatrixTestsDense::matrixCopyBlockFromMatrix(
 int MatrixTestsDense::matrixCopyFromMatrixBlock(
     hiopMatrixDense& src,
     hiopMatrixDense& dst,
-		const int rank)
+    const int rank)
 {
     assert(src.n() > dst.n()
         && "Did you pass in a src matrix larger than the dst matrix?");
@@ -222,7 +222,7 @@ int MatrixTestsDense::matrixCopyFromMatrixBlock(
  */
 int MatrixTestsDense::matrixShiftRows(
     hiopMatrixDense& A,
-		const int rank)
+    const int rank)
 {
     printMessage(SKIP_TEST, __func__, rank); return 0;
     const local_ordinal_type M = getNumLocRows(&A);
@@ -265,7 +265,7 @@ int MatrixTestsDense::matrixShiftRows(
 int MatrixTestsDense::matrixReplaceRow(
     hiopMatrixDense& A,
     hiopVectorPar& vec,
-		const int rank)
+    const int rank)
 {
     const local_ordinal_type N = getNumLocCols(&A);
     const local_ordinal_type M = getNumLocRows(&A);
@@ -304,7 +304,7 @@ int MatrixTestsDense::matrixReplaceRow(
 int MatrixTestsDense::matrixGetRow(
     hiopMatrixDense& A,
     hiopVectorPar& vec,
-		const int rank)
+    const int rank)
 {
     const local_ordinal_type N = getNumLocCols(&A);
     const local_ordinal_type M = getNumLocRows(&A);
