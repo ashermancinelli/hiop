@@ -45,6 +45,7 @@
 // herein do not necessarily state or reflect those of the United States Government or 
 // Lawrence Livermore National Security, LLC, and shall not be used for advertising or 
 // product endorsement purposes.
+
 #include <hiopMatrix.hpp>
 #include "matrixTestsDense.hpp"
 
@@ -52,34 +53,34 @@ namespace hiop::tests {
 
 // Start hiopMatrixDense matrix tests
 int MatrixTestsDense::matrixCopyFrom(
-    hiopMatrixDense& to,
-    hiopMatrixDense& from,
+    hiopMatrixDense& dst,
+    hiopMatrixDense& src,
     const int rank)
 {
-    assert(to.n() == from.n() && "Did you pass in matrices of the same size?");
-    assert(to.m() == from.m() && "Did you pass in matrices of the same size?");
-    assert(getNumLocRows(&to) == getNumLocRows(&from) && "Did you pass in matrices of the same size?");
-    assert(getNumLocCols(&to) == getNumLocCols(&from) && "Did you pass in matrices of the same size?");
-    const real_type from_val = one;
+    assert(dst.n() == src.n() && "Did you pass in matrices of the same size?");
+    assert(dst.m() == src.m() && "Did you pass in matrices of the same size?");
+    assert(getNumLocRows(&dst) == getNumLocRows(&src) && "Did you pass in matrices of the same size?");
+    assert(getNumLocCols(&dst) == getNumLocCols(&src) && "Did you pass in matrices of the same size?");
+    const real_type src_val = one;
 
-    // Test copying from another matrix
-    from.setToConstant(from_val);
-    to.setToZero();
+    // Test copying src another matrix
+    src.setToConstant(src_val);
+    dst.setToZero();
 
-    to.copyFrom(from);
-    int fail = verifyAnswer(&to, from_val);
+    dst.copyFrom(src);
+    int fail = verifyAnswer(&dst, src_val);
 
-    // test copying from a raw buffer
-    const size_t buf_len = getNumLocRows(&from) * getNumLocCols(&from);
-    real_type* from_buf = new real_type[buf_len];
-    std::fill_n(from_buf, buf_len, from_val);
-    to.setToZero();
+    // test copying src a raw buffer
+    const size_t buf_len = getNumLocRows(&src) * getNumLocCols(&src);
+    real_type* src_buf = new real_type[buf_len];
+    std::fill_n(src_buf, buf_len, src_val);
+    dst.setToZero();
 
-    to.copyFrom(from_buf);
-    fail += verifyAnswer(&to, from_val);
+    dst.copyFrom(src_buf);
+    fail += verifyAnswer(&dst, src_val);
 
     printMessage(fail, __func__, rank);
-    return reduceReturn(fail, &to);
+    return reduceReturn(fail, &dst);
 }
 
 int MatrixTestsDense::matrixAppendRow(
@@ -157,11 +158,11 @@ int MatrixTestsDense::matrixCopyBlockFromMatrix(
     const int rank)
 {
     assert(src.n() < dst.n()
-        && "Did you pass in a dest matrix larger than the source matrix?");
+        && "Src mat must be smaller than dst mat");
     assert(src.m() < dst.m()
-        && "Did you pass in a dest matrix larger than the source matrix?");
+        && "Src mat must be smaller than dst mat");
     assert(getNumLocCols(&src) < getNumLocCols(&dst)
-        && "Did you pass in a dest matrix larger than the source matrix?");
+        && "Src mat must be smaller than dst mat");
     const real_type src_val = one;
     const real_type dst_val = two;
     const local_ordinal_type src_num_rows = getNumLocRows(&src);
@@ -192,11 +193,11 @@ int MatrixTestsDense::matrixCopyFromMatrixBlock(
     const int rank)
 {
     assert(src.n() > dst.n()
-        && "Did you pass in a src matrix larger than the dst matrix?");
+        && "Src mat must be larger than dst mat");
     assert(src.m() > dst.m()
-        && "Did you pass in a src matrix larger than the dst matrix?");
+        && "Src mat must be larger than dst mat");
     assert(getNumLocCols(&src) > getNumLocCols(&dst)
-        && "Did you pass in a src matrix larger than the dst matrix?");
+        && "Src mat must be larger than dst mat");
     const local_ordinal_type src_num_rows = getNumLocRows(&src);
     const local_ordinal_type src_num_cols = getNumLocCols(&src);
     const local_ordinal_type block_start_row = (src_num_rows - getNumLocRows(&dst)) - 1;
