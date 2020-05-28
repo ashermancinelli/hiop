@@ -224,6 +224,7 @@ void hiopMatrixDense::copyFromMatrixBlock(const hiopMatrixDense& src, const int 
 
 void hiopMatrixDense::shiftRows(long long shift)
 {
+  shift=-shift; // To preserve shift>0 -> up and shift<0 -> down
   if(shift==0) return;
   if(fabs(shift)==m_local) return; //nothing to shift
   if(m_local<=1) return; //nothing to shift
@@ -234,34 +235,12 @@ void hiopMatrixDense::shiftRows(long long shift)
   assert(m_local>=2);
   //and
   assert(m_local-fabs(shift)>=1);
-#ifdef HIOP_DEEPCHECKS
-  double test1=8.3, test2=-98.3;
-  if(n_local>0) {
-    //not sure if memcpy is copying sequentially on all systems. we check this.
-    //let's at least check it
-    test1=shift<0 ? M[-shift][0] : M[m_local-shift-1][0];
-    test2=shift<0 ? M[-shift][n_local-1] : M[m_local-shift-1][n_local-1];
-  }
-#endif
 
-  //shift < 0 -> up; shift > 0 -> down
-  //if(shift<0) memcpy(M[0], M[-shift], n_local*(m_local+shift)*sizeof(double));
-  //else        memcpy(M[shift], M[0],  n_local*(m_local-shift)*sizeof(double));
   if(shift<0) {
-    for(int row=0; row<m_local+shift; row++)
-      memcpy(M[row], M[row-shift], n_local*sizeof(double));
+    std::rotate(M, M+(shift+m_local), M+m_local);
   } else {
-    for(int row=m_local-1; row>=shift; row--) {
-      memcpy(M[row], M[row-shift], n_local*sizeof(double));
-    }
+    std::rotate(M, M+shift, M+m_local);
   }
- 
-#ifdef HIOP_DEEPCHECKS
-  if(n_local>0) {
-    assert(test1==M[shift<0?0:m_local-1][0] && "a different copy technique than memcpy is needed on this system");
-    assert(test2==M[shift<0?0:m_local-1][n_local-1] && "a different copy technique than memcpy is needed on this system");
-  }
-#endif
 }
 void hiopMatrixDense::replaceRow(long long row, const hiopVectorPar& vec)
 {
