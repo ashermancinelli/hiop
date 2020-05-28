@@ -244,7 +244,9 @@ int MatrixTestsDense::matrixShiftRows(
         [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
         {
             (void)j; // j is unused
-            const bool isUniqueRow = (i == (uniq_row_idx + shift));
+            const bool isUniqueRow = (
+                i == (uniq_row_idx + shift) ||
+                i == uniq_row_idx);
             return isUniqueRow ? uniq_row_val : A_val;
         });
 
@@ -254,7 +256,9 @@ int MatrixTestsDense::matrixShiftRows(
         [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
         {
             (void)j; // j is unused
-            const bool isUniqueRow = (i == uniq_row_idx);
+            const bool isUniqueRow = (
+                i == (uniq_row_idx + shift) ||
+                i == uniq_row_idx);
             return isUniqueRow ? uniq_row_val : A_val;
         });
 
