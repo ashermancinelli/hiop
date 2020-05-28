@@ -90,7 +90,19 @@ public:
 
 
 private:
-    virtual void setLocalElement(hiop::hiopMatrix* a, local_ordinal_type i, local_ordinal_type j, real_type val);
+    virtual void setLocalElement(
+            hiop::hiopMatrix* a,
+            local_ordinal_type i,
+            local_ordinal_type j,
+            real_type val);
+    virtual void setLocalElement(
+            hiop::hiopVector* _x,
+            const local_ordinal_type i,
+            const real_type val);
+    virtual void setLocalRow(
+            hiop::hiopMatrixDense* A,
+            const local_ordinal_type row,
+            const real_type val);
     virtual real_type getLocalElement(const hiop::hiopMatrix* a, local_ordinal_type i, local_ordinal_type j);
     virtual real_type getLocalElement(const hiop::hiopVector* x, local_ordinal_type i);
     virtual local_ordinal_type getNumLocRows(hiop::hiopMatrix* a);

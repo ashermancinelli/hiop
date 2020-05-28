@@ -215,11 +215,51 @@ int MatrixTestsDense::matrixCopyFromMatrixBlock(
     return reduceReturn(fail, &dst);
 }
 
+/*
+ * This test currently segfaults, claiming that it needs another copy
+ * mechanism other than memcpy.
+ * Skipping for now.
+ */
 int MatrixTestsDense::matrixShiftRows(
     hiopMatrixDense& A,
 		const int rank)
 {
     printMessage(SKIP_TEST, __func__, rank); return 0;
+    const local_ordinal_type M = getNumLocRows(&A);
+    local_ordinal_type uniq_row_idx = 0;
+    local_ordinal_type shift = M-1;
+    int fail = 0;
+
+    const real_type A_val = one;
+    const real_type uniq_row_val = two;
+    A.setToConstant(A_val);
+
+    // Set one row to a unique value
+    setLocalRow(&A, uniq_row_idx, uniq_row_val);
+    A.shiftRows(shift);
+
+    // Check that the row with unique values has been shifted
+    // and that all other rows remain the same
+    fail += verifyAnswer(&A,
+        [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+        {
+            (void)j; // j is unused
+            const bool isUniqueRow = (i == (uniq_row_idx + shift));
+            return isUniqueRow ? uniq_row_val : A_val;
+        });
+
+    // Test a negative shift, hopefully setting A to it's original state
+    A.shiftRows(-shift);
+    fail += verifyAnswer(&A,
+        [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+        {
+            (void)j; // j is unused
+            const bool isUniqueRow = (i == uniq_row_idx);
+            return isUniqueRow ? uniq_row_val : A_val;
+        });
+
+    printMessage(fail, __func__, rank);
+    return reduceReturn(fail, &A);
 }
 
 int MatrixTestsDense::matrixReplaceRow(
@@ -227,7 +267,38 @@ int MatrixTestsDense::matrixReplaceRow(
     hiopVectorPar& vec,
 		const int rank)
 {
-    printMessage(SKIP_TEST, __func__, rank); return 0;
+    const local_ordinal_type N = getNumLocCols(&A);
+    const local_ordinal_type M = getNumLocRows(&A);
+    assert(N == vec.get_local_size() && "Did you pass a vector and matrix of compatible lengths?");
+    assert(A.n() == vec.get_size() && "Did you pass a vector and matrix of compatible lengths?");
+
+    const local_ordinal_type row_idx = M - 1;
+    const local_ordinal_type col_idx = 1;
+    const real_type A_val = one;
+    const real_type vec_val = two;
+    A.setToConstant(A_val);
+    vec.setToConstant(vec_val);
+    setLocalElement(&vec, col_idx, zero);
+
+    A.replaceRow(row_idx, vec);
+    const int fail = verifyAnswer(&A,
+        [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+        {
+            if (i == row_idx)
+            {
+                if (j == col_idx)
+                    return zero;
+                else
+                    return vec_val;
+            }
+            else
+            {
+                return A_val;
+            }
+        });
+
+    printMessage(fail, __func__, rank);
+    return reduceReturn(fail, &A);
 }
 
 int MatrixTestsDense::matrixGetRow(
@@ -235,7 +306,32 @@ int MatrixTestsDense::matrixGetRow(
     hiopVectorPar& vec,
 		const int rank)
 {
-    printMessage(SKIP_TEST, __func__, rank); return 0;
+    const local_ordinal_type N = getNumLocCols(&A);
+    const local_ordinal_type M = getNumLocRows(&A);
+    assert(N == vec.get_local_size() && "Did you pass a vector and matrix of compatible lengths?");
+    assert(A.n() == vec.get_size() && "Did you pass a vector and matrix of compatible lengths?");
+
+    // Set one value in the matrix row to be retrieved to be a unique value
+    const local_ordinal_type row_idx = M - 1;
+    const local_ordinal_type col_idx = 1;
+    const real_type A_val = one;
+    const real_type vec_val = two;
+    A.setToConstant(A_val);
+    setLocalElement(&A, row_idx, col_idx, zero);
+    vec.setToConstant(vec_val);
+    A.getRow(row_idx, vec);
+
+    const int fail = verifyAnswer(&vec,
+        [=] (local_ordinal_type i) -> real_type
+        {
+            if (i == col_idx)
+                return zero;
+            else
+                return A_val;
+        });
+
+    printMessage(fail, __func__, rank);
+    return reduceReturn(fail, &A);
 }
 // End hiopMatrixDense matrix tests
 
@@ -251,6 +347,29 @@ void MatrixTestsDense::setLocalElement(
     hiop::hiopMatrixDense* amat = dynamic_cast<hiop::hiopMatrixDense*>(A);
     real_type** data = amat->get_M();
     data[i][j] = val;
+}
+
+void MatrixTestsDense::setLocalElement(
+        hiop::hiopVector* _x,
+        const local_ordinal_type i,
+        const real_type val)
+{
+    auto x = dynamic_cast<hiop::hiopVectorPar*>(_x);
+    real_type* data = x->local_data();
+    data[i] = val;
+}
+
+/// Method to set a single row of matrix to a constant value
+void MatrixTestsDense::setLocalRow(
+        hiop::hiopMatrixDense* A,
+        const local_ordinal_type row,
+        const real_type val)
+{
+    const local_ordinal_type N = getNumLocCols(A);
+    for (int i=0; i<N; i++)
+    {
+        setLocalElement(A, row, i, val);
+    }
 }
 
 /// Returns element (i,j) of matrix _A_.
