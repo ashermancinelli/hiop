@@ -152,6 +152,10 @@ int main(int argc, char** argv)
 #ifdef HIOP_DEEPCHECKS
             fail += test.matrixAssertSymmetry(A_nxn, rank);
 #endif
+
+            // specific to matrixTestsDense
+            fail += test.matrixCopyBlockFromMatrix(A_mxm, A_kxn, rank);
+            fail += test.matrixCopyFromMatrixBlock(A_kxn, A_mxm, rank);
         }
 
         fail += test.matrixTransTimesMat(A_mxk_local, A_kxn, A_mxn, rank);
@@ -171,8 +175,6 @@ int main(int argc, char** argv)
         hiop::hiopMatrixDense A_mxn_extra_row(M_global, N_global, n_partition, comm, M_global+1);
         fail += test.matrixAppendRow(A_mxn_extra_row, x_n_dist, rank);
         fail += test.matrixCopyRowsFrom(A_kxn, A_mxn, rank);
-        fail += test.matrixCopyBlockFromMatrix(A_mxn, B_mxn, rank);
-        fail += test.matrixCopyFromMatrixBlock(A_mxn, B_mxn, rank);
         fail += test.matrixShiftRows(A_mxn, rank);
         fail += test.matrixReplaceRow(A_mxn, x_n_dist, rank);
         fail += test.matrixGetRow(A_mxn, x_n_dist, rank);

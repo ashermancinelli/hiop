@@ -108,6 +108,7 @@ int MatrixTestsDense::matrixAppendRow(
     fail += verifyAnswer(&A,
         [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
         {
+            (void)j; // j is unused
             const bool isLastRow = (i == init_num_rows);
             return isLastRow ? vec_val : A_val;
         });
@@ -129,17 +130,19 @@ int MatrixTestsDense::matrixCopyRowsFrom(
     const real_type dst_val = one;
     const real_type src_val = two;
     const local_ordinal_type dst_start_idx = dst.m() - src.m();
-    const local_ordinal_type num_rows_to_copy = src.m();
+    local_ordinal_type num_rows_to_copy = src.m();
     const local_ordinal_type src_num_rows = src.m();
 
+    // Test copying continuous rows from matrix
     dst.setToConstant(dst_val);
     src.setToConstant(src_val);
 
     dst.copyRowsFrom(src, num_rows_to_copy, dst_start_idx);
 
-    const int fail = verifyAnswer(&dst,
+    int fail = verifyAnswer(&dst,
         [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
         {
+            (void)j; // j is unused
             const bool isRowCopiedOver = (i >= dst_start_idx && i < dst_start_idx + src_num_rows);
             return isRowCopiedOver ? src_val : dst_val;
         });
@@ -149,19 +152,67 @@ int MatrixTestsDense::matrixCopyRowsFrom(
 }
 
 int MatrixTestsDense::matrixCopyBlockFromMatrix(
-    hiopMatrixDense& to,
-    hiopMatrixDense& from,
+    hiopMatrixDense& src,
+    hiopMatrixDense& dst,
 		const int rank)
 {
-    printMessage(SKIP_TEST, __func__, rank); return 0;
+    assert(src.n() < dst.n()
+        && "Did you pass in a dest matrix larger than the source matrix?");
+    assert(src.m() < dst.m()
+        && "Did you pass in a dest matrix larger than the source matrix?");
+    assert(getNumLocCols(&src) < getNumLocCols(&dst)
+        && "Did you pass in a dest matrix larger than the source matrix?");
+    const real_type src_val = one;
+    const real_type dst_val = two;
+    const local_ordinal_type src_num_rows = getNumLocRows(&src);
+    const local_ordinal_type src_num_cols = getNumLocCols(&src);
+    const local_ordinal_type dst_start_row = getNumLocRows(&dst) - src_num_rows;
+    const local_ordinal_type dst_start_col = getNumLocCols(&dst) - src_num_cols;
+
+    src.setToConstant(src_val);
+    dst.setToConstant(dst_val);
+    dst.copyBlockFromMatrix(dst_start_row, dst_start_col, src);
+
+    const int fail = verifyAnswer(&dst,
+        [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+        {
+            const bool isIdxCopiedFromSource = (
+                i >= dst_start_row && i < dst_start_row+src_num_rows &&
+                j >= dst_start_col && j < dst_start_col+src_num_cols);
+            return isIdxCopiedFromSource ? src_val : dst_val;
+        });
+
+    printMessage(fail, __func__, rank);
+    return reduceReturn(fail, &dst);
 }
 
 int MatrixTestsDense::matrixCopyFromMatrixBlock(
-    hiopMatrixDense& to,
-    hiopMatrixDense& from,
+    hiopMatrixDense& src,
+    hiopMatrixDense& dst,
 		const int rank)
 {
-    printMessage(SKIP_TEST, __func__, rank); return 0;
+    assert(src.n() > dst.n()
+        && "Did you pass in a src matrix larger than the dst matrix?");
+    assert(src.m() > dst.m()
+        && "Did you pass in a src matrix larger than the dst matrix?");
+    assert(getNumLocCols(&src) > getNumLocCols(&dst)
+        && "Did you pass in a src matrix larger than the dst matrix?");
+    const local_ordinal_type src_num_rows = getNumLocRows(&src);
+    const local_ordinal_type src_num_cols = getNumLocCols(&src);
+    const local_ordinal_type block_start_row = (src_num_rows - getNumLocRows(&dst)) - 1;
+    const local_ordinal_type block_start_col = (src_num_cols - getNumLocCols(&dst)) - 1;
+
+    const real_type src_val = one;
+    const real_type dst_val = two;
+    src.setToConstant(src_val);
+    dst.setToConstant(dst_val);
+
+    dst.copyFromMatrixBlock(src, block_start_row, block_start_col);
+
+    const int fail = verifyAnswer(&dst, src_val);
+
+    printMessage(fail, __func__, rank);
+    return reduceReturn(fail, &dst);
 }
 
 int MatrixTestsDense::matrixShiftRows(
