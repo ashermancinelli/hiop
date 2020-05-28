@@ -99,7 +99,7 @@ int MatrixTestsDense::matrixAppendRow(
     A.setToConstant(A_val);
     vec.setToConstant(vec_val);
     A.appendRow(vec);
-    
+
     // Ensure A's num rows is updated
     if (A.m() != init_num_rows+1)
         fail++;
