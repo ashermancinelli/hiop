@@ -49,8 +49,11 @@
 #include <cassert>
 
 #include <hiopVector.hpp>
-#include <hiopMatrix.hpp>
+#include <hiopVectorRajaPar.hpp>
+#include <hiopMatrixRajaDense.hpp>
+
 #include "LinAlg/matrixTestsDense.hpp"
+#include "LinAlg/matrixTestsRajaDense.hpp"
 
 int main(int argc, char** argv)
 {
@@ -182,7 +185,7 @@ int main(int argc, char** argv)
 
     // Test RAJA matrix
     {
-      // Code here ...
+        hiop::hiopMatrixRajaDense A_mxn(M_global, N_global, n_partition, comm);
     }
 
     if (rank == 0)
