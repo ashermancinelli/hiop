@@ -207,6 +207,7 @@ public:
         x.copyFromStarting(0, from);
         fail += verifyAnswer(&x, one);
 
+        delete[] _from;
         printMessage(fail, __func__, rank);
         return reduceReturn(fail, &x);
     }

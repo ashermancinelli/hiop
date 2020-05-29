@@ -197,6 +197,10 @@ int main(int argc, char** argv)
       }
     }
 
+    delete[] m_partition;
+    delete[] n_partition;
+    delete[] k_partition;
+
 #ifdef HIOP_USE_MPI
     MPI_Finalize();
 #endif

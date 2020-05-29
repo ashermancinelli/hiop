@@ -78,6 +78,7 @@ int MatrixTestsDense::matrixCopyFrom(
 
     dst.copyFrom(src_buf);
     fail += verifyAnswer(&dst, src_val);
+    delete[] src_buf;
 
     printMessage(fail, __func__, rank);
     return reduceReturn(fail, &dst);
