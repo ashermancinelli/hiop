@@ -45,88 +45,107 @@
 // herein do not necessarily state or reflect those of the United States Government or 
 // Lawrence Livermore National Security, LLC, and shall not be used for advertising or 
 // product endorsement purposes.
-#pragma once
+#include <hiopVectorRajaPar.hpp>
+#include "vectorTestsRajaPar.hpp"
 
-#include <limits>
-#include <cmath>
+namespace hiop::tests {
 
-using real_type             = double;
-using local_ordinal_type    = int;
-using global_ordinal_type   = long long;
-
-static constexpr real_type zero = 0.0;
-static constexpr real_type quarter = 0.25;
-static constexpr real_type half = 0.5;
-static constexpr real_type one = 1.0;
-static constexpr real_type two = 2.0;
-static constexpr real_type three = 3.0;
-static constexpr real_type eps =
-    10*std::numeric_limits<real_type>::epsilon();
-static constexpr int SKIP_TEST = -1;
-
-// must be const pointer and const dest for
-// const string declarations to pass
-// -Wwrite-strings
-static constexpr const char * const  RED       = "\033[1;31m";
-static constexpr const char * const  GREEN     = "\033[1;32m";
-static constexpr const char * const  YELLOW    = "\033[1;33m";
-static constexpr const char * const  CLEAR     = "\033[0m";
-
-namespace hiop::tests
+/// Method to set vector _x_ element _i_ to _value_.
+/// First need to retrieve hiopVectorRajaPar from the abstract interface
+void VectorTestsRajaPar::setLocalElement(hiop::hiopVector* x, local_ordinal_type i, real_type value)
 {
+    hiop::hiopVectorRajaPar* xvec = dynamic_cast<hiop::hiopVectorRajaPar*>(x);
+    xvec->copyFromDev();
+    real_type* xdat = xvec->local_data();
+    xdat[i] = value;
+    xvec->copyToDev();
+}
 
-class TestBase
+/// Returns element _i_ of vector _x_.
+/// First need to retrieve hiopVectorRajaPar from the abstract interface
+real_type VectorTestsRajaPar::getLocalElement(const hiop::hiopVector* x, local_ordinal_type i)
 {
+    const hiop::hiopVectorRajaPar* xv = dynamic_cast<const hiop::hiopVectorRajaPar*>(x);
+    hiop::hiopVectorRajaPar* xvec = const_cast<hiop::hiopVectorRajaPar*>(xv);
+    xvec->copyFromDev();
+    return xvec->local_data_const()[i];
+}
 
-protected:
-    static constexpr real_type zero      = 0.0;
-    static constexpr real_type half      = 0.5;
-    static constexpr real_type one       = 1.0;
-    static constexpr real_type two       = 2.0;
-    static constexpr real_type four      = 4.0;
-    static constexpr real_type eps =
-        100*std::numeric_limits<real_type>::epsilon();
-    static constexpr int SKIP_TEST = -1;
+/// Returns pointer to local ector data
+real_type* VectorTestsRajaPar::getLocalData(hiop::hiopVector* x)
+{
+    hiop::hiopVectorRajaPar* xvec = dynamic_cast<hiop::hiopVectorRajaPar*>(x);
+    return xvec->local_data();
+}
 
-    // must be const pointer and const dest for
-    // const string declarations to pass
-    // -Wwrite-strings
-    static constexpr const char * const  RED       = "\033[1;31m";
-    static constexpr const char * const  GREEN     = "\033[1;32m";
-    static constexpr const char * const  YELLOW    = "\033[1;33m";
-    static constexpr const char * const  CLEAR     = "\033[0m";
+/// Returns size of local data array for vector _x_
+local_ordinal_type VectorTestsRajaPar::getLocalSize(const hiop::hiopVector* x)
+{
+    const hiop::hiopVectorRajaPar* xvec = dynamic_cast<const hiop::hiopVectorRajaPar*>(x);
+    return static_cast<local_ordinal_type>(xvec->get_local_size());
+}
 
-protected:
-    /// Returns true if two real numbers are equal within tolerance
-    [[nodiscard]] constexpr
-    bool isEqual(const real_type a, const real_type b)
+#ifdef HIOP_USE_MPI
+/// Get communicator
+MPI_Comm VectorTestsRajaPar::getMPIComm(hiop::hiopVector* x)
+{
+    const hiop::hiopVectorRajaPar* xvec = dynamic_cast<const hiop::hiopVectorRajaPar*>(x);
+    return xvec->get_mpi_comm();
+}
+#endif
+
+/// If test fails on any rank set fail flag on all ranks
+bool VectorTestsRajaPar::reduceReturn(int failures, hiop::hiopVector* x)
+{
+    int fail = 0;
+
+#ifdef HIOP_USE_MPI
+    MPI_Allreduce(&failures, &fail, 1, MPI_INT, MPI_SUM, getMPIComm(x));
+#else
+    fail = failures;
+#endif
+
+    return (fail != 0);
+}
+
+
+/// Checks if _local_ vector elements are set to `answer`.
+int VectorTestsRajaPar::verifyAnswer(hiop::hiopVector* x, real_type answer)
+{
+  hiop::hiopVectorRajaPar* xvec = dynamic_cast<hiop::hiopVectorRajaPar*>(x);                            
+
+  xvec->copyFromDev();
+    const local_ordinal_type N = getLocalSize(x);
+    const real_type* xdata = getLocalData(x);
+
+    int local_fail = 0;
+    for(local_ordinal_type i=0; i<N; ++i)
+        if(!isEqual(xdata[i], answer))
+	{
+	    std::cout << xdata[i] << " ?= " << answer << "\n";
+            ++local_fail;
+	}
+
+    return local_fail;
+}
+
+int VectorTestsRajaPar::verifyAnswer(
+    hiop::hiopVector* x,
+    std::function<real_type(local_ordinal_type)> expect)
+{
+    const local_ordinal_type N = getLocalSize(x);
+
+    int local_fail = 0;
+    for (int i=0; i<N; i++)
     {
-        return (std::abs(a - b)/(1.0+std::abs(b)) < eps);
-    }
-
-    /// Prints error output for each rank
-    void printMessage(const int fail, const char* funcname, const int rank)
-    {
-        if(fail > 0)
+        if(!isEqual(getLocalElement(x, i), expect(i)))
         {
-            std::cout << RED << "--- FAIL: Test " << funcname << " on rank " << rank << CLEAR << "\n";
-        }
-        else if (fail == SKIP_TEST)
-        {
-            if(rank == 0)
-            {
-                std::cout << YELLOW << "--- SKIP: Test " << funcname << CLEAR << "\n";
-            }
-        }
-        else
-        {
-            if(rank == 0)
-            {
-                std::cout << GREEN << "--- PASS: Test " << funcname << CLEAR << "\n";
-            }
+            ++local_fail;
         }
     }
+    return local_fail;
+}
 
-};
+
 
 } // namespace hiop::tests

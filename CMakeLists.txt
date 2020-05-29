@@ -7,15 +7,34 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 cmake_policy(SET CMP0074 NEW)
 
 project (hiop)
+
 # enable Fortran for Fortran name mangling
 enable_language(Fortran)
+
+# Enable CUDA for build and execution on NVIDIA GPUs
+enable_language(CUDA)
+if(NOT DEFINED CMAKE_CUDA_STANDARD)
+    set(CMAKE_CUDA_STANDARD 11)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+endif()
+
+# Set CUDA flags
+if(HIOP_NVCC_ARCH)
+    set(CMAKE_CUDA_FLAGS "-arch=${HIOP_NVCC_ARCH} --expt-extended-lambda")
+    message(STATUS "Using CUDA arch ${HIOP_NVCC_ARCH}")
+else()
+    set(CMAKE_CUDA_FLAGS "-arch=sm_35 --expt-extended-lambda")
+    message(STATUS "Using CUDA arch sm_35")
+endif()
 
 # Create header for Fortran name mangling
 include(FortranCInterface)
 FortranCInterface_HEADER(FortranCInterface.hpp MACRO_NAMESPACE "FC_")
 
-option(HIOP_USE_MPI "Build with MPI support" ON)
-option(HIOP_USE_GPU "Build with support for GPUs - Magma and cuda libraries" OFF)
+option(HIOP_USE_MPI "Build with MPI support" OFF)
+option(HIOP_USE_GPU "Build with support for GPUs - Magma and cuda libraries" ON)
+option(HIOP_USE_UMPIRE "Build with portable memory management library Umpire" ON)
+option(HIOP_USE_RAJA   "Build with portability abstraction library RAJA" ON)
 option(HIOP_DEEPCHECKS "Extra checks and asserts in the code with a high penalty on performance" ON)
 option(HIOP_WITH_KRON_REDUCTION "Build Kron Reduction code (requires MA86)" OFF)
 option(HIOP_DEVELOPER_MODE "Build with extended warnings and options" OFF)
@@ -135,6 +154,24 @@ if(HIOP_USE_GPU)
   target_link_libraries(hiop_math INTERFACE hiop_cuda)
 endif(HIOP_USE_GPU)
 
+find_package(OpenMP)
+
+if(HIOP_USE_RAJA)
+  # Look for CMake configuration file in RAJA installation
+  find_package(RAJA CONFIG
+    PATHS ${RAJA_DIR} ${RAJA_DIR}/share/raja/cmake
+    REQUIRED)
+  target_link_libraries(hiop_math INTERFACE RAJA)
+endif()
+
+if(HIOP_USE_UMPIRE)
+  # Look for CMake configuration file in Umpire installation
+  find_package(umpire CONFIG
+    PATHS ${umpire_DIR} ${umpire_DIR}/share/umpire/cmake
+    REQUIRED)
+  target_link_libraries(hiop_math INTERFACE umpire)
+endif()
+
 if(HIOP_WITH_KRON_REDUCTION)
   set(HIOP_UMFPACK_DIR CACHE PATH "Path to UMFPACK directory")
   include(FindUMFPACK)
@@ -160,6 +197,17 @@ endif(NOT DEFINED LAPACK_LIBRARIES)
 # extended precision lapack based on xblas testing example
 #
 #set(LAPACK_LIBRARIES "-lgfortran;/export/home/petra1/work/installs/xblas-1.0.248/libxblas.a;/home/petra1/work/installs/lapack-3.7.0/libblas.a;/home/petra1/work/installs/lapack-3.7.0/liblapack.a;/home/petra1/work/installs/lapack-3.7.0/liblapack.a;/home/petra1/work/installs/lapack-3.7.0/libblas.a;/export/home/petra1/work/installs/xblas-1.0.248/libxblas.a")
+
+message("HiOp will use LAPACK/BLAS libs: ${LAPACK_LIBRARIES}")
+message("HiOp: the so-called math libraries are: '${HIOP_MATH_LIBRARIES}'")
+
+file(WRITE "${CMAKE_SOURCE_DIR}/nvblas.conf" "
+NVBLAS_LOGFILE  nvblas.log
+NVBLAS_TRACE_LOG_ENABLED
+NVBLAS_CPU_BLAS_LIB  ${LAPACK_LIBRARIES}
+NVBLAS_GPU_LIST ALL0
+NVBLAS_TILE_DIM 2048
+NVBLAS_AUTOPIN_MEM_ENABLED")
 
 # include build directory for Fortran name mangling header
 include_directories(${CMAKE_BINARY_DIR})
@@ -200,8 +248,6 @@ if(HIOP_BUILD_STATIC)
   install(TARGETS hiop DESTINATION lib)
 endif()
 
-add_subdirectory(tests)
-
 if(HIOP_BUILD_SHARED)
   add_library(hiop_shared SHARED $<TARGET_OBJECTS:hiopOptimization>
     $<TARGET_OBJECTS:hiopLinAlg>
@@ -214,6 +260,8 @@ if(HIOP_BUILD_SHARED)
   endif(HIOP_WITH_KRON_REDUCTION)
   install(TARGETS hiop_shared DESTINATION lib)
 endif()
+
+add_subdirectory(tests)
 
 install(FILES src/Interface/hiopInterface.hpp
   src/Interface/chiopInterface.hpp
@@ -247,6 +295,7 @@ install(FILES src/Interface/hiopInterface.hpp
   src/Drivers/IpoptAdapter.hpp
   ${CMAKE_BINARY_DIR}/hiop_defs.hpp
   DESTINATION include)
+install(FILES "${CMAKE_SOURCE_DIR}/nvblas.conf" DESTINATION lib)
 
 ##########################################################
 # CMake Tests

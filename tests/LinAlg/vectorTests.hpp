@@ -605,7 +605,7 @@ public:
     }
 
     /*
-     * this += C
+     * this[i] += C
      */
     bool vectorAddConstant(hiop::hiopVector& x, const int rank)
     {
@@ -621,7 +621,7 @@ public:
     }
 
     /*
-     * if (pattern[i] > 0.0) this[i] += C
+     * if (pattern[i] != 0.0) this[i] += C
      */
     bool vectorAddConstant_w_patternSelect(
             hiop::hiopVector& x, 

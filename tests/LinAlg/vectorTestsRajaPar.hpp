@@ -47,86 +47,36 @@
 // product endorsement purposes.
 #pragma once
 
-#include <limits>
-#include <cmath>
+#include "vectorTests.hpp"
 
-using real_type             = double;
-using local_ordinal_type    = int;
-using global_ordinal_type   = long long;
+namespace hiop::tests {
 
-static constexpr real_type zero = 0.0;
-static constexpr real_type quarter = 0.25;
-static constexpr real_type half = 0.5;
-static constexpr real_type one = 1.0;
-static constexpr real_type two = 2.0;
-static constexpr real_type three = 3.0;
-static constexpr real_type eps =
-    10*std::numeric_limits<real_type>::epsilon();
-static constexpr int SKIP_TEST = -1;
-
-// must be const pointer and const dest for
-// const string declarations to pass
-// -Wwrite-strings
-static constexpr const char * const  RED       = "\033[1;31m";
-static constexpr const char * const  GREEN     = "\033[1;32m";
-static constexpr const char * const  YELLOW    = "\033[1;33m";
-static constexpr const char * const  CLEAR     = "\033[0m";
-
-namespace hiop::tests
+/**
+ * @brief Utilities for testing hiopVectorPar class
+ *
+ * @todo In addition to set and get element ass set and get buffer methods.
+ *
+ */
+class VectorTestsRajaPar : public VectorTests
 {
+public:
+    VectorTestsRajaPar(){}
+    virtual ~VectorTestsRajaPar(){}
 
-class TestBase
-{
+private:
+    virtual void setLocalElement(hiop::hiopVector* x, local_ordinal_type i, real_type value) override;
+    virtual real_type getLocalElement(const hiop::hiopVector* x, local_ordinal_type i) override;
+    virtual local_ordinal_type getLocalSize(const hiop::hiopVector* x) override;
+    virtual real_type* getLocalData(hiop::hiopVector* x) override;
+    virtual int verifyAnswer(hiop::hiopVector* x, real_type answer) override;
+    virtual bool reduceReturn(int failures, hiop::hiopVector* x) override;
+    virtual int verifyAnswer(
+        hiop::hiopVector* x,
+        std::function<real_type(local_ordinal_type)> expect) override;
 
-protected:
-    static constexpr real_type zero      = 0.0;
-    static constexpr real_type half      = 0.5;
-    static constexpr real_type one       = 1.0;
-    static constexpr real_type two       = 2.0;
-    static constexpr real_type four      = 4.0;
-    static constexpr real_type eps =
-        100*std::numeric_limits<real_type>::epsilon();
-    static constexpr int SKIP_TEST = -1;
-
-    // must be const pointer and const dest for
-    // const string declarations to pass
-    // -Wwrite-strings
-    static constexpr const char * const  RED       = "\033[1;31m";
-    static constexpr const char * const  GREEN     = "\033[1;32m";
-    static constexpr const char * const  YELLOW    = "\033[1;33m";
-    static constexpr const char * const  CLEAR     = "\033[0m";
-
-protected:
-    /// Returns true if two real numbers are equal within tolerance
-    [[nodiscard]] constexpr
-    bool isEqual(const real_type a, const real_type b)
-    {
-        return (std::abs(a - b)/(1.0+std::abs(b)) < eps);
-    }
-
-    /// Prints error output for each rank
-    void printMessage(const int fail, const char* funcname, const int rank)
-    {
-        if(fail > 0)
-        {
-            std::cout << RED << "--- FAIL: Test " << funcname << " on rank " << rank << CLEAR << "\n";
-        }
-        else if (fail == SKIP_TEST)
-        {
-            if(rank == 0)
-            {
-                std::cout << YELLOW << "--- SKIP: Test " << funcname << CLEAR << "\n";
-            }
-        }
-        else
-        {
-            if(rank == 0)
-            {
-                std::cout << GREEN << "--- PASS: Test " << funcname << CLEAR << "\n";
-            }
-        }
-    }
-
+#ifdef HIOP_USE_MPI
+    MPI_Comm getMPIComm(hiop::hiopVector* x);
+#endif
 };
 
-} // namespace hiop::tests
+} // namespace hiopTest
