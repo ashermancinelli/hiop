@@ -227,7 +227,7 @@ void hiopMatrixDense::shiftRows(long long shift)
   if(shift==0) return;
   if(fabs(shift)==m_local) return; //nothing to shift
   if(m_local<=1) return; //nothing to shift
-  
+  if(n_local<=0) return;
   assert(fabs(shift)<m_local); 
 
   //at this point m_local should be >=2
@@ -243,20 +243,33 @@ void hiopMatrixDense::shiftRows(long long shift)
     test2=shift<0 ? M[-shift][n_local-1] : M[m_local-shift-1][n_local-1];
   }
 #endif
-
+  double* M0 = M[0];
+  //shift < 0 -> up; shift > 0 -> down
+  //if(shift<0) memcpy(M[0], M[-shift], n_local*(m_local+shift)*sizeof(double));
+  //else        memcpy(M[shift], M[0],  n_local*(m_local-shift)*sizeof(double));
   if(shift<0) {
-    for(int row=0; row<m_local+shift; row++)
-      memcpy(M[row], M[row-shift], n_local*sizeof(double));
+    //for(int row=0; row<m_local+shift; row++)
+    //  memcpy(M[row], M[row-shift], n_local*sizeof(double));
+
+    for(int it=0, it2=-n_local*shift; it<n_local*(m_local+shift); ++it, ++it2) {
+      assert(it2 < n_local*m_local);
+      M0[it] = M0[it2];
+    }
+      
   } else {
-    for(int row=m_local-1; row>=shift; row--) {
-      memcpy(M[row], M[row-shift], n_local*sizeof(double));
+    //for(int row=m_local-1; row>=shift; row--) {
+    //  memcpy(M[row], M[row-shift], n_local*sizeof(double));
+    //}
+    for(int it=m_local*n_local-1, it2=(m_local-shift)*n_local-1; it2>=0; --it, --it2) {
+      assert(it >= shift*n_local);
+      M0[it] = M0[it2];
     }
   }
  
 #ifdef HIOP_DEEPCHECKS
   if(n_local>0) {
-    assert(test1==M[shift<0?0:m_local-1][0] && "a different copy technique than memcpy is needed on this system");
-    assert(test2==M[shift<0?0:m_local-1][n_local-1] && "a different copy technique than memcpy is needed on this system");
+    assert(test1==M[shift<0?0:m_local-1][0] && "something went awfully wrong");
+    assert(test2==M[shift<0?0:m_local-1][n_local-1] && "something went awfully wrong");
   }
 #endif
 }
