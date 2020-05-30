@@ -59,34 +59,34 @@ public:
     int matrixCopyFrom(
         hiopMatrixDense& to,
         hiopMatrixDense& from,
-				const int rank);
+        const int rank);
     int matrixAppendRow(
         hiopMatrixDense& A,
         hiopVectorPar& vec,
-				const int rank);
+        const int rank);
     int matrixCopyRowsFrom(
         hiopMatrixDense& to,
         hiopMatrixDense& from,
-				const int rank);
+        const int rank);
     int matrixCopyBlockFromMatrix(
         hiopMatrixDense& to,
         hiopMatrixDense& from,
-				const int rank);
+        const int rank);
     int matrixCopyFromMatrixBlock(
         hiopMatrixDense& to,
         hiopMatrixDense& from,
-				const int rank);
+        const int rank);
     int matrixShiftRows(
         hiopMatrixDense& A,
-				const int rank);
+        const int rank);
     int matrixReplaceRow(
         hiopMatrixDense& A,
-				hiopVectorPar& vec,
-				const int rank);
+        hiopVectorPar& vec,
+        const int rank);
     int matrixGetRow(
         hiopMatrixDense& A,
-				hiopVectorPar& vec,
-				const int rank);
+        hiopVectorPar& vec,
+        const int rank);
 
 
 private:
