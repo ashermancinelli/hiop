@@ -124,7 +124,6 @@ int MatrixTestsDense::matrixCopyRowsFrom(
     hiopMatrixDense& src,
     const int rank)
 {
-    // printMessage(SKIP_TEST, __func__, rank); return 0;
     assert(dst.n() == src.n());
     assert(dst.m() > src.m());
     assert(getNumLocCols(&dst) == getNumLocCols(&src));
@@ -145,7 +144,9 @@ int MatrixTestsDense::matrixCopyRowsFrom(
         [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
         {
             (void)j; // j is unused
-            const bool isRowCopiedOver = (i >= dst_start_idx && i < dst_start_idx + src_num_rows);
+            const bool isRowCopiedOver = (
+              i >= dst_start_idx &&
+              i < dst_start_idx + src_num_rows);
             return isRowCopiedOver ? src_val : dst_val;
         });
 
@@ -166,6 +167,9 @@ int MatrixTestsDense::matrixCopyBlockFromMatrix(
         && "Src mat must be smaller than dst mat");
     const real_type src_val = one;
     const real_type dst_val = two;
+
+    // Copy matrix block into downmost and rightmost location
+    // possible
     const local_ordinal_type src_num_rows = getNumLocRows(&src);
     const local_ordinal_type src_num_cols = getNumLocCols(&src);
     const local_ordinal_type dst_start_row = getNumLocRows(&dst) - src_num_rows;
@@ -199,34 +203,46 @@ int MatrixTestsDense::matrixCopyFromMatrixBlock(
         && "Src mat must be larger than dst mat");
     assert(getNumLocCols(&src) > getNumLocCols(&dst)
         && "Src mat must be larger than dst mat");
-    const local_ordinal_type src_num_rows = getNumLocRows(&src);
-    const local_ordinal_type src_num_cols = getNumLocCols(&src);
-    const local_ordinal_type block_start_row = (src_num_rows - getNumLocRows(&dst)) - 1;
-    const local_ordinal_type block_start_col = (src_num_cols - getNumLocCols(&dst)) - 1;
+    const local_ordinal_type dst_m = getNumLocRows(&dst);
+    const local_ordinal_type dst_n = getNumLocCols(&dst);
+    const local_ordinal_type src_m = getNumLocRows(&src);
+    const local_ordinal_type src_n = getNumLocCols(&src);
+    const local_ordinal_type block_start_row = (src_m - getNumLocRows(&dst)) - 1;
+    const local_ordinal_type block_start_col = (src_n - getNumLocCols(&dst)) - 1;
 
     const real_type src_val = one;
     const real_type dst_val = two;
     src.setToConstant(src_val);
+    if (rank == 0)
+        setLocalElement(&src, src_m-1, src_n-1, zero);
     dst.setToConstant(dst_val);
 
     dst.copyFromMatrixBlock(src, block_start_row, block_start_col);
 
-    const int fail = verifyAnswer(&dst, src_val);
+    const int fail = verifyAnswer(&dst,
+        [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+        {
+            // This is the element set to zero in src
+            // before being copied over
+            if (i == dst_m && j == dst_n && rank == 0)
+                return zero;
+            else
+                return src_val;
+        });
 
     printMessage(fail, __func__, rank);
     return reduceReturn(fail, &dst);
 }
 
 /*
- * shiftRows does not overwrite rows in the opposite direction
- * they are shifted. For example
+ * shiftRows does not wrap around when shifted past the end
+ * of the matrix.
  *
  *    2 2 2                   2 2 2
- *    1 1 1                   1 1 1
- *    1 1 1  shiftRows(2) ->  2 2 2
+ *    1 1 1                   2 2 2
+ *    1 1 1  shiftRows(1) ->  1 1 1
  *
- *  The uppermost row is not overwritten by the 1-row that would
- *  wrap around and replace it.
+ *  The uppermost row is not overwritten by the last row
  */
 int MatrixTestsDense::matrixShiftRows(
     hiopMatrixDense& A,
@@ -239,9 +255,10 @@ int MatrixTestsDense::matrixShiftRows(
 
     const real_type A_val = one;
     const real_type uniq_row_val = two;
-    A.setToConstant(A_val);
 
+    // First check positive shift
     // Set one row to a unique value
+    A.setToConstant(A_val);
     setLocalRow(&A, uniq_row_idx, uniq_row_val);
     A.shiftRows(shift);
 
@@ -249,8 +266,26 @@ int MatrixTestsDense::matrixShiftRows(
         [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
         {
             (void)j; // j is unused
-            const bool isUniqueRow = (i == (uniq_row_idx + shift)
-                || i == uniq_row_idx);
+            const bool isUniqueRow = (
+                i == (uniq_row_idx + shift) ||
+                i == uniq_row_idx);
+            return isUniqueRow ? uniq_row_val : A_val;
+        });
+
+    // Now check negative shift
+    shift *= -1;
+    uniq_row_idx = M - 1;
+    A.setToConstant(A_val);
+    setLocalRow(&A, uniq_row_idx, uniq_row_val);
+    A.shiftRows(shift);
+
+    fail += verifyAnswer(&A,
+        [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
+        {
+            (void)j; // j is unused
+            const bool isUniqueRow = (
+                i == (uniq_row_idx + shift) ||
+                i == uniq_row_idx);
             return isUniqueRow ? uniq_row_val : A_val;
         });
 
@@ -280,13 +315,16 @@ int MatrixTestsDense::matrixReplaceRow(
     const int fail = verifyAnswer(&A,
         [=] (local_ordinal_type i, local_ordinal_type j) -> real_type
         {
+            // Was the row replaced?
             if (i == row_idx)
             {
+                // Was the index of the row set to zero?
                 if (j == col_idx)
                     return zero;
                 else
                     return vec_val;
             }
+            // The matrix should be otherwise unchanged
             else
             {
                 return A_val;
