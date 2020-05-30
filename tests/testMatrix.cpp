@@ -102,17 +102,13 @@ int main(int argc, char** argv)
         hiop::hiopMatrixDense B_mxn(M_global, N_global, n_partition, comm);
         hiop::hiopMatrixDense A_nxm(N_global, M_global, m_partition, comm);
         hiop::hiopMatrixDense A_nxn(N_global, N_global, n_partition, comm);
-        hiop::hiopMatrixDense B_nxn(N_global, N_global, n_partition, comm);
         hiop::hiopMatrixDense A_kxn(K_global, N_global, n_partition, comm);
-        hiop::hiopMatrixDense A_kxk(K_global, K_global, k_partition, comm);
-        hiop::hiopMatrixDense A_mxk(M_global, K_global, k_partition, comm);
         hiop::hiopMatrixDense A_mxm(M_global, M_global, m_partition, comm);
         hiop::hiopMatrixDense A_kxm(K_global, M_global, m_partition, comm);
 
         // Some matrices need to scale only in one dimension as
-        // ranks scale. The subscripted size will denote which
-        // dimension will not scale with ranks by suffixing an
-        // 'l' to the dimension.
+        // ranks scale. The subscripted size suffixed with an 'l'
+        // indicates which dimension will not scale with ranks.
         hiop::hiopMatrixDense A_klxm(K_local, M_global, m_partition, comm);
         hiop::hiopMatrixDense A_mlxk(M_local, K_global, k_partition, comm);
 
@@ -127,7 +123,6 @@ int main(int argc, char** argv)
         //
         // Distributed vectors
         hiop::hiopVectorPar x_n_dist(N_global, n_partition, comm);
-        hiop::hiopVectorPar x_m_dist(M_global, m_partition, comm);
 
         // Local vectors
         hiop::hiopVectorPar x_n_nodist(N_global);

@@ -868,13 +868,13 @@ public:
 
     /*
      * This method is not yet implemented in HIOP
+     */
     bool vectorMin(const hiop::hiopVector& x, const int rank)
     {
-        (void)x;
+        (void)x; (void) rank;
         printMessage(SKIP_TEST, __func__, rank);
         return 0;
     }
-    */
 
     /*
      * Project vector into bounds
