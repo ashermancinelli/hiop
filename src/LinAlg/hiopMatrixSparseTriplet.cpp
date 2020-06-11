@@ -339,24 +339,24 @@ addMDinvNtransToSymDeMatUTri(int row_dest_start, int col_dest_start,
       int kj=M2.row_starts->idx_start[j];
       
       while(ki<M1.row_starts->idx_start[i+1] && kj<M2.row_starts->idx_start[j+1]) {
-          assert(ki<M1.nnz); 
-          assert(kj<M2.nnz);
+	      assert(ki<M1.nnz);
+   	    assert(kj<M2.nnz);
 
-          // Sort these before dipatchign to GPU?
-          //
-          // TODO sort such that we iterate over i,j out of order
-          // same sparsity pattern, so keep sorted pattern to
-          // reuse next kernel launch
-          //
-          // similar to petsc sparse coloring alg for sparse matmul
-          if(M1.jCol[ki] == M2.jCol[kj]) { 
-              acc += M1.values[ki] / DM[this->jCol[ki]] * M2.values[kj];
-              ki++;
-              kj++;
-          } else {
-              if(this->jCol[ki]<this->jCol[kj]) ki++;
-              else                              kj++;
-          }
+        // Sort these before dipatchign to GPU?
+        //
+        // TODO sort such that we iterate over i,j out of order
+        // same sparsity pattern, so keep sorted pattern to
+        // reuse next kernel launch
+        //
+        // similar to petsc sparse coloring alg for sparse matmul
+        if(M1.jCol[ki] == M2.jCol[kj]) {
+      	  acc += M1.values[ki] / DM[this->jCol[ki]] * M2.values[kj];
+   	      ki++;
+   	      kj++;
+   	    } else {
+   	      if(M1.jCol[ki] < M2.jCol[kj]) ki++;
+   	      else                          kj++;
+   	    }
       } //end of loop over ki and kj
 
 #ifdef HIOP_DEEPCHECKS
