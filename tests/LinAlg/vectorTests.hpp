@@ -617,6 +617,46 @@ public:
   }
 
   /*
+   * this[i] += alpha * x[i] / z[i]
+   */
+  bool vectorAxdzpy_w_patternSelect(
+      hiop::hiopVector& v,
+      hiop::hiopVector& x,
+      hiop::hiopVector& z,
+      hiop::hiopVector& pattern,
+      const int rank)
+  {
+    const local_ordinal_type N = getLocalSize(&v);
+    assert(v.get_size() == x.get_size());
+    assert(N == getLocalSize(&x));
+
+    const real_type alpha = three;
+    const real_type x_val = half;
+    const real_type v_val = two;
+    const real_type z_val = half;
+
+    x.setToConstant(x_val);
+    z.setToConstant(z_val);
+    v.setToConstant(v_val);
+    pattern.setToConstant(one);
+    if (rank== 0)
+      setLocalElement(&pattern, N - 1, zero);
+
+    const real_type expected = v_val + (alpha * x_val / z_val);
+    v.axdzpy_w_pattern(alpha, x, z, pattern);
+
+    const int fail = verifyAnswer(&v,
+      [=] (local_ordinal_type i) -> real_type
+      {
+        const bool isLastElementOnRank0 = (i == N-1 && rank == 0);
+        return isLastElementOnRank0 ? v_val : expected;
+      });
+
+    printMessage(fail, __func__, rank);
+    return reduceReturn(fail, &v);
+  }
+
+  /*
    * this += C
    */
   bool vectorAddConstant(hiop::hiopVector& x, const int rank)
@@ -714,9 +754,6 @@ public:
       hiop::hiopVector& pattern,
       const int rank)
   {
-    printMessage(SKIP_TEST, __func__, rank);
-    return 0;
-    
     const local_ordinal_type N = getLocalSize(&x);
     assert(N == getLocalSize(&pattern));
 
@@ -727,13 +764,11 @@ public:
 
     const real_type x_val = half;
     x.setToConstant(x_val);
+    // Make sure pattern eliminates the correct element
+    setLocalElement(&x, N - 1, 1000*three);
 
-    // No loops such that the test captures accumulation errors
     const real_type expected = (N-1) * std::log(x_val);
     const real_type result = x.logBarrier(pattern);
-    printf("r %f e %f diff %.10e\n",
-        result, expected,
-        std::abs(result-expected));
 
     const bool fail = !isEqual(result, expected);
 
