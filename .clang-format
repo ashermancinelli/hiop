@@ -1,0 +1,31 @@
+---
+Language: Cpp
+AlignConsecutiveAssignments: true
+ColumnLimit: 100
+AlignEscapedNewlines: Right
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+BreakBeforeBraces: Allman
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeComma
+BreakStringLiterals: true
+CompactNamespaces: true
+FixNamespaceComments: true
+IndentPPDirectives: None
+IndentWidth: 2
+MaxEmptyLinesToKeep: 1
+NamespaceIndentation: None
+PointerAlignment: Left
+SortIncludes: false
+SpaceAfterTemplateKeyword: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: Never
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 3
+SpacesInAngles: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+---
