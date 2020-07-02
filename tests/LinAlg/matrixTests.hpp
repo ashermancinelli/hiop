@@ -73,7 +73,7 @@ public:
   MatrixTests() {}
   virtual ~MatrixTests(){}
 
-  int matrixSetToZero(hiop::hiopMatrix& A, const int rank)
+  virtual int matrixSetToZero(hiop::hiopMatrix& A, const int rank)
   {
     A.setToZero();
     const int fail = verifyAnswer(&A, zero);
@@ -81,7 +81,7 @@ public:
     return reduceReturn(fail, &A);
   }
 
-  int matrixSetToConstant(hiop::hiopMatrix& A, const int rank)
+  virtual int matrixSetToConstant(hiop::hiopMatrix& A, const int rank)
   {
     const local_ordinal_type M = getNumLocRows(&A);
     const local_ordinal_type N = getNumLocCols(&A);

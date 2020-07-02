@@ -4,5 +4,8 @@ add_executable(testVector testVector.cpp LinAlg/vectorTestsPar.cpp)
 target_link_libraries(testVector PRIVATE hiop)
 
 # Build matrix test
-add_executable(testMatrix testMatrix.cpp LinAlg/matrixTestsDense.cpp)
+add_executable(testMatrix
+  testMatrix.cpp
+  LinAlg/matrixTestsDense.cpp
+  LinAlg/matrixTestsComplexDense.cpp)
 target_link_libraries(testMatrix PRIVATE hiop)

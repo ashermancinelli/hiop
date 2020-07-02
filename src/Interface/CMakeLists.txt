@@ -1,2 +1,2 @@
 add_library(chiopInterface OBJECT chiopInterface.cpp)
-
+target_link_libraries(chiopInterface PUBLIC hiop_math)

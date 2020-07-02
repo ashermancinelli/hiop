@@ -58,10 +58,14 @@
 
 #include <hiopVector.hpp>
 #include <hiopMatrix.hpp>
+#include <hiopMatrixComplexDense.hpp>
 #include "LinAlg/matrixTestsDense.hpp"
+#include "LinAlg/matrixTestsComplexDense.hpp"
 
 int main(int argc, char** argv)
 {
+  constexpr bool isTestMatrixComplexDense = true;
+  constexpr bool isTestMatrixDense = true;
   int rank=0, numRanks=1;
   MPI_Comm comm = MPI_COMM_NULL;
 
@@ -105,7 +109,7 @@ int main(int argc, char** argv)
 
   int fail = 0;
 
-  // Test dense matrix
+  if (isTestMatrixDense)
   {
     // Matrix dimensions denoted by subscript
     // Distributed matrices:
@@ -187,9 +191,37 @@ int main(int argc, char** argv)
     fail += test.matrixGetRow(A_mxn, x_n_dist, rank);
   }
 
-  // Test RAJA matrix
+  if (isTestMatrixComplexDense)
   {
-    // Code here ...
+    std::cout << "Testing hiopMatrixComplexDense\n";
+    hiop::hiopMatrixComplexDense A_mxn(M_global, N_global, n_partition, comm);
+    hiop::hiopMatrixComplexDense B_mxn(M_global, N_global, n_partition, comm);
+    hiop::hiopMatrixComplexDense A_nxm(N_global, M_global, m_partition, comm);
+    hiop::hiopMatrixComplexDense A_nxn(N_global, N_global, n_partition, comm);
+    hiop::hiopMatrixComplexDense A_kxn(K_global, N_global, n_partition, comm);
+    hiop::hiopMatrixComplexDense A_mxm(M_global, M_global, m_partition, comm);
+    hiop::hiopMatrixComplexDense A_kxm(K_global, M_global, m_partition, comm);
+
+    hiop::hiopMatrixComplexDense A_mxk_local(M_global, K_global);
+    hiop::hiopMatrixComplexDense A_kxn_local(K_global, N_global);
+    hiop::hiopMatrixComplexDense A_mxn_local(M_global, N_global);
+
+    // Vectors with shape of the form:
+    // x_<size>_<distributed or local>
+    //
+    // Distributed vectors
+    hiop::hiopVectorPar x_n_dist(N_global, n_partition, comm);
+
+    // Local vectors
+    hiop::hiopVectorPar x_n_nodist(N_global);
+    hiop::hiopVectorPar x_m_nodist(M_global);
+
+    hiop::tests::MatrixTestsComplexDense test;
+
+    fail += test.matrixSetToZero(A_mxn, rank);
+    fail += test.matrixSetToConstant(A_mxn, rank);
+    fail += test.matrixCopyFrom(A_mxn, B_mxn, rank);
+    fail += test.matrixAddMatrix(A_mxn, B_mxn, rank);
   }
 
   if (rank == 0)
