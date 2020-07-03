@@ -180,17 +180,24 @@ namespace tests
       return reduceReturn(fail, &dst);
     }
 
-    int matrixAddMatrix(
+    /**
+     * @brief Tests both the real-only overload and the imaginary-defined
+     * overload.
+     */
+    int matrixAddMatrixComplex(
         hiop::hiopMatrixComplexDense& A,
         hiop::hiopMatrixComplexDense& B,
         const int rank)
     {
-      // Test the real-only method first
-      int fail = MatrixTests::matrixAddMatrix(A, B, rank);
-      std::complex<real_type> alpha = half,
-            A_val = half,
-            B_val = one;
+      int                     fail{0};
+      std::complex<real_type> alpha{half, half};
+      std::complex<real_type> A_val{half, half};
+      std::complex<real_type> B_val{one, one};
 
+      // Test the real-only method first
+      fail += MatrixTests::matrixAddMatrix(A, B, rank);
+
+      // Then test the imaginary-defined method
       A.setToConstant(A_val);
       B.setToConstant(B_val);
       A.addMatrix(alpha, B);
@@ -199,9 +206,74 @@ namespace tests
       printMessage(fail, __func__, rank);
       return reduceReturn(fail, &A);
     }
+
+    /**
+     * @brief Tests method `addSparseMatrix' method. The assertions in th
+     * method will fail if both matrices are not square, so both test matrices
+     * must also be square.
+     */
+    int matrixAddSparseMatrix(
+        hiop::hiopMatrixComplexDense& A,
+        hiop::hiopMatrixComplexSparseTriplet& B,
+        const int rank=0)
+    {
+      assert(A.m()==A.n());
+      assert(B.m()==B.n());
+      assert(A.m()==B.m());
+      const local_ordinal_type M = getNumLocRows(&A);
+      const local_ordinal_type N = getNumLocCols(&A);
+      std::complex<real_type> B_val{one, one};
+      std::complex<real_type> A_val{two, two};
+      std::complex<real_type> alpha{half, half};
+      int                     fail{0};
+
+      // For alpha=0, this method should early return
+      A.setToConstant(A_val);
+      B.setToConstant(B_val);
+      A.addSparseMatrix(zero, B);
+      fail += verifyAnswer(&A, A_val);
+
+      A.setToConstant(A_val);
+      B.setToConstant(B_val);
+
+      // On master rank, set one index to be zero
+      local_ordinal_type zeroRowIdx{-1};
+      local_ordinal_type zeroColIdx{-1};
+
+      /// TODO: use cameron's helper methods for this sort of thing
+      if (rank == 0)
+      {
+        const auto nnz = B.numberOfNonZeros();
+        auto* values = B.M();
+        values[nnz-1] = zero;
+        zeroRowIdx = B.i_row()[nnz-1];
+        zeroColIdx = B.j_col()[nnz-1];
+      }
+
+      printf("%d\n",fail);
+      A.addSparseMatrix(alpha, B);
+      fail += verifyAnswer(&A,
+          [=](local_ordinal_type i,
+              local_ordinal_type j
+              ) -> std::complex<real_type>
+          {
+            const bool isZerodIdx = rank == 0 && 
+                                    i == zeroRowIdx && 
+                                    j == zeroColIdx;
+            return isZerodIdx ? A_val : A_val + B_val;
+          });
+      printf("%d\n",fail);
+
+      printMessage(fail, __func__, rank);
+      return reduceReturn(fail, &A);
+    }
     // End hiopMatrixComplexDense matrix tests
 
   private:
+    virtual void setLocalElement(hiop::hiopMatrix *a,
+        local_ordinal_type i,
+        local_ordinal_type j,
+        real_type val) override;
     virtual void setLocalElement(hiop::hiopMatrix *a,
         local_ordinal_type i,
         local_ordinal_type j,

@@ -59,13 +59,14 @@
 #include <hiopVector.hpp>
 #include <hiopMatrix.hpp>
 #include <hiopMatrixComplexDense.hpp>
+#include <hiopMatrixComplexSparseTriplet.hpp>
 #include "LinAlg/matrixTestsDense.hpp"
 #include "LinAlg/matrixTestsComplexDense.hpp"
 
 int main(int argc, char** argv)
 {
   constexpr bool isTestMatrixComplexDense = true;
-  constexpr bool isTestMatrixDense = true;
+  constexpr bool isTestMatrixDense        = true;
   int rank=0, numRanks=1;
   MPI_Comm comm = MPI_COMM_NULL;
 
@@ -111,6 +112,7 @@ int main(int argc, char** argv)
 
   if (isTestMatrixDense)
   {
+    std::cout << "Testing hiopMatrixDense\n";
     // Matrix dimensions denoted by subscript
     // Distributed matrices:
     hiop::hiopMatrixDense A_mxn(M_global, N_global, n_partition, comm);
@@ -206,6 +208,9 @@ int main(int argc, char** argv)
     hiop::hiopMatrixComplexDense A_kxn_local(K_global, N_global);
     hiop::hiopMatrixComplexDense A_mxn_local(M_global, N_global);
 
+    // arbitraty nnz for tests that need sparse matrices
+    const global_ordinal_type nnz{M_global * N_global / 2};
+
     // Vectors with shape of the form:
     // x_<size>_<distributed or local>
     //
@@ -221,7 +226,18 @@ int main(int argc, char** argv)
     fail += test.matrixSetToZero(A_mxn, rank);
     fail += test.matrixSetToConstant(A_mxn, rank);
     fail += test.matrixCopyFrom(A_mxn, B_mxn, rank);
-    fail += test.matrixAddMatrix(A_mxn, B_mxn, rank);
+    fail += test.matrixAddMatrixComplex(A_mxn, B_mxn, rank);
+
+    if (numRanks == 1)
+    {
+      // Sparse matrix for `addSparseMatrix' method.
+      hiop::hiopMatrixComplexSparseTriplet A_mxm_sparse(M_global, M_global, nnz);
+      initializeSparseMat(&A_mxm_sparse, nnz);
+      fail += test.matrixAddSparseMatrix(A_mxm, A_mxm_sparse);
+    }
+
+    fail += test.matrixMaxAbsValue(A_mxn, rank);
+    fail += test.matrixIsFinite(A_mxn, rank);
   }
 
   if (rank == 0)

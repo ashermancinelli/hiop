@@ -166,9 +166,13 @@ namespace hiop
 		       int maxRows=-1, int maxCols=-1, int rank=-1) const;
 
     /* number of rows */
-    virtual long long m() const { return stM->m(); }
+    inline long long m() const { return stM->m(); }
     /* number of columns */
-    virtual long long n() const { return stM->n(); }
+    inline long long n() const { return stM->n(); }
+    inline long long numberOfNonZeros() const { return stM->numberOfNonzeros(); }
+    inline int* i_row() const { return stM->i_row(); }
+    inline int* j_col() const { return stM->j_col(); }
+    inline std::complex<double>* M() const { return stM->M(); }
 
 #ifdef HIOP_DEEPCHECKS
     /* check symmetry */

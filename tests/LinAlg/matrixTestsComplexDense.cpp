@@ -72,6 +72,19 @@ namespace tests
   void MatrixTestsComplexDense::setLocalElement(hiop::hiopMatrix* A,
                                                 local_ordinal_type i,
                                                 local_ordinal_type j,
+                                                real_type val)
+  {
+    auto* amat = dynamic_cast<hiop::hiopMatrixComplexDense*>(A);
+    if (amat != nullptr) {
+      std::complex<real_type>** data = amat->get_M();
+      data[i][j] = std::complex<real_type>(val);
+    } else
+      THROW_NULL_DEREF;
+  }
+
+  void MatrixTestsComplexDense::setLocalElement(hiop::hiopMatrix* A,
+                                                local_ordinal_type i,
+                                                local_ordinal_type j,
                                                 std::complex<real_type> val)
   {
     auto* amat = dynamic_cast<hiop::hiopMatrixComplexDense*>(A);
@@ -177,7 +190,7 @@ namespace tests
    */
   [[nodiscard]] int MatrixTestsComplexDense::verifyAnswer(
       hiop::hiopMatrix* A,
-      const std::complex<real_type> answer)
+      std::complex<real_type> answer)
   {
     const local_ordinal_type M = getNumLocRows(A);
     const local_ordinal_type N = getNumLocCols(A);
