@@ -217,15 +217,16 @@ namespace tests
         hiop::hiopMatrixComplexSparseTriplet& B,
         const int rank=0)
     {
-      assert(A.m()==A.n());
-      assert(B.m()==B.n());
-      assert(A.m()==B.m());
+      assert(A.m() == A.n());
+      assert(B.m() == B.n());
+      assert(A.m() == B.m());
       const local_ordinal_type M = getNumLocRows(&A);
       const local_ordinal_type N = getNumLocCols(&A);
-      std::complex<real_type> B_val{one, one};
-      std::complex<real_type> A_val{two, two};
-      std::complex<real_type> alpha{half, half};
-      int                     fail{0};
+      std::complex<real_type>  B_val{one, one};
+      std::complex<real_type>  A_val{two, two};
+      std::complex<real_type>  alpha{half, half};
+      int                      fail{0};
+      const int                nnz = B.numberOfNonZeros();
 
       // For alpha=0, this method should early return
       A.setToConstant(A_val);
@@ -237,32 +238,47 @@ namespace tests
       B.setToConstant(B_val);
 
       // On master rank, set one index to be zero
+      // but it has to already be a nonzero of the sparse matrix
       local_ordinal_type zeroRowIdx{-1};
       local_ordinal_type zeroColIdx{-1};
 
       /// TODO: use cameron's helper methods for this sort of thing
       if (rank == 0)
       {
-        const auto nnz = B.numberOfNonZeros();
         auto* values = B.M();
-        values[nnz-1] = zero;
-        zeroRowIdx = B.i_row()[nnz-1];
-        zeroColIdx = B.j_col()[nnz-1];
+        values[0] = 0.;//std::complex<double>{zero, zero};
+        zeroRowIdx = B.i_row()[0];
+        zeroColIdx = B.j_col()[0];
       }
 
-      printf("%d\n",fail);
+      /// TODO: use cameron's helper methods for this sort of thing
+      auto irow = B.i_row();
+      auto jcol = B.j_col();
+
       A.addSparseMatrix(alpha, B);
       fail += verifyAnswer(&A,
-          [=](local_ordinal_type i,
-              local_ordinal_type j
-              ) -> std::complex<real_type>
+        [=](local_ordinal_type i,
+            local_ordinal_type j
+            ) -> std::complex<real_type>
+        {
+          const bool isZerodIdx = rank == 0 && 
+                                  i == zeroRowIdx && 
+                                  j == zeroColIdx;
+          /// TODO: fix this ugle crap with cameron's helper methods
+          bool isNonZero{false};
+          for(int ii=0; ii<nnz; ii++)
           {
-            const bool isZerodIdx = rank == 0 && 
-                                    i == zeroRowIdx && 
-                                    j == zeroColIdx;
-            return isZerodIdx ? A_val : A_val + B_val;
-          });
-      printf("%d\n",fail);
+            if (irow[ii] == i && jcol[ii] == j)
+            {
+              isNonZero = true;
+              break;
+            }
+          }
+          if (isZerodIdx || !isNonZero)
+            return A_val;
+          else
+            return A_val + alpha * B_val;
+        });
 
       printMessage(fail, __func__, rank);
       return reduceReturn(fail, &A);

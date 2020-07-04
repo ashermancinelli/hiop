@@ -114,12 +114,14 @@ namespace tests
   /// First need to retrieve hiopMatrixComplexDense from the abstract interface
   std::complex<real_type> MatrixTestsComplexDense::getLocalElementComplex(
       const hiop::hiopMatrix* A,
-      local_ordinal_type i,
-      local_ordinal_type j)
+      local_ordinal_type row,
+      local_ordinal_type col)
   {
     auto* amat = dynamic_cast<const hiop::hiopMatrixComplexDense*>(A);
     if (amat != nullptr)
-      return amat->local_data()[i][j];
+    {
+      return amat->local_data()[row][col];
+    }
     else
       THROW_NULL_DEREF;
   }

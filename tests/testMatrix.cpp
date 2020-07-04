@@ -63,6 +63,45 @@
 #include "LinAlg/matrixTestsDense.hpp"
 #include "LinAlg/matrixTestsComplexDense.hpp"
 
+void initializeSparseMat(hiop::hiopMatrixComplexSparseTriplet* A, int nnz)
+{
+  auto* irow = A->i_row();
+  auto* jcol = A->j_col();
+  auto  M    = A->m();
+  auto  N    = A->n();
+  auto  vals = A->M();
+  int   row  = 0;
+  int   col  = 0;
+  int   i    = 0;
+  for(int ii=0; ii<nnz; ii++)
+  {
+    vals[i] = zero;
+    irow[i] = zero;
+    jcol[i] = zero;
+  }
+  while(i < nnz)
+  {
+    if(row >= M)
+      return;
+    col       = 0;
+    vals[i]   = zero;
+    irow[i]   = row;
+    jcol[i++] = col;
+
+    col       = N / 2;
+    vals[i]   = zero;
+    irow[i]   = row;
+    jcol[i++] = col;
+
+    col       = N - 1;
+    vals[i]   = zero;
+    irow[i]   = row;
+    jcol[i++] = col;
+
+    row++;
+  }
+}
+
 int main(int argc, char** argv)
 {
   constexpr bool isTestMatrixComplexDense = true;
@@ -209,7 +248,8 @@ int main(int argc, char** argv)
     hiop::hiopMatrixComplexDense A_mxn_local(M_global, N_global);
 
     // arbitraty nnz for tests that need sparse matrices
-    const global_ordinal_type nnz{M_global * N_global / 2};
+    // 3 entries per row
+    const global_ordinal_type nnz{M_global * 3};
 
     // Vectors with shape of the form:
     // x_<size>_<distributed or local>
