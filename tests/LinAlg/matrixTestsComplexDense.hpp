@@ -211,6 +211,10 @@ namespace tests
      * @brief Tests method `addSparseMatrix' method. The assertions in th
      * method will fail if both matrices are not square, so both test matrices
      * must also be square.
+     *
+     * TODO: Clean up all the nasty inline crap in here. Cameron implemented
+     * most of this in his branch, so as soon as that branch is pulled I'll
+     * have access to those methods here.
      */
     int matrixAddSparseMatrix(
         hiop::hiopMatrixComplexDense& A,
@@ -220,18 +224,22 @@ namespace tests
       assert(A.m() == A.n());
       assert(B.m() == B.n());
       assert(A.m() == B.m());
-      const local_ordinal_type M = getNumLocRows(&A);
-      const local_ordinal_type N = getNumLocCols(&A);
+      const local_ordinal_type M    = getNumLocRows(&A);
+      const local_ordinal_type N    = getNumLocCols(&A);
+      const int                nnz  = B.numberOfNonZeros();
+      int                      fail = 0;
       std::complex<real_type>  B_val{one, one};
       std::complex<real_type>  A_val{two, two};
       std::complex<real_type>  alpha{half, half};
-      int                      fail{0};
-      const int                nnz = B.numberOfNonZeros();
 
-      // For alpha=0, this method should early return
       A.setToConstant(A_val);
       B.setToConstant(B_val);
       A.addSparseMatrix(zero, B);
+      fail += verifyAnswer(&A, A_val);
+
+      A.setToConstant(A_val);
+      B.setToZero();
+      A.addSparseMatrix(alpha, B);
       fail += verifyAnswer(&A, A_val);
 
       A.setToConstant(A_val);
@@ -241,19 +249,17 @@ namespace tests
       // but it has to already be a nonzero of the sparse matrix
       local_ordinal_type zeroRowIdx{-1};
       local_ordinal_type zeroColIdx{-1};
+      auto irow = B.i_row();
+      auto jcol = B.j_col();
 
       /// TODO: use cameron's helper methods for this sort of thing
       if (rank == 0)
       {
         auto* values = B.M();
-        values[0] = 0.;//std::complex<double>{zero, zero};
-        zeroRowIdx = B.i_row()[0];
-        zeroColIdx = B.j_col()[0];
+        values[0] = zero;
+        zeroRowIdx = irow[0];
+        zeroColIdx = jcol[0];
       }
-
-      /// TODO: use cameron's helper methods for this sort of thing
-      auto irow = B.i_row();
-      auto jcol = B.j_col();
 
       A.addSparseMatrix(alpha, B);
       fail += verifyAnswer(&A,
@@ -278,6 +284,76 @@ namespace tests
             return A_val;
           else
             return A_val + alpha * B_val;
+        });
+
+      printMessage(fail, __func__, rank);
+      return reduceReturn(fail, &A);
+    }
+
+    int matrixAddSparseSymUpperTriangleToSymDenseMatrixUpperTriangle(
+        hiop::hiopMatrixComplexDense& A,
+        hiop::hiopMatrixComplexSparseTriplet& B,
+        const int rank=0)
+    {
+      assert(A.m() == A.n());
+      assert(B.m() == B.n());
+      assert(A.m() == B.m());
+      const local_ordinal_type M          = getNumLocRows(&A);
+      const local_ordinal_type N          = getNumLocCols(&A);
+      const local_ordinal_type M_sparse   = getNumLocRows(&B);
+      const local_ordinal_type N_sparse   = getNumLocCols(&B);
+      const int                nnz        = B.numberOfNonZeros();
+      int                      fail       = 0;
+      local_ordinal_type       zeroRowIdx = -1;
+      local_ordinal_type       zeroColIdx = -1;
+      auto                     irow       = B.i_row();
+      auto                     jcol       = B.j_col();
+      std::complex<real_type>  B_val{one, one};
+      std::complex<real_type>  A_val{two, two};
+      std::complex<real_type>  alpha{half, half};
+
+      A.setToConstant(A_val);
+      B.setToZero();
+      A.addSparseSymUpperTriangleToSymDenseMatrixUpperTriangle(alpha, B);
+      fail += verifyAnswer(&A, A_val);
+
+      A.setToConstant(A_val);
+      B.setToConstant(B_val);
+      A.addSparseSymUpperTriangleToSymDenseMatrixUpperTriangle(zero, B);
+      fail += verifyAnswer(&A, A_val);
+
+      /// TODO: use cameron's helper methods for this sort of thing
+      if (rank == 0)
+      {
+        auto* values = B.M();
+        values[0] = zero;
+        zeroRowIdx = irow[0];
+        zeroColIdx = jcol[0];
+      }
+
+      A.setToConstant(A_val);
+      B.setToConstant(B_val);
+      A.addSparseSymUpperTriangleToSymDenseMatrixUpperTriangle(alpha, B);
+      fail += verifyAnswer(&A,
+        [=](local_ordinal_type row,
+            local_ordinal_type col)
+        {
+          const bool isUpperTriangle = row <= col;
+          const bool isZerodIdx      = rank == 0 && 
+                                       row  == zeroRowIdx && 
+                                       col  == zeroColIdx;
+
+          bool isNonZero{false};
+          for(int i=0; i<nnz; i++)
+          {
+            if (irow[i] == row && jcol[i] == col)
+            {
+              isNonZero = true;
+            }
+          }
+          return isUpperTriangle && isNonZero && !isZerodIdx ?
+                 A_val + alpha * B_val :
+                 A_val;
         });
 
       printMessage(fail, __func__, rank);

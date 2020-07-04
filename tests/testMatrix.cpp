@@ -274,6 +274,8 @@ int main(int argc, char** argv)
       hiop::hiopMatrixComplexSparseTriplet A_mxm_sparse(M_global, M_global, nnz);
       initializeSparseMat(&A_mxm_sparse, nnz);
       fail += test.matrixAddSparseMatrix(A_mxm, A_mxm_sparse);
+      fail += test.matrixAddSparseSymUpperTriangleToSymDenseMatrixUpperTriangle(
+              A_mxm, A_mxm_sparse);
     }
 
     fail += test.matrixMaxAbsValue(A_mxn, rank);
