@@ -492,7 +492,7 @@ void hiopVectorRajaPar::componentDiv ( const hiopVector& v_ )
     });
 }
 
-void hiopVectorRajaPar::componentDiv_p_selectPattern( const hiopVector& v_, const hiopVector& ix_)
+void hiopVectorRajaPar::componentDiv_w_selectPattern( const hiopVector& v_, const hiopVector& ix_)
 {
   const hiopVectorRajaPar& v = dynamic_cast<const hiopVectorRajaPar&>(v_);
   const hiopVectorRajaPar& ix= dynamic_cast<const hiopVectorRajaPar&>(ix_);

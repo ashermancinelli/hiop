@@ -102,7 +102,7 @@ public:
   virtual double onenorm_local() const; 
   virtual void componentMult( const hiopVector& v );
   virtual void componentDiv ( const hiopVector& v );
-  virtual void componentDiv_p_selectPattern( const hiopVector& v, const hiopVector& ix);
+  virtual void componentDiv_w_selectPattern( const hiopVector& v, const hiopVector& ix);
   virtual void scale( double alpha );
   /** this += alpha * x */
   virtual void axpy  ( double alpha, const hiopVector& x );
