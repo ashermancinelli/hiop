@@ -144,24 +144,24 @@ public:
   virtual void print(FILE*, const char* withMessage=NULL, int max_elems=-1, int rank=-1) const;
 
   /* more accessers */
-  inline long long get_local_size() const { return n_local; }
-  inline double* local_data() { return data; }
-  inline const double* local_data_const() const { return data; }
-  inline double* local_data_dev() { return data_dev; }
-  inline const double* local_data_dev_const() const { return data_dev; }
-  inline MPI_Comm get_mpi_comm() const { return comm; }
+  inline long long get_local_size() const { return n_local_; }
+  inline double* local_data() { return data_; }
+  inline const double* local_data_const() const { return data_; }
+  inline double* local_data_dev() { return data_dev_; }
+  inline const double* local_data_dev_const() const { return data_dev_; }
+  inline MPI_Comm get_mpi_comm() const { return comm_; }
 
   void copyToDev();
   void copyFromDev();
 
 private:
-  umpire::Allocator hostalloc;
-  umpire::Allocator devalloc;
-  MPI_Comm comm;
-  double* data;
-  double* data_dev;
-  long long glob_il, glob_iu;
-  long long n_local;
+  umpire::Allocator hostalloc_;
+  umpire::Allocator devalloc_;
+  MPI_Comm comm_;
+  double* data_;
+  double* data_dev_;
+  long long glob_il_, glob_iu_;
+  long long n_local_;
   /** copy constructor, for internal/private use only (it doesn't copy the elements.) */
   hiopVectorRajaPar(const hiopVectorRajaPar&);
 
