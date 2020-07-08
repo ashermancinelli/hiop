@@ -4,6 +4,7 @@ set(LinAlg_SRC
   hiopMatrixComplexDense.cpp
   hiopMatrixSparseTripletStorage.cpp
   hiopMatrixSparseTriplet.cpp 
+  hiopMatrixRajaSparseTriplet.cpp 
   hiopMatrixComplexSparseTriplet.cpp
 )
 
@@ -12,7 +13,7 @@ if(HIOP_USE_GPU)
 endif()
 
 if(HIOP_USE_UMPIRE)
-  set(LinAlg_SRC ${LinAlg_SRC} hiopVectorRajaPar.cpp)
+  set(LinAlg_SRC ${LinAlg_SRC} hiopVectorRajaPar.cpp hiopMatrixRajaSparseTriplet.cpp)
   include_directories(${UMPIRE_INCLUDE_DIRS} ${camp_INSTALL_PREFIX}/include)
 endif()
 
