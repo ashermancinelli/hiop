@@ -190,33 +190,38 @@ public:
     const local_ordinal_type N = getLocalSize(&x);
     assert(N == x.get_size() && "This test cannot be ran with distributed vectors");
     assert(N == getLocalSize(&from));
-    x.setToConstant(two);
+    const real_type from_val = two;
+    const real_type to_val = one;
 
-    auto _from = new real_type[N];
+    x.setToConstant(to_val);
+    auto from_buffer = new real_type[N];
     for (local_ordinal_type i=0; i<N; i++)
-      _from[i] = one;
+      from_buffer[i] = from_val;
 
     if (rank == 0)
     {
-      x.copyFromStarting(1, _from, N-1);
+      x.copyFromStarting(1, from_buffer, N-1);
     }
     else
     {
-      x.copyFromStarting(0, _from, N);
+      x.copyFromStarting(0, from_buffer, N);
     }
 
-    for (local_ordinal_type i=0; i<N; i++)
-    {
-      if (getLocalElement(&x, i) != one && !(i == 0 && rank == 0))
-        fail++;
-    }
+    fail += verifyAnswer(&x,
+      [=] (local_ordinal_type i)
+      {
+        // Only index 0 on rank 0 should *not* be copied over
+        const bool shouldValueBeCopied = !( rank == 0 && i == 0 );
+        return shouldValueBeCopied ? from_val : to_val;
+      });
 
-    x.setToConstant(two);
-    from.setToConstant(one);
+    // Test copy from another vector
+    x.setToConstant(to_val);
+    from.setToConstant(from_val);
     x.copyFromStarting(0, from);
-    fail += verifyAnswer(&x, one);
+    fail += verifyAnswer(&x, from_val);
 
-    delete[] _from;
+    delete[] from_buffer;
     printMessage(fail, __func__, rank);
     return reduceReturn(fail, &x);
   }
