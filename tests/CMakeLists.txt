@@ -13,7 +13,6 @@ endif()
 
 # Build vector test
 add_executable(testVector ${testVector_SRC})
-target_link_libraries(testVector PRIVATE hiop)
 
 if(HIOP_USE_UMPIRE)
   target_link_libraries(testVector PRIVATE umpire RAJA OpenMP::OpenMP_CXX)
@@ -21,8 +20,16 @@ endif()
 
 # Build matrix test
 add_executable(testMatrix testMatrix.cpp LinAlg/matrixTestsDense.cpp)
-target_link_libraries(testMatrix PRIVATE hiop)
 
 # Build sparse matrix test
-add_executable(testMatrixSparse testMatrixSparse.cpp LinAlg/matrixTestsSparseTriplet.cpp)
-target_link_libraries(testMatrixSparse PRIVATE hiop)
+add_executable(testMatrixSparse
+  testMatrixSparse.cpp
+  LinAlg/matrixTestsSparseTriplet.cpp)
+
+add_executable(testMatrixRajaSparse
+  testMatrixRajaSparse.cpp
+  LinAlg/matrixTestsRajaSparseTriplet.cpp)
+
+foreach(lib testVector testMatrix testMatrixSparse testMatrixRajaSparse)
+  target_link_libraries(${lib} PRIVATE hiop)
+endforeach()

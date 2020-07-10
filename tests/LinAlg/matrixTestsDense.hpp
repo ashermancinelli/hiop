@@ -464,7 +464,7 @@ private:
       const global_ordinal_type row,
       const global_ordinal_type col,
       local_ordinal_type &local_row,
-      local_ordinal_type &local_col) override;
+      local_ordinal_type &local_col);
 
 #ifdef HIOP_USE_MPI
   MPI_Comm getMPIComm(hiop::hiopMatrix *A);

@@ -71,7 +71,7 @@ public:
   MatrixTests() {}
   virtual ~MatrixTests(){}
 
-  int matrixSetToZero(hiop::hiopMatrix& A, const int rank=0)
+  bool matrixSetToZero(hiop::hiopMatrix& A, const int rank=0)
   {
     A.setToZero();
     const int fail = verifyAnswer(&A, zero);
@@ -79,7 +79,7 @@ public:
     return reduceReturn(fail, &A);
   }
 
-  int matrixSetToConstant(hiop::hiopMatrix& A, const int rank=0)
+  bool matrixSetToConstant(hiop::hiopMatrix& A, const int rank=0)
   {
     const local_ordinal_type M = getNumLocRows(&A);
     const local_ordinal_type N = getNumLocCols(&A);
@@ -95,7 +95,7 @@ public:
   /*
    * y_{glob} \leftarrow \beta y_{glob} + \alpha A_{glob \times loc} x_{loc}
    */
-  int matrixTimesVec(
+  bool matrixTimesVec(
       hiop::hiopMatrix& A,
       hiop::hiopVector& y,
       hiop::hiopVector& x,
@@ -130,7 +130,7 @@ public:
    * Notice that since A^T, x must not be distributed in this case, whereas
    * the plain `timesVec' nessecitated that x be distributed and y not be.
    */
-  int matrixTransTimesVec(
+  bool matrixTransTimesVec(
       hiop::hiopMatrix& A,
       hiop::hiopVector& x,
       hiop::hiopVector& y,
@@ -191,7 +191,7 @@ public:
    *   W: KxN
    *   all local
    */
-  int matrixTimesMat(
+  bool matrixTimesMat(
       hiop::hiopMatrix& A,
       hiop::hiopMatrix& X,
       hiop::hiopMatrix& W,
@@ -229,7 +229,7 @@ public:
    *  X: kxn
    *
    */
-  int matrixTransTimesMat(
+  bool matrixTransTimesMat(
       hiop::hiopMatrix& A_local,
       hiop::hiopMatrix& W,
       hiop::hiopMatrix& X,
@@ -281,7 +281,7 @@ public:
    *  X: nxk
    *
    */
-  int matrixTimesMatTrans(
+  bool matrixTimesMatTrans(
       hiop::hiopMatrix& A,
       hiop::hiopMatrix& W_local,
       hiop::hiopMatrix& X,
@@ -315,7 +315,7 @@ public:
   /*
    * this += alpha * diag
    */
-  int matrixAddDiagonal(
+  bool matrixAddDiagonal(
       hiop::hiopMatrix& A,
       hiop::hiopVector& x,
       const int rank=0)
@@ -356,7 +356,7 @@ public:
   /*
    * this += alpha * subdiag
    */
-  int matrixAddSubDiagonal(
+  bool matrixAddSubDiagonal(
       hiop::hiopMatrix& A,
       hiop::hiopVector& x,
       const int rank=0)
@@ -407,7 +407,7 @@ public:
   /*
    * A += alpha * B
    */
-  int matrixAddMatrix(
+  bool matrixAddMatrix(
       hiop::hiopMatrix& A,
       hiop::hiopMatrix& B,
       const int rank=0)
@@ -432,7 +432,7 @@ public:
    *
    * Precondition: W is square
    */
-  int matrixAddToSymDenseMatrixUpperTriangle(
+  bool matrixAddToSymDenseMatrixUpperTriangle(
       hiop::hiopMatrix& _W,
       hiop::hiopMatrix& A,
       const int rank=0)
@@ -478,7 +478,7 @@ public:
    *
    * Precondition: W is square
    */
-  int matrixTransAddToSymDenseMatrixUpperTriangle(
+  bool matrixTransAddToSymDenseMatrixUpperTriangle(
       hiop::hiopMatrix& _W,
       hiop::hiopMatrix& A,
       const int rank=0)
@@ -523,7 +523,7 @@ public:
    * A is square
    * degree of A <= degree of W
    */
-  int matrixAddUpperTriangleToSymDenseMatrixUpperTriangle(
+  bool matrixAddUpperTriangleToSymDenseMatrixUpperTriangle(
       hiop::hiopMatrix& _W,
       hiop::hiopMatrix& A,
       const int rank=0)
@@ -561,7 +561,7 @@ public:
    * Set bottom right value to ensure that all values
    * are checked.
    */
-  virtual int matrixMaxAbsValue(
+  virtual bool matrixMaxAbsValue(
       hiop::hiopMatrix& A,
       const int rank=0)
   {
@@ -587,7 +587,7 @@ public:
    * Set bottom right value to ensure that all values
    * are checked.
    */
-  virtual int matrixIsFinite(
+  virtual bool matrixIsFinite(
       hiop::hiopMatrix& A,
       const int rank=0)
   {
@@ -607,7 +607,7 @@ public:
   }
 
 #ifdef HIOP_DEEPCHECKS
-  int matrixAssertSymmetry(
+  bool matrixAssertSymmetry(
       hiop::hiopMatrix& A,
       const int rank=0)
   {
@@ -638,14 +638,14 @@ public:
   }
 #endif
 
-  int matrixNumRows(hiop::hiopMatrix& A, global_ordinal_type M, const int rank=0)
+  bool matrixNumRows(hiop::hiopMatrix& A, global_ordinal_type M, const int rank=0)
   {
     const bool fail = A.m() == M ? 0 : 1;
     printMessage(fail, __func__, rank);
     return reduceReturn(fail, &A);
   }
 
-  int matrixNumCols(hiop::hiopMatrix& A, global_ordinal_type N, const int rank=0)
+  bool matrixNumCols(hiop::hiopMatrix& A, global_ordinal_type N, const int rank=0)
   {
     const bool fail = A.n() == N ? 0 : 1;
     printMessage(fail, __func__, rank);
@@ -677,17 +677,6 @@ protected:
       hiop::hiopVector* x,
       std::function<real_type(local_ordinal_type)> expect) = 0;
   virtual bool reduceReturn(int failures, hiop::hiopMatrix* A) = 0;
-  /*
-   * Returns true and sets local coordinate pair if global indices
-   * maps to local indices, otherwise false and does not alter
-   * local coordinates.
-   */
-  virtual bool globalToLocalMap(
-      hiop::hiopMatrix* A,
-      const global_ordinal_type row,
-      const global_ordinal_type col,
-      local_ordinal_type& local_row,
-      local_ordinal_type& local_col) = 0;
 };
 
 }} // namespace hiop::tests

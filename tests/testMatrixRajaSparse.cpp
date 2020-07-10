@@ -60,11 +60,11 @@
 #include <hiopVector.hpp>
 #include <hiopMatrix.hpp>
 
-#include <hiopMatrixSparseTriplet.hpp>
-#include "LinAlg/matrixTestsSparseTriplet.hpp"
+#include <hiopMatrixRajaSparseTriplet.hpp>
+#include "LinAlg/matrixTestsRajaSparseTriplet.hpp"
 
 /// Generate a sparse matrix in triplet format
-void initializeSparseTriplet(hiop::hiopMatrixSparseTriplet &A, local_ordinal_type entries_per_row)
+void initializeSparseTriplet(hiop::hiopMatrixRajaSparseTriplet &A, local_ordinal_type entries_per_row)
 {
   local_ordinal_type * iRow = A.i_row();
   local_ordinal_type * jCol = A.j_col();
@@ -107,14 +107,14 @@ int main(int argc, char** argv)
 
   // Test Sparse Triplet Matrix
   {
-    std::cout << "Testing hiopMatrixSparseTriplet" << "\n";
-    hiop::tests::MatrixTestsSparseTriplet test;
+    std::cout << "Testing hiopMatrixRajaSparseTriplet\n";
+    hiop::tests::MatrixTestsRajaSparseTriplet test;
 
     // Establishing sparsity pattern and initializing Matrix
     local_ordinal_type entries_per_row = 5;
     local_ordinal_type nnz = M_local * entries_per_row;
 
-    hiop::hiopMatrixSparseTriplet mxn_sparse(M_local, N_local, nnz);
+    hiop::hiopMatrixRajaSparseTriplet mxn_sparse(M_local, N_local, nnz);
 
     initializeSparseTriplet(mxn_sparse, entries_per_row);
   
@@ -143,8 +143,7 @@ int main(int argc, char** argv)
     // TODO: Since this is specific for the next test only, perhaps move it within the test.
     local_ordinal_type M2 = M_global * 2;
     nnz = M2 * (entries_per_row);
-
-    hiop::hiopMatrixSparseTriplet m2xn_sparse(M2, N_global, nnz);
+    hiop::hiopMatrixRajaSparseTriplet m2xn_sparse(M2, N_global, nnz);
     initializeSparseTriplet(m2xn_sparse, entries_per_row);
 
     // Set offsets where to insert sparse matrix
