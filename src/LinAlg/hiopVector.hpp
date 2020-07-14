@@ -168,11 +168,6 @@ public:
   /** checks whether entries in this matches pattern in ix */
   virtual bool matchesPattern(const hiopVector& ix) = 0;
 
-  /** allocates a vector that mirrors this, but doesn't copy the values  */
-  //virtual hiopVector* new_alloc() const = 0;
-  /** allocates a vector that mirrors this, and copies the values  */
-  //virtual hiopVector* new_copy() const = 0;
-
   /* dual adjustment -> see hiopIterate::adjustDuals_primalLogHessian */
   virtual void adjustDuals_plh(const hiopVector& x, const hiopVector& ix,
 			       const double& mu, const double& kappa)=0;
@@ -187,7 +182,15 @@ public:
   /* prints up to max_elems (by default all), on rank 'rank' (by default on all) */
   virtual void print(FILE*, const char* message=NULL,int max_elems=-1, int rank=-1) const = 0;
   
-  inline long long get_size() const { return n; }
+  /** allocates a vector that mirrors this, but doesn't copy the values  */
+  virtual hiopVector* alloc_clone() const;
+  /** allocates a vector that mirrors this, and copies the values  */
+  virtual hiopVector* new_copy () const;
+  virtual long long get_size() const { return n; }
+  virtual long long get_local_size() const = 0;
+  virtual double* local_data() = 0;
+  virtual const double* local_data_const() const = 0;
+
 protected:
   long long n; //we assume sequential data
 

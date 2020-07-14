@@ -47,7 +47,7 @@
 // product endorsement purposes.
 
 #include "hiopHessianLowRank.hpp"
-#include "hiopMatrixDenseFactory.hpp"
+#include "hiopFactory.hpp"
 
 #include "hiop_blasdefs.hpp"
 
@@ -82,7 +82,7 @@ hiopHessianLowRank::hiopHessianLowRank(hiopNlpDenseConstraints* nlp_, int max_me
   Yt = St->alloc_clone(); //faster than nlp->alloc_multivector_primal(...);
   //these are local
   L  = getMatrixDenseInstance(0,0);
-  D  = new hiopVectorPar(0);
+  D  = getVectorInstance(0);
   V  = getMatrixDenseInstance(0,0);
 
   //the previous iteration's objects are set to NULL
@@ -108,7 +108,7 @@ hiopHessianLowRank::hiopHessianLowRank(hiopNlpDenseConstraints* nlp_, int max_me
   _n_vec1 = DhInv->alloc_clone();
   _n_vec2 = DhInv->alloc_clone();
 
-  _V_work_vec=new hiopVectorPar(0);
+  _V_work_vec=getVectorInstance(0);
   _V_ipiv_vec=NULL; _V_ipiv_size=-1;
 
   
@@ -365,7 +365,7 @@ void hiopHessianLowRank::updateInternalBFGSRepresentation()
 
   //grow L,D, andV if needed
   if(L->m()!=l) { delete L; L=getMatrixDenseInstance(l,l);}
-  if(D->get_size()!=l) { delete D; D=new hiopVectorPar(l); }
+  if(D->get_size()!=l) { delete D; D=getVectorInstance(l); }
   if(V->m()!=2*l) {delete V; V=getMatrixDenseInstance(2*l,2*l); }
 
   //-- block (2,2)
@@ -603,7 +603,7 @@ void hiopHessianLowRank::factorizeV()
   lwork=(int)Vwork_tmp;
   if(lwork != _V_work_vec->get_size()) {
     if(_V_work_vec!=NULL) delete _V_work_vec;  
-    _V_work_vec=new hiopVectorPar(lwork);
+    _V_work_vec=getVectorInstance(lwork);
   } else assert(_V_work_vec);
 
   DSYTRF(&uplo, &N, V->local_buffer(), &lda, _V_ipiv_vec, _V_work_vec->local_data(), &lwork, &info);
@@ -629,7 +629,7 @@ void hiopHessianLowRank::solveWithV(hiopVectorPar& rhs_s, hiopVectorPar& rhs_y)
 #ifdef HIOP_DEEPCHECKS
   nlp->log->write("hiopHessianLowRank::solveWithV: RHS IN 's' part: ", rhs_s, hovMatrices);
   nlp->log->write("hiopHessianLowRank::solveWithV: RHS IN 'y' part: ", rhs_y, hovMatrices);
-  hiopVectorPar* rhs_saved= new hiopVectorPar(rhs_s.get_size()+rhs_y.get_size());
+  hiopVectorPar* rhs_saved= getVectorInstance(rhs_s.get_size()+rhs_y.get_size());
   rhs_saved->copyFromStarting(0, rhs_s);
   rhs_saved->copyFromStarting(l, rhs_y);
 #endif
@@ -746,7 +746,7 @@ void hiopHessianLowRank::growD(const int& lmem_curr, const int& lmem_max, const 
   assert(l==lmem_curr);
   assert(lmem_max>=l);
 
-  hiopVectorPar* Dnew=new hiopVectorPar(l+1);
+  hiopVectorPar* Dnew=getVectorInstance(l+1);
   double* Dnew_vec=Dnew->local_data();
   memcpy(Dnew_vec, D->local_data_const(), l*sizeof(double));
   Dnew_vec[l]=sTy;
@@ -801,7 +801,7 @@ hiopVectorPar&  hiopHessianLowRank::new_l_vec1(int l)
   if(_l_vec1!=NULL) {
     delete _l_vec1;
   }
-  _l_vec1= new hiopVectorPar(l);
+  _l_vec1= getVectorInstance(l);
   return *_l_vec1;
 }
 hiopVectorPar&  hiopHessianLowRank::new_l_vec2(int l)
@@ -811,7 +811,7 @@ hiopVectorPar&  hiopHessianLowRank::new_l_vec2(int l)
   if(_l_vec2!=NULL) {
     delete _l_vec2;
   }
-  _l_vec2= new hiopVectorPar(l);
+  _l_vec2= getVectorInstance(l);
   return *_l_vec2;
 }
 
@@ -1062,7 +1062,7 @@ hiopHessianInvLowRank_obsolette::hiopHessianInvLowRank_obsolette(hiopNlpDenseCon
   Yt = St->alloc_clone(); //faster than nlp->alloc_multivector_primal(...);
   //these are local
   R  = getMatrixDenseInstance(0, 0);
-  D  = new hiopVectorPar(0);
+  D  = getVectorInstance(0);
 
   //the previous iteration's objects are set to NULL
   _it_prev=NULL; _grad_f_prev=NULL; _Jac_c_prev=NULL; _Jac_d_prev=NULL;
@@ -1552,7 +1552,7 @@ void hiopHessianInvLowRank_obsolette::growD(const int& lmem_curr, const int& lme
   assert(l==lmem_curr);
   assert(lmem_max>l);
 
-  hiopVectorPar* Dnew=new hiopVectorPar(l+1);
+  hiopVectorPar* Dnew=getVectorInstance(l+1);
   double* Dnew_vec=Dnew->local_data();
   memcpy(Dnew_vec, D->local_data_const(), l*sizeof(double));
   Dnew_vec[l]=sTy;
@@ -1653,7 +1653,7 @@ hiopVectorPar&  hiopHessianInvLowRank_obsolette::new_l_vec1(int l)
   if(_l_vec1!=NULL) {
     delete _l_vec1;
   }
-  _l_vec1= new hiopVectorPar(l);
+  _l_vec1= getVectorInstance(l);
   return *_l_vec1;
 }
 hiopVectorPar&  hiopHessianInvLowRank_obsolette::new_l_vec2(int l)
@@ -1663,7 +1663,7 @@ hiopVectorPar&  hiopHessianInvLowRank_obsolette::new_l_vec2(int l)
   if(_l_vec2!=NULL) {
     delete _l_vec2;
   }
-  _l_vec2= new hiopVectorPar(l);
+  _l_vec2= getVectorInstance(l);
   return *_l_vec2;
 }
 hiopVectorPar&  hiopHessianInvLowRank_obsolette::new_l_vec3(int l)
@@ -1673,7 +1673,7 @@ hiopVectorPar&  hiopHessianInvLowRank_obsolette::new_l_vec3(int l)
   if(_l_vec3!=NULL) {
     delete _l_vec3;
   }
-  _l_vec3= new hiopVectorPar(l);
+  _l_vec3= getVectorInstance(l);
   return *_l_vec3;
 }
 

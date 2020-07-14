@@ -47,7 +47,7 @@
 // product endorsement purposes.
 
 #include "hiopDualsUpdater.hpp"
-#include "hiopMatrixDenseFactory.hpp"
+#include "hiopFactory.hpp"
 
 #include "hiop_blasdefs.hpp"
 
@@ -65,7 +65,7 @@ hiopDualsLsqUpdate::hiopDualsLsqUpdate(hiopNlpFormulation* nlp)
   _mxm   = getMatrixDenseInstance(nlpd->m(), nlpd->m());
 
   M      = getMatrixDenseInstance(nlpd->m(), nlpd->m());
-  rhs    = new hiopVectorPar(nlpd->m());
+  rhs    = getVectorInstance(nlpd->m());
   rhsc   = dynamic_cast<hiopVectorPar*>(nlpd->alloc_dual_eq_vec());
   rhsc->setToZero();
   rhsd   = dynamic_cast<hiopVectorPar*>(nlpd->alloc_dual_ineq_vec());

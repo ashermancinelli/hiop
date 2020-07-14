@@ -37,7 +37,7 @@ public:
   {
 
     ipiv = new int[n];
-    dwork = new hiopVectorPar(0);
+    dwork = getVectorInstance(0);
 
 
     magma_int_t ndevices;

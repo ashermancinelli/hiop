@@ -47,7 +47,7 @@
 // product endorsement purposes.
 
 #include "hiopNlpTransforms.hpp"
-#include "hiopMatrixDenseFactory.hpp"
+#include "hiopFactory.hpp"
 
 #include <cmath>
 namespace hiop

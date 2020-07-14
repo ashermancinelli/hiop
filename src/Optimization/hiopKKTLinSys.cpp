@@ -47,7 +47,7 @@
 // product endorsement purposes.
 
 #include "hiopKKTLinSys.hpp"
-#include "hiopMatrixDenseFactory.hpp"
+#include "hiopFactory.hpp"
 #include "hiop_blasdefs.hpp"
 
 #include <cmath>

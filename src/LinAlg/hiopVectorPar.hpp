@@ -118,8 +118,8 @@ public:
   virtual void selectPattern(const hiopVector& ix);
   virtual bool matchesPattern(const hiopVector& ix);
 
-  virtual hiopVectorPar* alloc_clone() const;
-  virtual hiopVectorPar* new_copy () const;
+  virtual hiopVector* alloc_clone() const;
+  virtual hiopVector* new_copy () const;
 
   virtual void adjustDuals_plh(const hiopVector& x, const hiopVector& ix, const double& mu, const double& kappa);
 
@@ -130,10 +130,10 @@ public:
   virtual void print(FILE*, const char* withMessage=NULL, int max_elems=-1, int rank=-1) const;
 
   /* more accessers */
-  inline long long get_local_size() const { return n_local; }
-  inline double* local_data() { return data; }
-  inline const double* local_data_const() const { return data; }
-  inline MPI_Comm get_mpi_comm() const { return comm; }
+  virtual long long get_local_size() const { return n_local; }
+  virtual double* local_data() { return data; }
+  virtual const double* local_data_const() const { return data; }
+  virtual MPI_Comm get_mpi_comm() const { return comm; }
 
 protected:
   MPI_Comm comm;
