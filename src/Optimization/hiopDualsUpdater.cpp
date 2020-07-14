@@ -186,7 +186,7 @@ LSQUpdate(hiopIterate& iter, const hiopVector& grad_f, const hiopMatrix& jac_c, 
   // [ rhsc ] = - [ J_c   0 ] [ vecx ] 
   // [ rhsd ]     [ J_d   I ] [ vecd ]
   // [vecx,vecd] = - [ -\nabla f(xk) + zk_l-zk_u, - vk_l + vk_u]. 
-  hiopVectorPar& vecx = *_vec_n;
+  hiopVector& vecx = *_vec_n;
   vecx.copyFrom(grad_f);
   vecx.axpy(-1.0, *iter.get_zl());
   vecx.axpy( 1.0, *iter.get_zu());
@@ -255,7 +255,7 @@ int hiopDualsLsqUpdate::factorizeMat(hiopMatrixDense& M)
   return info;
 }
 
-int hiopDualsLsqUpdate::solveWithFactors(hiopMatrixDense& M, hiopVectorPar& r)
+int hiopDualsLsqUpdate::solveWithFactors(hiopMatrixDense& M, hiopVector& r)
 {
 #ifdef HIOP_DEEPCHECKS
   assert(M.m()==M.n());

@@ -247,7 +247,7 @@ public:
 
 protected:
   int* ipiv;
-  hiopVectorPar* dwork;
+  hiopVector* dwork;
 private:
   hiopLinSolverIndefDenseLapack()
     : ipiv(NULL), dwork(NULL)

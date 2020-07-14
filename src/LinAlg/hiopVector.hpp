@@ -46,8 +46,7 @@
 // Lawrence Livermore National Security, LLC, and shall not be used for advertising or 
 // product endorsement purposes.
 
-#ifndef HIOP_VECTOR
-#define HIOP_VECTOR
+#pragma once
 
 #include "hiop_defs.hpp"
 
@@ -85,6 +84,7 @@ public:
   //maybe startingAtCopyFromStartingAt startingAtCopyToStartingAt ?
   /** Copy the elements of v */
   virtual void copyFrom(const hiopVector& v ) = 0;
+  virtual void copyFrom(const double* v_local_data) = 0; //v should be of length at least n_local
   /** Copy the 'n' elements of v starting at 'start_index_in_src' in 'this' */
   virtual void copyFromStarting(int start_index_in_src, const double* v, int n) = 0;
   /* Copy v in 'this' starting at start_index_in_src in  'this'. */
@@ -112,6 +112,17 @@ public:
   virtual double infnorm() const = 0;
   /** Return the one norm */
   virtual double onenorm() const = 0;
+
+  /**
+   * TODO: remove these *_local methods from the interface
+   *
+   * This should really not be here, but it's used so much in the kernels that
+   * I moved it to the interface temporarily to reduce the number of changes 
+   * we have to make at a time
+   **/
+  virtual double onenorm_local() const = 0;
+  virtual double infnorm_local() const = 0;
+
   /** Multiply the components of this by the components of v. */
   virtual void componentMult( const hiopVector& v ) = 0;
   /** Divide the components of this hiopVector by the components of v. */
@@ -183,9 +194,9 @@ public:
   virtual void print(FILE*, const char* message=NULL,int max_elems=-1, int rank=-1) const = 0;
   
   /** allocates a vector that mirrors this, but doesn't copy the values  */
-  virtual hiopVector* alloc_clone() const;
+  virtual hiopVector* alloc_clone() const = 0;
   /** allocates a vector that mirrors this, and copies the values  */
-  virtual hiopVector* new_copy () const;
+  virtual hiopVector* new_copy () const = 0;
   virtual long long get_size() const { return n; }
   virtual long long get_local_size() const = 0;
   virtual double* local_data() = 0;
@@ -199,4 +210,3 @@ protected:
 };
 
 }
-#endif

@@ -312,8 +312,8 @@ namespace hiop
   }
 
   void hiopKKTLinSysCompressedMDSXYcYd::
-  solveCompressed(hiopVectorPar& rx, hiopVectorPar& ryc, hiopVectorPar& ryd,
-		  hiopVectorPar& dx, hiopVectorPar& dyc, hiopVectorPar& dyd)
+  solveCompressed(hiopVector& rx, hiopVector& ryc, hiopVector& ryd,
+		  hiopVector& dx, hiopVector& dyc, hiopVector& dyd)
   {
     if(!nlpMDS_)   { assert(false); return; }
     if(!HessMDS_)  { assert(false); return; }
@@ -331,7 +331,7 @@ namespace hiop
     nlp_->log->write("RHS KKT MDS XDycYd ryc:", ryc, hovIteration);
     nlp_->log->write("RHS KKT MDS XDycYd ryd:", ryd, hovIteration);
 
-    hiopVectorPar& rxs = *_buff_xs_;
+    hiopVector& rxs = *_buff_xs_;
     //rxs = Hxs^{-1} * rx_sparse 
     rx.startingAtCopyToStartingAt(0, rxs, 0, nxsp);
     rxs.componentDiv(*Hxs_);
@@ -374,7 +374,7 @@ namespace hiop
     //
     // compute dxs
     //
-    hiopVectorPar& dxs = *_buff_xs_;
+    hiopVector& dxs = *_buff_xs_;
     // dxs = (Hxs)^{-1} ( rxs - Jac_c_sp^T dyc - Jac_d_sp^T dyd)
     rx.startingAtCopyToStartingAt(0, dxs, 0, nxsp);
     Jac_cMDS_->sp_mat()->transTimesVec(1., dxs, -1., dyc);
