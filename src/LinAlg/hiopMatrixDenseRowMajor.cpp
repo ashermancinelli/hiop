@@ -56,7 +56,7 @@
 
 #include "hiop_blasdefs.hpp"
 
-#include "hiopVector.hpp"
+#include "hiopVectorPar.hpp"
 
 namespace hiop
 {

@@ -50,7 +50,7 @@
 #define HIOP_NLP_TRANSFORMS
 
 #include "hiopInterface.hpp"
-#include "hiopVector.hpp"
+#include "hiopVectorPar.hpp"
 #include "hiopMatrixDense.hpp"
 
 #include <cassert>

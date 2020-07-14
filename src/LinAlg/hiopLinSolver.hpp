@@ -50,7 +50,7 @@
 #define HIOP_LINSOLVER
 
 #include "hiopMatrix.hpp"
-#include "hiopVector.hpp"
+#include "hiopVectorPar.hpp"
 
 #include "hiop_blasdefs.hpp"
 

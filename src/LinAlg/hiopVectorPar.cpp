@@ -46,7 +46,7 @@
 // Lawrence Livermore National Security, LLC, and shall not be used for advertising or 
 // product endorsement purposes.
 
-#include "hiopVector.hpp"
+#include "hiopVectorPar.hpp"
 
 #include <cmath>
 #include <cstring> //for memcpy

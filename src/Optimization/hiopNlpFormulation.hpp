@@ -50,7 +50,7 @@
 #define HIOP_NLP_FORMULATION
 
 #include "hiopInterface.hpp"
-#include "hiopVector.hpp"
+#include "hiopVectorPar.hpp"
 #include "hiopMatrix.hpp"
 #include "hiopMatrixMDS.hpp"
 

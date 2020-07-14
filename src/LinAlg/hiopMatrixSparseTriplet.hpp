@@ -1,7 +1,7 @@
 #ifndef HIOP_SPARSE_MATRIX_TRIPLET
 #define HIOP_SPARSE_MATRIX_TRIPLET
 
-#include "hiopVector.hpp"
+#include "hiopVectorPar.hpp"
 #include "hiopMatrix.hpp"
 #include "hiopMatrixDense.hpp"
 
