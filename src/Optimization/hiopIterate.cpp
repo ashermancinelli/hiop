@@ -184,20 +184,14 @@ double hiopIterate::normOneOfBoundDuals() const
   assert(vl->matchesPattern(nlp->get_idl()));
   assert(vu->matchesPattern(nlp->get_idu()));
 #endif
-  /// TODO: Figure out how to avoid using the _onenorm_local_ methods to
-  /// restrict the use of the vector to the interface.
-  auto *zlvec=dynamic_cast<hiopVectorPar*>(zl);
-  auto *vlvec=dynamic_cast<hiopVectorPar*>(zu);
-  auto *zuvec=dynamic_cast<hiopVectorPar*>(zu);
-  auto *vuvec=dynamic_cast<hiopVectorPar*>(vu);
   //work locally with all the vectors. This will result in only one MPI_Allreduce call instead of two.
-  double nrm1=zlvec->onenorm_local() + zuvec->onenorm_local();
+  double nrm1=zl->onenorm_local() + zu->onenorm_local();
 #ifdef HIOP_USE_MPI
   double nrm1_global;
   int ierr=MPI_Allreduce(&nrm1, &nrm1_global, 1, MPI_DOUBLE, MPI_SUM, nlp->get_comm()); assert(MPI_SUCCESS==ierr);
   nrm1=nrm1_global;
 #endif
-  nrm1 += vlvec->onenorm_local() + vuvec->onenorm_local();
+  nrm1 += vl->onenorm_local() + vu->onenorm_local();
   return nrm1;
 }
 
@@ -209,20 +203,14 @@ double hiopIterate::normOneOfEqualityDuals() const
   assert(vl->matchesPattern(nlp->get_idl()));
   assert(vu->matchesPattern(nlp->get_idu()));
 #endif
-  auto *zlvec=dynamic_cast<hiopVectorPar*>(zl);
-  auto *vlvec=dynamic_cast<hiopVectorPar*>(zu);
-  auto *zuvec=dynamic_cast<hiopVectorPar*>(zu);
-  auto *vuvec=dynamic_cast<hiopVectorPar*>(vu);
-  auto *ycvec=dynamic_cast<hiopVectorPar*>(yc);
-  auto *ydvec=dynamic_cast<hiopVectorPar*>(yd);
   //work locally with all the vectors. This will result in only one MPI_Allreduce call instead of two.
-  double nrm1=zlvec->onenorm_local() + zuvec->onenorm_local();
+  double nrm1=zl->onenorm_local() + zu->onenorm_local();
 #ifdef HIOP_USE_MPI
   double nrm1_global;
   int ierr=MPI_Allreduce(&nrm1, &nrm1_global, 1, MPI_DOUBLE, MPI_SUM, nlp->get_comm()); assert(MPI_SUCCESS==ierr);
   nrm1=nrm1_global;
 #endif
-  nrm1 += vlvec->onenorm_local() + vuvec->onenorm_local() + ycvec->onenorm_local() + ydvec->onenorm_local();
+  nrm1 += vl->onenorm_local() + vu->onenorm_local() + yc->onenorm_local() + yd->onenorm_local();
   return nrm1;
 }
 
@@ -234,22 +222,16 @@ void hiopIterate::normOneOfDuals(double& nrm1Eq, double& nrm1Bnd) const
   assert(vl->matchesPattern(nlp->get_idl()));
   assert(vu->matchesPattern(nlp->get_idu()));
 #endif
-  auto *zlvec=dynamic_cast<hiopVectorPar*>(zl);
-  auto *vlvec=dynamic_cast<hiopVectorPar*>(zu);
-  auto *zuvec=dynamic_cast<hiopVectorPar*>(zu);
-  auto *vuvec=dynamic_cast<hiopVectorPar*>(vu);
-  auto *ycvec=dynamic_cast<hiopVectorPar*>(yc);
-  auto *ydvec=dynamic_cast<hiopVectorPar*>(yd);
   //work locally with all the vectors. This will result in only one MPI_Allreduce call
-  nrm1Bnd = zlvec->onenorm_local() + zuvec->onenorm_local();
+  nrm1Bnd = zl->onenorm_local() + zu->onenorm_local();
 #ifdef HIOP_USE_MPI
   double nrm1_global;
   int ierr=MPI_Allreduce(&nrm1Bnd, &nrm1_global, 1, MPI_DOUBLE, MPI_SUM, nlp->get_comm());
   assert(MPI_SUCCESS==ierr);
   nrm1Bnd=nrm1_global;
 #endif
-  nrm1Bnd += vlvec->onenorm_local() + vuvec->onenorm_local();
-  nrm1Eq   = nrm1Bnd + ycvec->onenorm_local() + ydvec->onenorm_local();
+  nrm1Bnd += vl->onenorm_local() + vu->onenorm_local();
+  nrm1Eq   = nrm1Bnd + yc->onenorm_local() + yd->onenorm_local();
 }
 
 

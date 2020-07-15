@@ -48,6 +48,7 @@
 
 #include "hiopNlpFormulation.hpp"
 #include "hiopHessianLowRank.hpp"
+#include "hiopVectorPar.hpp"
 #include "hiopFactory.hpp"
 #include "hiopLogger.hpp"
 
@@ -510,7 +511,6 @@ bool hiopNlpFormulation::get_starting_point(hiopVector& x0,
 {
   //aaa
   hiopVectorPar &x0_for_hiop = dynamic_cast<hiopVectorPar&>(x0);
-  
   hiopVectorPar& zL0_for_hiop = dynamic_cast<hiopVectorPar&>(zL0);
   hiopVectorPar& zU0_for_hiop = dynamic_cast<hiopVectorPar&>(zU0);
   hiopVectorPar& yc0_for_hiop = dynamic_cast<hiopVectorPar&>(yc0);

@@ -116,7 +116,7 @@ public:
   hiopKKTLinSysCompressed(hiopNlpFormulation* nlp)
     : hiopKKTLinSys(nlp), Dx_(NULL), rx_tilde_(NULL)
   {
-    Dx_ = dynamic_cast<hiopVector*>(nlp->alloc_primal_vec());
+    Dx_ = nlp->alloc_primal_vec();
     assert(Dx_ != NULL);
     rx_tilde_  = Dx_->alloc_clone(); 
   }

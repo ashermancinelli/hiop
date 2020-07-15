@@ -50,20 +50,6 @@
 
 #include "hiop_defs.hpp"
 
-#ifdef HIOP_USE_MPI
-#include "mpi.h"
-#else 
-
-#ifndef MPI_COMM
-#define MPI_Comm int
-#endif
-#ifndef MPI_COMM_NULL
-#define MPI_COMM_NULL 0
-#endif
-#include <cstddef>
-
-#endif 
-
 #include <cstdio>
 
 namespace hiop
@@ -106,28 +92,27 @@ public:
    * either source ('this') or destination ('dest') is reached */
   virtual void startingAtCopyToStartingAt(int start_idx_in_src, hiopVector& dest, int start_idx_dest, int num_elems=-1) const = 0;
 
-  /** Return the two norm */
+  /** @brief Return the two norm */
   virtual double twonorm() const = 0;
-  /** Return the infinity norm */
+  /** @brief Return the infinity norm */
   virtual double infnorm() const = 0;
-  /** Return the one norm */
-  virtual double onenorm() const = 0;
-
   /**
-   * TODO: remove these *_local methods from the interface
-   *
-   * This should really not be here, but it's used so much in the kernels that
-   * I moved it to the interface temporarily to reduce the number of changes 
-   * we have to make at a time
-   **/
-  virtual double onenorm_local() const = 0;
+   * @brief Linf norm on single rank
+   */
   virtual double infnorm_local() const = 0;
+  /** @brief Return the one norm */
+  virtual double onenorm() const = 0;
+  /**
+   * @brief L1 norm on single rank
+   */
+  virtual double onenorm_local() const = 0;
 
-  /** Multiply the components of this by the components of v. */
+  /** @brief Multiply the components of this by the components of v. */
   virtual void componentMult( const hiopVector& v ) = 0;
-  /** Divide the components of this hiopVector by the components of v. */
+  /** @brief Divide the components of this hiopVector by the components of v. */
   virtual void componentDiv ( const hiopVector& v ) = 0;
-  /* Elements of this that corespond to nonzeros in ix are divided by elements of v.
+  /**
+   * @brief Elements of this that corespond to nonzeros in ix are divided by elements of v.
    * The rest of elements of this are set to zero.
    */
   virtual void componentDiv_w_selectPattern( const hiopVector& v, const hiopVector& ix) = 0;
