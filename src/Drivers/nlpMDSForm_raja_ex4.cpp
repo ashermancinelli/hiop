@@ -4,6 +4,7 @@
 #include <umpire/ResourceManager.hpp>
 #include <RAJA/RAJA.hpp>
 #include <hiopMatrixDenseRowMajor.hpp>
+#include <hiopMatrixRajaDense.hpp>
 
 #ifdef HIOP_USE_GPU
   #include "cuda.h"
@@ -824,12 +825,10 @@ bool Ex4OneCallCons::eval_Jac_cons(const long long& n, const long long& m,
   assert(m==ns_+3*haveIneq_);
 
   int ns = ns_; ///< Cannot capture member inside RAJA lambda
-  // int nd = nd_; ///< Cannot capture member inside RAJA lambda
   
   if(iJacS!=NULL && jJacS!=NULL)
   {
     // Compute equality constraints Jacobian
-    assert(3*ns_+3==nnzJacS);
     RAJA::forall<ex4_raja_exec>(RAJA::RangeSegment(0, ns_),
       RAJA_LAMBDA(RAJA::Index_type itrow)
       {

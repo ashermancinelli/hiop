@@ -302,6 +302,9 @@ void hiopVectorRajaPar::copyFrom(const double* local_array)
  */
 void hiopVectorRajaPar::copyFromStarting(int start_index_in_this, const double* v, int nv)
 {
+  if(nv == 0)
+    return;
+
   assert(start_index_in_this+nv <= n_local_);
   
   auto& rm = umpire::ResourceManager::getInstance();
@@ -401,6 +404,9 @@ void hiopVectorRajaPar::copyToStarting(int start_index, hiopVector& vec)
  */
 void hiopVectorRajaPar::copyToStarting(hiopVector& vec, int start_index/*_in_dest*/)
 {
+  if(n_local_ == 0)
+    return;
+
   const hiopVectorRajaPar& v = dynamic_cast<const hiopVectorRajaPar&>(vec);
   assert(start_index+n_local_ <= v.n_local_);
 
@@ -432,8 +438,8 @@ void hiopVectorRajaPar::startingAtCopyToStartingAt(
 {
   const hiopVectorRajaPar& dest = dynamic_cast<hiopVectorRajaPar&>(destination);
 
-  assert(start_idx_in_src >= 0 && start_idx_in_src < this->n_local_);
-  assert(start_idx_dest   >= 0 && start_idx_dest   < dest.n_local_);
+  assert(start_idx_in_src >= 0 && start_idx_in_src <= this->n_local_);
+  assert(start_idx_dest   >= 0 && start_idx_dest   <= dest.n_local_);
 
   if(num_elems<0)
   {
@@ -448,6 +454,8 @@ void hiopVectorRajaPar::startingAtCopyToStartingAt(
     num_elems = std::min(num_elems, (int)dest.n_local_-start_idx_dest);
   }
 
+  if(num_elems == 0)
+    return;
   auto& rm = umpire::ResourceManager::getInstance();
   rm.copy(dest.data_dev_ + start_idx_dest, this->data_dev_ + start_idx_in_src, num_elems*sizeof(double));
 }
