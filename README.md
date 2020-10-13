@@ -17,6 +17,17 @@ The installation can be customized using the standard CMake options. For example
 $> cmake -DCMAKE_INSTALL_PREFIX=/usr/lib/hiop ..'
 ```
 
+### Supported Compilers
+
+We regularly develop with the following:
+
+- GCC > 5
+- Clang (See below for notes on Apple Clang)
+
+Xlc is the next compiler we would like to support. We currently do not have the
+resources to support Apple Clang, however we would appreciate contributions to
+that end.
+
 
 ### HiOp-specific build options
 * Enable/disable MPI: *-DHIOP_USE_MPI=[ON/OFF]* (by default ON)

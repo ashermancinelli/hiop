@@ -45,7 +45,9 @@ $> mpiexec -np 2 valgrind ./src/Drivers/nlpDenseCons_ex2.exe
 $> mpiexec -np 2 valgrind ./src/Drivers/nlpDenseCons_ex3.exe 
 ```
 
-## 3. clang with fsanitize group checks reports no warning and no errors. MacOS only.
+## 3. clang with fsanitize group checks reports no warning and no errors. MacOS
+only. *NOTE: currently not working with Apple Clang. See note regarding
+compilers in the main readme.*
 ```shell
 $> rm -rf *; CC=clang CXX=clang++ cmake -DCMAKE_CXX_FLAGS="-fsanitize=nullability,undefined,integer,alignment" -DHIOP_USE_MPI=ON -DHIOP_DEEPCHECKS=ON -DCMAKE_BUILD_TYPE=DEBUG ..
 $> make -j4 
