@@ -91,6 +91,9 @@ private:
   virtual local_ordinal_type getLocalSize(const hiop::hiopVector *x) override;
   virtual int verifyAnswer(hiop::hiopMatrixSparse* A, real_type answer) override;
   virtual int verifyAnswer(
+      hiop::hiopMatrixSparse* A,
+      std::function<real_type(local_ordinal_type, local_ordinal_type)> expect) override;
+  virtual int verifyAnswer(
       hiop::hiopMatrixDense* A,
       std::function<real_type(local_ordinal_type, local_ordinal_type)> expect) override;
   virtual int verifyAnswer(hiop::hiopVector *x, real_type answer) override;
