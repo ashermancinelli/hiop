@@ -20,7 +20,7 @@
       # testing
       set -xv
       TESTDIR="$PROJWORK/csc359/ci"
-      cp * $TESTDIR/
+      cp -R * $TESTDIR/
       cd $TESTDIR
       MY_CLUSTER="ascent" ./BUILD.sh --build-only || exit 1
 
