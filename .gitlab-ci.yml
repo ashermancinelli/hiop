@@ -108,6 +108,7 @@ build-on-login-node:
   rules:
     - if: '$CI_PROJECT_PATH == "ecpcitest/exasgd/hiop"'
   <<: *ornl_script_definition
+  <<: *ornl_environment_variables
 
 # For Ascent CI
 test-on-compute-node:
@@ -119,3 +120,4 @@ test-on-compute-node:
   rules:
     - if: '$CI_PROJECT_PATH == "ecpcitest/exasgd/hiop"'
   <<: *ornl_test_script_definition
+  <<: *ornl_environment_variables
