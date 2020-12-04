@@ -33,9 +33,18 @@ trap 'cleanup $? $LINENO' EXIT
 
 export BUILD=1
 export TEST=1
+export FULL_BUILD_MATRIX=0
 while [[ $# -gt 0 ]]
 do
   case $1 in
+    --full-build-matrix)
+      echo
+      echo Running full build matrix
+      echo
+      source ./tests/fullBuildMatrix.sh
+      export FULL_BUILD_MATRIX=1
+      shift
+      ;;
     --build-only|-B)
       echo
       echo Building only
@@ -63,7 +72,7 @@ EOD
   esac
 done
 
-set -x
+# set -x
 x="unset"
 
 if [[ ! -v MY_CLUSTER ]]
@@ -199,6 +208,11 @@ then
 fi
 
 module list
+
+if [[ $FULL_BUILD_MATRIX -eq 1 ]]; then
+  buildMatrix || exit 1
+  exit 0
+fi
 
 export CMAKE_OPTIONS="\
     -DCMAKE_BUILD_TYPE=Debug \
