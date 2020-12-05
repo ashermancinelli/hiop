@@ -15,6 +15,10 @@
 # MY_CLUSTER=ascent ./BUILD.sh
 #
 
+export BASE_PATH=$(dirname $0)
+export MAKE_CMD='make -j 8'
+export CTEST_CMD='ctest -VV --timeout 1800'
+
 cleanup() {
   echo
   echo Exit code $1 caught in build script.
@@ -23,7 +27,7 @@ cleanup() {
     echo BUILD_STATUS:0
   else
     echo
-    echo Failure found on line $2 in build script.
+    echo Failure found in build script.
     echo
     echo BUILD_STATUS:1
   fi
@@ -33,7 +37,7 @@ trap 'cleanup $? $LINENO' EXIT
 
 export BUILD=1
 export TEST=1
-export FULL_BUILD_MATRIX=0
+export FULL_BUILD_MATRIX=${FULL_BUILD_MATRIX:-0}
 while [[ $# -gt 0 ]]
 do
   case $1 in
@@ -61,25 +65,31 @@ do
       export TEST=1
       shift
       ;;
-    *)
+    --help|*)
       cat <<EOD
-    Argument not found!
+      Usage:
+
+        $ MY_CLUSTER='clustername' ./$0
       
-    usage: $0 [ --test-only|-T ] [ --build-only|-B ]
+      Optional arguments:
+      
+        --build-only          Only build, don't test
+        --test-only           Only run tests, don't build
+        --full-build-matrix   Run entire matrix of build configurations
+        --help                Show this message
 EOD
       exit 1
       ;;
   esac
 done
 
-# set -x
-x="unset"
+set -x
 
 if [[ ! -v MY_CLUSTER ]]
 then
   export MY_CLUSTER=`uname -n | sed -e 's/[0-9]//g' -e 's/\..*//'`
 fi
-BUILDDIR="$(pwd)/build"
+BUILDDIR="$(pwd)/_build"
 extra_cmake_args=""
 
 module purge
@@ -195,10 +205,9 @@ marianas|dl*)
     ;;
 esac
 
-base_path=`dirname $0`
 #  NOTE: The following is required when running from Gitlab CI via slurm job
 if [ -z "$SLURM_SUBMIT_DIR" ]; then
-    cd $base_path          || exit 1
+    cd $BASE_PATH          || exit 1
 fi
 
 if [[ ! -v NVBLAS_CONFIG_FILE ]] || [[ ! -f "$NVBLAS_CONFIG_FILE" ]]
@@ -210,8 +219,8 @@ fi
 module list
 
 if [[ $FULL_BUILD_MATRIX -eq 1 ]]; then
-  buildMatrix || exit 1
-  exit 0
+  buildMatrix
+  exit $?
 fi
 
 export CMAKE_OPTIONS="\
@@ -243,7 +252,7 @@ if [[ "$BUILD" == "1" ]]; then
   echo
   pushd $BUILDDIR                             || exit 1
   cmake $CMAKE_OPTIONS ..                     || exit 1
-  make -j || exit 1
+  $MAKE_CMD || exit 1
   popd
 fi
 
@@ -253,7 +262,7 @@ if [[ "$TEST" == "1" ]]; then
   echo
 
   pushd $BUILDDIR || exit 1
-  ctest -VV --timeout 1800 || exit 1
+  $CTEST_CMD || exit 1
   popd
 fi
 
